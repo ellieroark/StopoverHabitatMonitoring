@@ -41,9 +41,8 @@ library(AICcmodavg)
 library(afex)
 
 
-setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
-## source a script that: 1) sources data cleaning script and 2) randomly selects 
-## one of each duplicate aru count
+#setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
+
 
 
 set.seed(3271989)

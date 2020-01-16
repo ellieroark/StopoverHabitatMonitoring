@@ -24,7 +24,7 @@
 library(Hmisc)
 library(tidyverse)
 
-setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
+#setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
 
 ##don't forget to run data prep and ARUDuplicate script before running this script! See 
 ## StopoverHabitatMonitoring.R for details. 
