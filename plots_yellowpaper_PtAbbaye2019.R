@@ -27,11 +27,11 @@ library(Hmisc)
 library(lme4)
 
 
-setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
+#setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
 
 ### clean up environment
-rm(allaru, allaru_nb, dup_no_match, match, no_match, ptct_nb, spdet_aruF, 
-   w.allaru, w.arudup, arudup, drop_anon, dr, nm, pair, t.arudup)
+rm(allaru_s, spdet_arudup, arudiag, drop_counts, i, lm_on, mmdiag, plotson,
+   poisdiag, regdiag)
 
 #### SUMMARY PLOTS FOR SPECIES RICHNESS GLMM------------------------------------
 ##boxplot for sp detected by each count type
@@ -206,48 +206,52 @@ ptctpred <- spdet_all[which(spdet_all$count_type == "point"), ]
 ## plot of coefficients for GLMM (10 min vs 10 min)
 ## example from wg:
 ## # make a data frame to use in ggplot
-meth_df <- data.frame(matrix(nrow = 6, ncol = 4))
-colnames(meth_df) <- c("variable", "coef_estimate", "l_bound", "h_bound")
-meth_df$variable <- c("species richness", "diversity (turnover)",
-                      "species disribution", "abundance", "phenology",
-                      "temporal trends")
-
-# get confidence intervals from fitted model
-cis <- confint(method_mod)
+r1_df <- data.frame(matrix(nrow = 12, ncol = 4))
+colnames(r1_df) <- c("variable", "coef_estimate", "l_bound", "h_bound")
+r1_df$variable <- c("Count type (ARU)", "Wind (2)", "Wind (3+)",
+                      "Rain (Wet)", "Noise (1)", "Noise (>2)", "Day of year", 
+                      "Day of year squared", "Minutes past sunrise", 
+                      "Count type (ARU)*Rain (Wet)", 
+                      "Count type (ARU)*Day of Year",
+                      "Count type (ARU)*Day of year squared")
 
 # get coefficient point estimate and lower and upper CI bounds for each
 # predictor variable
-for(i in 1:nrow(meth_df)) {
+for(i in 1:nrow(r1_df)) {
   # get coefficient point estimate
-  meth_df$coef_estimate[i] <- summary(method_mod)$coefficients[1 + i]
-  meth_df$l_bound[i] <- cis[1 + i, "2.5 %"]
-  meth_df$h_bound[i] <- cis[1 + i, "97.5 %"]
+  r1_df$coef_estimate[i] <- summary(r1.spdetmm)$coefficients[1 + i]
+  r1_df$l_bound[i] <- CI.r1[2 + i, "2.5 %"]
+  r1_df$h_bound[i] <- CI.r1[2 + i, "97.5 %"]
 }
 
 # make graph
-print(ggplot(data = meth_df,
+print(ggplot(data = r1_df,
              aes(x = factor(variable,
-                            levels = c("species richness",
-                                       "diversity (turnover)",
-                                       "species disribution",
-                                       "abundance",
-                                       "phenology",
-                                       "temporal trends")),
+                            levels = c("Count type (ARU)", "Wind (2)", "Wind (3+)",
+                                       "Rain (Wet)", "Noise (1)", "Noise (>2)", 
+                                       "Day of year", "Day of year squared", 
+                                       "Minutes past sunrise", 
+                                       "Count type (ARU)*Rain (Wet)", 
+                                       "Count type (ARU)*Day of Year",
+                                       "Count type (ARU)*Day of year squared")),
                  y = coef_estimate)) +
         geom_point() +
         geom_linerange(aes(x = factor(variable,
-                                      levels = c("species richness",
-                                                 "diversity (turnover)",
-                                                 "species disribution",
-                                                 "abundance",
-                                                 "phenology",
-                                                 "temporal trends")),
+                                      levels = c("Count type (ARU)", "Wind (2)",
+                                                 "Wind (3+)", "Rain (Wet)", 
+                                                 "Noise (1)", "Noise (>2)", 
+                                                 "Day of year", 
+                                                 "Day of year squared", 
+                                                 "Minutes past sunrise", 
+                                                 "Count type (ARU)*Rain (Wet)", 
+                                                 "Count type (ARU)*Day of Year",
+                                                 "Count type (ARU)*Day of year squared")),
                            ymin = l_bound,
                            ymax = h_bound)) +
-        xlab("Study question") +
+        xlab("Predictor Variable") +
         ylab("Coefficient estimate") +
         theme_bw() +
-        ylim(-5, 5) +
+        ylim(-1, 1) +
         theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)))
 
 #### END summary plots for species richness GLMM-------------------------------
