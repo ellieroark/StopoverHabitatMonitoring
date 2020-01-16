@@ -21,14 +21,31 @@ source("./SRModels/SRModels/DataPrep_SR~counttype_10mincts_2019.R")
 
 # script identifies duplicated 10 min ARU counts and randomly selects one of the 
 # duplicates to include in the spdet_paired dataframe.
+# 
+## MUST FIRST RUN DataPrep_SR~counttype_10mincts_2019.R
 source("./SRModels/SRModels/ARUDuplicateReview2019.R")
+
+# script creates table of species detected during field season by detection 
+# method
+# 
+## MUST FIRST RUN DataPrep_SR~counttype_10mincts_2019.R
+## AND ARUDuplicateReview2019.R
+source("./SRModels/SRModels/SpeciesDiversity~counttype_2019.R")
 
 # script subsets spdet_paired to only paired point counts and aru counts, and 
 # creates spdet_all, which contains ALL counts from the season (including point
 # counts with no accompanying ARU count). script then fits poisson GLM and 
 # poisson GLMM to model species richness, with count type, date, time and weather
 # as predictors
+# 
+## MUST FIRST RUN DataPrep_SR~counttype_10mincts_2019.R
+## AND ARUDuplicateReview2019.R
 source("./SRModels/SRModels/GLMM_SR_10mincts_2019.R")
 
+
 # script creates plots for StopoverHabitatMonitoring Manuscript
+# 
+## MUST FIRST RUN DataPrep_SR~counttype_10mincts_2019.R
+## AND ARUDuplicateReview2019.R
+## AND GLMM_SR_10mincts_2019.R
 source("./SRModels/SRModels/plots_yellowpaper_PtAbbaye2019.R")
