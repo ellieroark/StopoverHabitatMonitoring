@@ -10,15 +10,23 @@
 ##          data from 2019 and returns the following:
 ##            - allaru: df of every 10 min paired ct aru observation
 ##            - ptct: df of every point count observation
-##            - spdet_paired: df with # of species detected per count by count
+##            - spdet_all: df with # of species detected per count by count
 ##              type
 ##
 ##         
 ## outputs: *linear regression model predicting the number of species detected 
 ##            based on count type, timing and weather variables
 ##            
-## TODO: * 
+## TODO: * THIS SCRIPT IS NOW DEFUNCT. SEE GLMM_SR_10mincts_2019 for final GLM 
+## of species richness!!!!!
 ################################
+
+
+
+
+## THIS SCRIPT IS NOW DEFUNCT. SEE GLMM_SR_10mincts_2019 for final GLM 
+## of species richness!!!!!
+
 
 #install.packages("psych")
 #install.packages("GGally")
@@ -212,19 +220,19 @@ tod_spdet <- plot(spdet_paired$min_past_sun, spdet_paired$sp_detected,
                   main = "species per count by minutes past sunrise")
 
 #look at response variable
-describe(spdet_paired$sp_detected)
+describe(spdet_all$sp_detected)
 
 #look at histograms for each count type
-ggplot(spdet_paired, aes(sp_detected, fill = count_type)) + 
+ggplot(spdet_all, aes(sp_detected, fill = count_type)) + 
   geom_histogram(binwidth = 1) + 
   facet_grid(count_type ~ ., margins = TRUE, scales = "free")
 
 #look at pairs plot for all data
-spdet_paired <- spdet_paired %>% ungroup()
-spdet_paired_covs <- select(spdet_paired, c("wind", "rain", "noise", "day_sq",
+spdet_all <- spdet_all %>% ungroup()
+spdet_all_covs <- select(spdet_all, c("wind", "rain", "noise", "day_sq",
                                             "day_of_yr_c", "min_past_sun"))
 
-pairplot <- ggpairs(spdet_paired_covs, columns = 1:5)
+pairplot <- ggpairs(spdet_all_covs, columns = 1:5)
 }
 
 ## END EXPLORATORY PLOTS -------------------------------------------------------
@@ -296,7 +304,7 @@ anova(nonoise_spdetmod, pois_spdetmod, test = "Chisq")
 if (regdiag){
 ## regression diagnostics-----------------------------------------------
 # examining whether day and day^2 are collinear
-plot(spdet_paired$day_of_yr_c, spdet_paired$day_sq)
+plot(spdet_all$day_of_yr_c, spdet_all$day_sq)
 
 #check for collinearity for all predictor variables
 vif(spdetmod)
@@ -320,7 +328,7 @@ boxplot(presids, main = "standardized residuals for sp_det model", ylab =
 
 
 ## build null model to test whether whole pt_ct_richness_mod is significant
-null_spdetmod <- glm(sp_detected ~ 1, data = spdet_paired,
+null_spdetmod <- glm(sp_detected ~ 1, data = spdet_all,
                                family = "gaussian")
 
 anova(null_spdetmod, spdetmod, test = "Chisq")
@@ -329,13 +337,13 @@ anova(null_spdetmod, spdetmod, test = "Chisq")
 # is polynomical term sigificant, or is a straight line just as good?
 spdetmod_noPoly <- glm(sp_detected ~ 1 + count_type + wind + rain + noise +
                          day_of_yr_c + rain:count_type + min_past_sun, 
-                        data = spdet_paired, family = "gaussian")
+                        data = spdet_all, family = "gaussian")
 summary(spdetmod_noPoly)
 anova(spdetmod_noPoly, spdetmod, test = "Chisq")
 
 pois_spdetmod_nopoly <- glm(sp_detected ~ 1 + count_type + wind + rain + noise +
                               day_of_yr_c + rain:count_type + min_past_sun, 
-                            data = spdet_paired, family = "poisson")
+                            data = spdet_all, family = "poisson")
 anova(pois_spdetmod_nopoly, pois_spdetmod, test = "Chisq")
 
 ## result of noPoly model suggests that polynomial term is not important for the 
@@ -361,19 +369,19 @@ plot(spdetmod_noPoly)
 if(poisdiag){
 ## POISSON model diagnostics----------------------------------------------------
 # bar plot of frequency of # of sp detected
-spcount <-  table(spdet_paired$sp_detected)
+spcount <-  table(spdet_all$sp_detected)
 barplot(spcount, main = "distribution of species detected", xlab = "sp detected", 
         ylab = "count/frequency")
 
 # check unconditional mean and variance for sp_detected (response variable)
 # (we ultimately care only about CONDITIONAL mean and variance being equal after
 # model is fit but this is a good indicator of whether it might be a problem)
-mean(spdet_paired$sp_detected)
-var(spdet_paired$sp_detected)
+mean(spdet_all$sp_detected)
+var(spdet_all$sp_detected)
 # doesn't look great! overdispersion may be a problem here.
 # also check partially conditioned mean and variance by count type
-aggregate(sp_detected~count_type, FUN=mean, data=spdet_paired)
-aggregate(sp_detected~count_type, FUN=var, data=spdet_paired)
+aggregate(sp_detected~count_type, FUN=mean, data=spdet_all)
+aggregate(sp_detected~count_type, FUN=var, data=spdet_all)
 
 #look at deviance statistic of fit model divided by its d.f. to see if ratio
 # is over 1
@@ -406,7 +414,7 @@ with(pois_spdetmod, pchisq(deviance, df.residual, lower.tail = FALSE))
 # # to a constant value by specifying "quasipoisson"
 # qpois_spdetmod <- glm(sp_detected ~ 1 + count_type + wind + rain + noise +
 #                        day_of_yr_c + day_sq + rain:count_type +
-#                        min_past_sun, data = spdet_paired, 
+#                        min_past_sun, data = spdet_all, 
 #                      family = "quasipoisson")
 # 
 # summary(qpois_spdetmod)
@@ -415,7 +423,7 @@ with(pois_spdetmod, pchisq(deviance, df.residual, lower.tail = FALSE))
 # ## another option: fit a negative binomial model 
 # nb_spdetmod <- glm.nb(sp_detected ~ 1 + count_type + wind + rain + noise +
 #                         day_of_yr_c + day_sq + rain:count_type +
-#                         min_past_sun, data = spdet_paired)
+#                         min_past_sun, data = spdet_all)
 # summary(nb_spdetmod)
 # plot(nb_spdetmod)
 # 
@@ -438,31 +446,31 @@ boxplot(resids_GLM_pois, main = "standardized residuals for pois_spdetmod model 
         term", ylab = "standardize residuals")
 
 # look at residuals vs. fitted values
-spdet_paired$resids <- resids_GLM_pois
-spdet_paired$predicted <- predict(pois_spdetmod, newdata = spdet_paired)
+spdet_all$resids <- resids_GLM_pois
+spdet_all$predicted <- predict(pois_spdetmod, newdata = spdet_all)
 
 # predicted vs. observed
-ggplot(data = spdet_paired, aes(x = exp(predicted), y = sp_detected)) + 
+ggplot(data = spdet_all, aes(x = exp(predicted), y = sp_detected)) + 
   geom_point() + 
   ggtitle("Observed and expected number of species\nPoisson GLM")
 
 # resids vs. fitted values
-pts <- unique(spdet_paired$point_id)
-ggplot(data = spdet_paired[spdet_paired$point_id %in% pts[11:18], ], 
+pts <- unique(spdet_all$point_id)
+ggplot(data = spdet_all[spdet_all$point_id %in% pts[11:18], ], 
        aes(x = predicted, y = resids, color = point_id)) + 
   geom_point(size = 3) + 
   ggtitle("residual vs. fitted values\nPoisson GLM")
 
-ggplot(data = spdet_paired, aes(x = point_id, y = resids)) + 
+ggplot(data = spdet_all, aes(x = point_id, y = resids)) + 
   geom_boxplot() + 
   ggtitle("Residuals by point location\nPoisson GLM")
 
-ggplot(data = spdet_paired, aes(x = day_of_yr_c, y = resids)) + 
+ggplot(data = spdet_all, aes(x = day_of_yr_c, y = resids)) + 
   geom_point() + 
   geom_smooth() +
   ggtitle("Residuals by day of year\nPoisson GLM")
 
-acf(spdet_paired$resids[order(spdet_paired$day_of_yr_c)])
+acf(spdet_all$resids[order(spdet_all$day_of_yr_c)])
 ## END Poisson model diagnostics------------------------------------------------
 }
 ## ALL-ARU MODEL -----------------------------------------------------
@@ -471,7 +479,7 @@ acf(spdet_paired$resids[order(spdet_paired$day_of_yr_c)])
 ##  + beta5*dayofyear + beta6*dayofyear^2 + beta7*count_type*rain
 ##  + beta8*minpastsunrise + beta9*aru_id
 
-spdet_aru <- spdet_paired[which(spdet_paired$count_type == "aru"), ]
+spdet_aru <- spdet_all[which(spdet_all$count_type == "aru"), ]
 
 aruspdetmod <- glm(sp_detected ~ 1 + wind + rain + noise + aru_id +
                   day_of_yr_s + day_sq_s + min_past_sun_s, 
