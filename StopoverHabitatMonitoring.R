@@ -19,6 +19,12 @@ setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
 # detected per count for both ARU and point counts. 
 source("./StopoverHabitatMonitoring/DataPrep_SR~counttype_10mincts_2019.R")
 
+# NOT YET COMPLETE-- DO NOT SOURCE
+# script reads in original data for 20 random minutes of aru listening and 
+# tallies the number of species detected in each 20 random minute count
+source("./StopoverHabitatMonitoring/DataPrep_SR~counttype_20randmin.R")
+
+
 # script identifies duplicated 10 min ARU counts and randomly selects one of the 
 # duplicates to include in the spdet_paired dataframe.
 # 
