@@ -47,9 +47,6 @@ library(afex)
 
 set.seed(3271989)
 
-### clean up environment
-rm(allaru, allaru_nb, dup_no_match, match, no_match, ptct_nb, spdet_aruF, 
-   w.allaru, w.arudup, arudup, drop_anon, dr, nm, pair, t.arudup)
 
 ### control whether I make exploratory plots and run diagnostics:
 plotson <- FALSE
@@ -483,7 +480,7 @@ aruspdetmod <- glm(sp_detected ~ 1 + wind + rain + noise + aru_id +
                    family = "poisson")
 
 summary(aruspdetmod)
-plot(aruspdetmod)
+#plot(aruspdetmod)
 
 ## none of the aru values appear significant, but now test significance of 
 ## overall term:

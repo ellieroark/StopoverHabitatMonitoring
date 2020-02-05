@@ -23,9 +23,6 @@ library(tidyverse)
 
 #setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
 
-#clean up environment
-rm(filenames, longaru, widearu, nobird_aruct, nobird_ptct, sunrise_times, 
-   var_aru, var_pt, weathervar)
 
 #get rid of column values irrelevant for this analysis
 allaru_s <- subset(allaru, select = c(anon_filename, original_name, species_code))

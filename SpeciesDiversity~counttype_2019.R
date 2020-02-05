@@ -32,8 +32,8 @@ library(tidyverse)
 alpha_codes <- read_csv(file = "./2018data/BirdAlphaCodes.csv")
 
 #clean up environment
-rm(allaru_s, allaru_nb, dup_no_match, match, no_match, ptct_nb, spdet_aru, 
-   spdet_aruF, spdet_arudup, spdet_paired, spdet_ptct, w.allaru, w.arudup, 
+rm(allaru_s, dup_no_match, match, no_match, spdet_aru, 
+   spdet_arudup, spdet_ptct, w.allaru, w.arudup, 
    arudup, drop_anon, i, dr, nm, pair, t.arudup)
 
 #get list of species detected by aru counts

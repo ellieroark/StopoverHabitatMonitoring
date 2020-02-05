@@ -243,9 +243,8 @@ spdet_paired <- spdet_paired[order(spdet_paired$date, spdet_paired$ptct_id,
                                    spdet_paired$anon_filename),]
 
 
-# ### clean up environment
-# rm(filenames, longaru, widearu, nobird_aruct, nobird_ptct,
-#    spdet_aru, spdet_ptct, sunrise_times, var_aru, var_pt, weathervar, allaru,
-#    ptct)
+### clean up environment
+rm(filenames, longaru, widearu, nobird_aruct, nobird_ptct, allaru_nb, ptct_nb,
+   spdet_aruF, sunrise_times, var_aru, var_pt, weathervar)
 
 
