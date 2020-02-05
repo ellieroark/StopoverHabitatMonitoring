@@ -5,71 +5,69 @@
 ## created: 5 Feb 2020
 ## last modified: 5 Feb 2020
 ## 
-## inputs: *
-##
+## inputs: *ARU20randmin.csv- file with bird species identifications from 20 
+##          random minutes of aru data for each recorder for each survey day
+##         *filename_key_20randmin.csv- key containing date, original file name
+##          and other essential information to de-anonymize the file names in 
+##          ARU20randmin.csv
 ##         
 ## outputs: *
 ##            
-## TODO: * 
+## TODO: * check through de-anonymized data and ensure there are no NAs
 ################################
 
+### read in random minute aru observations and file name key
+
 aru20r <- read_csv(file = "./2019data/ARU20randmin.csv")
+filenames <- read_csv(file = "./2019data/filename_key_20randmin.csv", 
+                      col_types = cols(.default = "?", folder = "c"))
 
-#coerce date col in ptct df to date format
-ptct$date <- as.Date(ptct$date, format = "%m/%d/%Y")
+##cut columns down to just anon_filename and species_code
+aru20r <- subset(aru20r, select = c(filename, species_code))
 
-### combine widearu and longaru dfs---------------------------------------------
-
-## cut longaru cols down to just the anon_file_name and species_code
-longaru <- subset(longaru, select = -c(minute_detected, det_code, comments, 
-                                       minute_half))
-## remove duplicate records, keeping only unique species in each anon_filename
-longaru <- distinct(longaru)
-
-#add .wav to anon filenames in widearu
-widearu$anon_filename <- paste(widearu$anon_filename, ".wav", sep = "")
-
-##cut widearu cols down to just anon_filename and species_code
-widearu <- subset(widearu, select = c(anon_filename, species_code))
-
-#change colname so that the two dfs match
-longaru <- rename(longaru, anon_filename = "anon_file_name")
-
-## merge the two data frames
-allaru <- rbind(longaru, widearu)
-
-### end combine widearu + longaru dfs-------------------------------------------
+##change filename to anon_name in aru20r
+aru20r <- rename(aru20r, anon_name = "filename")
 
 ### un-anonymize the aru file names---------------------------------------------
 
 #get rid of columns we don't need in filenames
-filenames <- subset(filenames, select = c(original_name, anon_name, date))
-#change column name to match allaru
-filenames <- rename(filenames, anon_filename = "anon_name")
+filenames <- subset(filenames, select = c(selec, sound.files, anon_name, date))
 
 #join filenames to allaru to add a column that has the un-anonymized file names
-allaru <- left_join(allaru, filenames, by = "anon_filename")
+aru20r <- left_join(aru20r, filenames, by = "anon_name")
 
 ### end un-anonymize------------------------------------------------------------
 
+#####TODO: CHECK THROUGH ALL DE-ANONYMIZED DATA AND ENSURE NO NAs
+
 ### add point id, count type, aru id, weather, aru_sample columns---------------
 
-#create a point_id column for allaru from the point id indicated in original_name
-allaru$point_id <- gsub(".*_...._", "", allaru$original_name)
-allaru$point_id <- gsub(".wav", "", allaru$point_id)
-
-#create a point count id column by pasting the point_id and date cols
-allaru$ptct_id <- paste(as.character(allaru$date), allaru$point_id, sep = "_")
-ptct$ptct_id <- paste(as.character(ptct$date), ptct$point_id, sep = "_")
+#create dataframe with key for the anonymized recorder names
+rec <- c("rec1", "rec2", "rec3", "rec4")
+aru_id <- c("SWIFT02", "SWIFT01", "AM", "SWIFT03")
+recs <- data.frame(aru_id, rec)
 
 #create an aru_id col for allaru
-allaru$aru_id <- gsub("_........_...._...", "", allaru$original_name)
-allaru$aru_id <- gsub("wav", "", allaru$aru_id)
-allaru$aru_id <- gsub("[:.:]", "", allaru$aru_id)
+aru20r$rec <- gsub("day.._?", "", aru20r$anon_name)
+aru20r$rec <- gsub("_.*_.*", "", aru20r$rec)
+
+#de-anonymize aru_id
+aru20r <- left_join(aru20r, recs, by = "rec")
+
+#remove "rec" column-- aru_id is all that's needed
+aru20r$rec <- NULL
 
 #create count type col
-allaru$count_type <- "aru"
-ptct$count_type <- "point"
+aru20r$count_type <- "arurand"
+
+# create a point_id column by fetching the point id for a particular date and 
+# aru from the allaru df
+locs <- data.frame(allaru$point_id, allaru$date, allaru$aru_id)
+locs <- rename(locs, point_id = "allaru.point_id", date = "allaru.date", 
+               aru_id = "allaru.aru_id")
+locs$aruday <- paste0(locs$date, locs$aru_id, sep = "_")
+aru20r$aruday <- paste0(aru20r$date, aru20r$aru_id, sep = "_")
+aru20r <- left_join(aru20r, locs, by)
 
 # create a new df with just weather variables and ptctids
 weathervar <- ptct[which(ptct$aru_sample == TRUE), 
