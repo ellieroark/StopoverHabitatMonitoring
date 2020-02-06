@@ -3,7 +3,7 @@
 ## 
 ## author: Ellie Roark
 ## created: 15 Jan 2020
-## last modified: 15 Jan 2020
+## last modified: 5 Feb 2020
 ## 
 ## This script organizes the workflow for the ARU vs Point Counts in migration
 ## stopover habitat analysis.
@@ -22,6 +22,8 @@ source("./StopoverHabitatMonitoring/DataPrep_SR~counttype_10mincts_2019.R")
 # NOT YET COMPLETE-- DO NOT SOURCE
 # script reads in original data for 20 random minutes of aru listening and 
 # tallies the number of species detected in each 20 random minute count
+# 
+# MUST FIRST RUN DataPrep_SR~counttype_10mincts_2019.R
 source("./StopoverHabitatMonitoring/DataPrep_SR~counttype_20randmin.R")
 
 
