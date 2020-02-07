@@ -136,70 +136,25 @@ covs <- distinct(covs)
 # join variable dfs to spdet dfs
 spdet_20r <- left_join(spdet_20r, covs, by = "aruday")
 
-##TODO: create day of year and min past sun cols in spdet_20r
+##create day of year and min past sun cols in spdet_20r
+spdet_20r$day_of_yr <- yday(spdet_20r$date)
+spdet_20r$min_past_sun <- NA
 
 # actually merge spdet_aru and spdet_ptct
 spdet_3ct <- full_join(spdet_paired, spdet_20r, by = NULL)
 
 ### end merge dataframes--------------------------------------------------------
-# 
-# ### make additional date and time cols needed for analysis----------------------
-# # make a day of year column 
-# spdet_paired$day_of_yr <- yday(spdet_paired$date)
-# 
-# ## make a min_past_sun col that gives start time as minutes past sunrise
-# # combine month, day, year and sunrise time into one column
-# sunrise_times$year <- "2019"
-# sunrise_times$date <- paste(as.character(sunrise_times$month), sep = "-", 
-#                             as.character(sunrise_times$Day))
-# sunrise_times$date <- paste(as.character(sunrise_times$date), sep = "-", 
-#                             as.character(sunrise_times$year))
-# sunrise_times$sunrisedt <- paste(as.character(sunrise_times$date), sep = " ", 
-#                                  as.character(sunrise_times$Rise))
-# 
-# # convert min_past_sun datetime col into a positx value
-# sunrise_times$sunrisedt <- as.POSIXct(sunrise_times$sunrisedt, 
-#                                       format='%B-%d-%Y %H:%M:%S')
-# 
-# sunrise_times$date <- as.Date(sunrise_times$date, format='%B-%d-%Y')
-# 
-# # make start_time in spdet_paired into a datetime col with positx structure
-# spdet_paired$start_time <- paste(spdet_paired$date, sep = " ", 
-#                                  spdet_paired$start_time)
-# 
-# spdet_paired$start_time <- as.POSIXct(spdet_paired$start_time, 
-#                                       format= '%Y-%m-%d %H:%M:%S')
-# 
-# # left join so that sunrise times are associated with a date in spdet_paired df
-# #drop unncessary cols from sunrise_times
-# sunrise_times <- select(sunrise_times, -c(month, Day, Rise, Set, year))
-# 
-# spdet_paired <- left_join(spdet_paired, sunrise_times, by= "date")
-# 
-# 
-# # subtract sunrise time from start time to get min_past_sun
-# spdet_paired$min_past_sun <- difftime(spdet_paired$start_time, 
-#                                       spdet_paired$sunrisedt, units = "mins")
-# 
-# spdet_paired <- select(spdet_paired, -c(sunrisedt))
-# 
-# # convert to numeric
-# spdet_paired$min_past_sun <- as.numeric(spdet_paired$min_past_sun)
-# 
-# ### end date and time col creation-----------------------------------------------
-# 
-# ## organize df so that it's sorted by date and ptctid
-# spdet_paired <- spdet_paired[order(spdet_paired$date, spdet_paired$ptct_id,
-#                                    spdet_paired$anon_filename),]
-# 
-# 
-# # ### clean up environment
-# # rm(filenames, longaru, widearu, nobird_aruct, nobird_ptct,
-# #    spdet_aru, spdet_ptct, sunrise_times, var_aru, var_pt, weathervar, allaru,
-# #    ptct)
-# 
-# 
-# 
-# 
-# 
-# 
+
+## organize df so that it's sorted by date and ptctid
+spdet_3ct <- spdet_3ct[order(spdet_3ct$date, spdet_3ct$ptct_id),]
+
+
+### clean up environment
+rm(covs, filenames, locs, recs, spdet_20r, spdet_aru, spdet_ptct, thisdat,
+   weathervar, aru_id, aruday, n_sp, rec, sp_detected, thisct)
+
+
+
+
+
+
