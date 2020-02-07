@@ -82,5 +82,7 @@ spdet_aru <- spdet_aru[spdet_aru$anon_filename %nin% drop_anon, ]
 spdet_paired <- spdet_paired[spdet_paired$anon_filename %nin% drop_anon, ]
 
 
-
+# clean up environment
+rm(allaru_s, dup_no_match, match, no_match, spdet_arudup, w.allaru, w.arudup,
+   arudup, dr, drop_anon, nm, pair, t.arudup)
 
