@@ -49,6 +49,16 @@ source("./StopoverHabitatMonitoring/SpeciesDiversity~counttype_2019.R")
 source("./StopoverHabitatMonitoring/GLMM_SR_10mincts_2019.R")
 
 
+# script that fits poisson GLMM to model species richness by count type with 
+# THREE count types- aru (10 consecutive min aru cts) point (10 min in person 
+# point counts) and arurand (20 random minutes from each recorder on each day)
+# 
+## MUST FIRST RUN DataPrep_SR~counttype_10mincts_2019.R
+## AND ARUDuplicateReview2019.R
+## AND DataPrep_SR~counttype_20randmin.R
+source("./StopoverHabitatMonitoring/GLMM_SR_20randommin.R")
+
+
 # script creates plots for StopoverHabitatMonitoring Manuscript
 # 
 ## MUST FIRST RUN DataPrep_SR~counttype_10mincts_2019.R

@@ -80,9 +80,18 @@ r20.spdetmm <- glmer(sp_detected ~ count_type + wind + rain + noise +
                       day_of_yr_s:count_type + day_sq_s:count_type +
                      (1|day_of_yr_s), 
                     data = spdet_3ct,
-                    family = poisson)
+                    family = poisson, 
+                    start = r1.spdetmm@theta )
 summary(r20.spdetmm)
 
 
 ## end GLMM with 3 ct types-----------------------------------------------------
 
+#plot SR over time, stratified by count type
+spdet_time_3ct <- ggplot(spdet_3ct, aes(x=day_of_yr, y=sp_detected, 
+                                             color=count_type)) +  
+  geom_point() +
+  scale_colour_hue(l=50)  # Use a slightly darker palette than normal
+  #geom_smooth(method="loess", 
+  #            se=TRUE)     # Add confidence interval shading
+spdet_time_3ct
