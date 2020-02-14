@@ -13,6 +13,7 @@
 
 setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
 
+### Species Richness Analyses--------------------------------------------------
 
 # script reads in original data for 10 minute point counts and 10 minute aru 
 # counts and creates spdet_paired dataframe, which tallies the number of species
@@ -58,6 +59,21 @@ source("./StopoverHabitatMonitoring/GLMM_SR_10mincts_2019.R")
 ## AND DataPrep_SR~counttype_20randmin.R
 source("./StopoverHabitatMonitoring/GLMM_SR_20randommin.R")
 
+### End Species Richness Analyses-----------------------------------------------
+
+
+### Abundance Analyses----------------------------------------------------------
+
+# script that cleans point count data to prep it for abundance models
+# 
+## MUST FIRST RUN [nothing]
+source("./StopoverHabitatMonitoring/PtCtAbundance.R")
+
+
+### End Abundance Analyses------------------------------------------------------
+
+
+### Plots-----------------------------------------------------------------------
 
 # script creates plots for StopoverHabitatMonitoring Manuscript
 # 
@@ -65,3 +81,6 @@ source("./StopoverHabitatMonitoring/GLMM_SR_20randommin.R")
 ## AND ARUDuplicateReview2019.R
 ## AND GLMM_SR_10mincts_2019.R
 source("./StopoverHabitatMonitoring/plots_yellowpaper_PtAbbaye2019.R")
+
+### End Plots-------------------------------------------------------------------
+
