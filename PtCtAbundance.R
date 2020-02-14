@@ -15,21 +15,52 @@
 ##            
 ## TODO: * 
 ################################
+library(Hmisc)
+library(tidyverse)
+library(lubridate)
 
+ptct <- read_csv(file = "./2019data/Corrected_PointCounts_PtAbbaye2019.csv")
 
 ptct$count <- as.numeric(ptct$count)
-obsfreq_hist <- hist(ptct$count, main = "number of individs")
-
-#boxplot for sp detected by each count type
-count_type_box <- ggplot(spdet_paired, aes(x=count_type, y=sp_detected)) + 
-  geom_boxplot() + scale_y_continuous(breaks = c(1, 5, 10)) +
-  labs(x = "Count type", y = "Number of species detected", 
-       title = "Number of Species Detected per Point Count by Count Type")
-count_type_box
-
+ptct$date <- as.Date(ptct$date, format = "%m/%d/%Y")
 
 # make day of yr col for ptct obs
 ptct$day_of_yr <- yday(ptct$date)
+# make pt ct id column
+ptct$ptct_id <- paste(as.character(ptct$date), ptct$point_id, sep = "_")
+
+## Create dataframe of Golden-crowned Kinglet counts----------------------------
+#subset to gcki
+gcki <- ptct[which(ptct$species_code == "GCKI"), ]
+
+#get unique ptctids for counts on which there were no GCKIs
+nogckict <- ptct[which(ptct$ptct_id %nin% gcki$ptct_id), ]
+
+#get rid of species-specific variables
+dropa <- c("species_code","species_common_name", "minute_detected", "det_code", 
+             "rel_bearing", "distance", "minute_detected", "comments", "count")
+nogckict <- nogckict[ , !(names(nogckict) %in% dropa)]
+
+# get only a single row for each point count
+nogckict <- dplyr::distinct(nogckict)
+
+# add count variable back in, specifying that these are counts with 0 GCKIs
+nogckict$count <- 0
+
+# get rid of species-specific variables in gcki df
+dropb <- c("species_code","species_common_name", "minute_detected", "det_code", 
+           "rel_bearing", "distance", "minute_detected", "comments")
+gcki <- gcki[ , !(names(gcki) %in% dropb)]
+
+# join gcki and nogckict dfs to create a dataframe that has all point counts 
+# with the number of GCKIs detected 
+gcki <- full_join(gcki, nogckict)
+
+## end create GCKI dataframe----------------------------------------------------
+
+
+## Exploratory plots -----------------------------------------------------------
+hist(ptct$count, main = "number of individs")
 
 #subset to only sp observations of WIWR
 wiwr <- ptct[which(ptct$species_code == "WIWR"), ]
@@ -93,3 +124,5 @@ plot(sum_bcch$day_of_yr, sum_bcch$count,
      main = "bcch per day over time")
 plot(sum_heth$day_of_yr, sum_heth$count, 
      main = "heth per day over time")
+
+## end Exploratory plots -------------------------------------------------------
