@@ -20,10 +20,12 @@ library(tidyverse)
 library(lubridate)
 library(car)
 library(MASS)
+library(gbm)
 
 setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
 
 ptct <- read_csv(file = "./2019data/Corrected_PointCounts_PtAbbaye2019.csv")
+sunrise_times <- read_csv(file = "./2019data/SunriseTimes_PtAbbaye2019.csv")
 
 ptct$count <- as.numeric(ptct$count)
 ptct$date <- as.Date(ptct$date, format = "%m/%d/%Y")
@@ -52,9 +54,53 @@ ptct[which(ptct$noise >= 2), "noise"] <- ">2"
 ptct$noise <- factor(as.character(ptct$noise), 
                      levels = c("0", "1", ">2"))
 
+#make cloud cover a factor variable
+ptct$cloud_cover <- factor(as.character(ptct$cloud_cover), 
+                    levels = c("0-33", "33-66", "66-100"))
+
 # make a centered day of year and a squared day of year
 ptct$day_of_yr_c <- ptct$day_of_yr - mean(ptct$day_of_yr)
 ptct$day_sq <- ptct$day_of_yr_c^2
+
+## make a min_past_sun col that gives start time as minutes past sunrise
+# combine month, day, year and sunrise time into one column
+sunrise_times$year <- "2019"
+sunrise_times$date <- paste(as.character(sunrise_times$month), sep = "-", 
+                            as.character(sunrise_times$Day))
+sunrise_times$date <- paste(as.character(sunrise_times$date), sep = "-", 
+                            as.character(sunrise_times$year))
+sunrise_times$sunrisedt <- paste(as.character(sunrise_times$date), sep = " ", 
+                                 as.character(sunrise_times$Rise))
+
+# convert min_past_sun datetime col into a positx value
+sunrise_times$sunrisedt <- as.POSIXct(sunrise_times$sunrisedt, 
+                                      format='%B-%d-%Y %H:%M:%S')
+
+sunrise_times$date <- as.Date(sunrise_times$date, format='%B-%d-%Y')
+
+# make start_time in ptct into a datetime col with positx structure
+ptct$start_time <- paste(ptct$date, sep = " ", 
+                                 ptct$start_time)
+
+ptct$start_time <- as.POSIXct(ptct$start_time, 
+                                      format= '%Y-%m-%d %H:%M:%S')
+
+# left join so that sunrise times are associated with a date in ptct df
+#drop unncessary cols from sunrise_times
+sunrise_times <- dplyr::select(sunrise_times, -c(month, Day, Rise, Set, year))
+
+ptct <- left_join(ptct, sunrise_times, by= "date")
+
+
+# subtract sunrise time from start time to get min_past_sun
+ptct$min_past_sun <- difftime(ptct$start_time, 
+                                      ptct$sunrisedt, units = "mins")
+
+ptct <- dplyr::select(ptct, -c(sunrisedt))
+
+# convert to numeric
+ptct$min_past_sun <- as.numeric(ptct$min_past_sun)
+
 
 ## Create dataframe of Golden-crowned Kinglet counts----------------------------
 #subset to gcki
@@ -202,7 +248,8 @@ ybsa <- full_join(ybsa, noybsact)
 ## end create YBSA df----------------------------------------------------------- 
 
 ## remove no....ct dfs, now that that data is incorporated into each species df
-rm(nobcchct, nogckict, nowiwrct, noybsact, nohethct, dropa, dropb)
+rm(nobcchct, nogckict, nowiwrct, noybsact, nohethct, dropa, dropb, 
+   sunrise_times)
 
 ## Exploratory plots -----------------------------------------------------------
 hist(ptct$count, main = "number of individs")
@@ -260,8 +307,6 @@ plot(gcki$day_of_yr, gcki$count,
 ## end Exploratory plots -------------------------------------------------------
 
 ## GLM for GCKI counts over time------------------------------------------------
-
-
 ## model for the number of GCKI detected per point count, depending on weather
 gcki.ct <- glm(count ~ 1 + wind + rain + noise + cloud_cover + day_of_yr_c + 
                  day_sq,
@@ -322,6 +367,50 @@ gcki.ct.nb <- glm.nb(count ~ 1 + wind + rain + noise + cloud_cover + day_of_yr_c
 
 summary(gcki.ct.nb)
 plot(gcki.ct.nb)
+## end GLM for GCKI counts------------------------------------------------------
 
 
+
+## Boosted Regression Tree for GCKI counts--------------------------------------
+
+gcki.brt <- gbm(count ~ 1 + wind + rain + noise + day_of_yr_c + cloud_cover +
+                        day_sq + min_past_sun, 
+                distribution = "poisson", 
+                data = gcki, 
+                interaction.depth = 3, 
+                n.trees = 1000, 
+                n.minobsinnode = 5, 
+                shrinkage = 0.01, 
+                bag.fraction = 0.8)
+
+## end BRT for GCKI counts-------------------------------------------------------
+
+## predictions with BRT---------------------------------------------------------
+# create new data to predict with
+pred_gcki <- data.frame(day_of_yr = seq(min(gcki$day_of_yr), 
+                                        max(gcki$day_of_yr), by = 1))
+pred_gcki$day_of_yr_c <- pred_gcki$day_of_yr-mean(pred_gcki$day_of_yr)
+pred_gcki$day_sq <- pred_gcki$day_of_yr_c^2
+pred_gcki$min_past_sun <- median(gcki$min_past_sun)
+pred_gcki$wind <- as.factor("0-1")
+pred_gcki$rain <- as.factor("Dry")
+pred_gcki$noise <- as.factor("0")
+pred_gcki$cloud_cover <- as.factor("0-33")
+#coerce factor variables to contain the same number of levels as the original 
+pred_gcki$wind <- factor(pred_gcki$wind, 
+                         levels = c("0-1", "2", "3+"),
+                         labels = c("0-1", "2", "3+"))
+pred_gcki$rain <- factor(pred_gcki$rain, 
+                         levels = c("Dry", "wet"),
+                         labels = c("Dry", "wet"))
+pred_gcki$noise <- factor(pred_gcki$noise, 
+                          levels = c("0", "1", ">2"), 
+                          labels = c("0", "1", ">2"))
+pred_gcki$cloud_cover <- factor(pred_gcki$cloud_cover, 
+                          levels = c("0-33", "33-66", "66-100"), 
+                          labels = c("0-33", "33-66", "66-100"))
+
+
+p1 <- predict(gcki.brt, newdata = pred_gcki, n.trees = 1000, type = "response")
+## end predictions with BRT-----------------------------------------------------
 
