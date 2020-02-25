@@ -87,15 +87,7 @@ aru.pred$point_id <- factor(aru.pred$point_id,
 
 
 #next, feed that new data into the predict function for lmer package
-# first run the model that you want to use for prediction
-r1.spdetmm <- glmer(sp_detected ~ count_type + wind + rain + noise +
-                      day_of_yr_s + day_sq_s + rain:count_type +
-                      day_of_yr_s:count_type + day_sq_s:count_type +
-                      min_past_sun_s + (1|day_of_yr_s), 
-                    data = spdet_all,
-                    family = poisson)
-
-#now make a new col with predictions
+#make a new col with predictions
 aru.pred$preds <- predict(r1.spdetmm, newdata = aru.pred, type = "response", 
                           re.form = NA)
 
