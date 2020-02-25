@@ -15,7 +15,7 @@ setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
 
 ### Species Richness Analyses--------------------------------------------------
 
-# script reads in original data for 10 minute point counts and 10 minute aru 
+# script reads in original d  ata for 10 minute point counts and 10 minute aru 
 # counts and creates spdet_paired dataframe, which tallies the number of species
 # detected per count for both ARU and point counts. 
 source("./StopoverHabitatMonitoring/DataPrep_SR~counttype_10mincts_2019.R")
@@ -32,6 +32,7 @@ source("./StopoverHabitatMonitoring/ARUDuplicateReview2019.R")
 # MUST FIRST RUN DataPrep_SR~counttype_10mincts_2019.R
 source("./StopoverHabitatMonitoring/DataPrep_SR~counttype_20randmin.R")
 
+# ONLY NEED TO RUN ONCE TO GENERATE TABLE
 # script creates table of species detected during field season by detection 
 # method
 # 
@@ -79,7 +80,9 @@ source("./StopoverHabitatMonitoring/PtCtAbundance.R")
 # 
 ## MUST FIRST RUN DataPrep_SR~counttype_10mincts_2019.R
 ## AND ARUDuplicateReview2019.R
+## AND DataPrep_SR~counttype_20randmin.R
 ## AND GLMM_SR_10mincts_2019.R
+## AND GLMM_SR_20randommin.R
 source("./StopoverHabitatMonitoring/plots_yellowpaper_PtAbbaye2019.R")
 
 ### End Plots-------------------------------------------------------------------
