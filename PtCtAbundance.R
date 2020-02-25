@@ -21,6 +21,7 @@ library(lubridate)
 library(car)
 library(MASS)
 library(gbm)
+library(data.table)
 
 setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
 
@@ -36,7 +37,28 @@ ptct$day_of_yr <- yday(ptct$date)
 ptct$ptct_id <- paste(as.character(ptct$date), ptct$point_id, sep = "_")
 
 ## prep data frame ensuring all variables are factors
-#change wind from dbl to factor with 3 levels (0-1, 2, 3+)
+# make wind df to average windspeed for each day to use in day-aggregate models
+windday <- ptct %>%
+        dplyr::select(wind, day_of_yr)
+
+windday <- distinct(windday)
+
+#change beaufort wind speed ratings to the median speed (in knots) for each 
+# beaufort score
+windday[which(windday$wind == "1"), "wind"] <- "2"
+windday[which(windday$wind == "2"), "wind"] <- "5"
+windday[which(windday$wind == "3"), "wind"] <- "8"
+windday[which(windday$wind == "4"), "wind"] <- "13"
+windday[which(windday$wind == "5"), "wind"] <- "19"
+
+windday$wind <- as.numeric(windday$wind)
+
+windday <- windday %>%
+        group_by(day_of_yr) %>%
+        summarise(wind = mean(wind))
+
+#change wind from dbl to factor with 3 levels (0-1, 2, 3+) for use in all other
+# models
 ptct[which(ptct$wind <= "1"), "wind"] <- "0-1"
 ptct[which(ptct$wind >= "3"), "wind"] <- "3+"
 ptct$wind <- factor(as.character(ptct$wind), 
@@ -247,9 +269,46 @@ ybsa <- full_join(ybsa, noybsact)
 
 ## end create YBSA df----------------------------------------------------------- 
 
+## create dataframes with # of individs. per day, instead of per count----------
+#  add up number of individs detected per day for each 
+sum_wiwr <- wiwr %>%
+        group_by(day_of_yr) %>%
+        summarize(count = sum(count))
+
+sum_ybsa <- ybsa %>%
+        group_by(day_of_yr) %>%
+        summarize(count = sum(count))
+
+sum_bcch <- bcch %>%
+        group_by(day_of_yr) %>%
+        summarize(count = sum(count))
+
+sum_heth <- heth %>%
+        group_by(day_of_yr) %>%
+        summarize(count = sum(count))
+sum_gcki <- gcki %>%
+        group_by(day_of_yr) %>%
+        summarize(count = sum(count))
+
+# add centered and squared day of year cols to windday df before joining to 
+# sum_dfs
+windday$day_of_yr_c <- windday$day_of_yr - mean(windday$day_of_yr)
+windday$day_sq <- windday$day_of_yr_c^2
+
+
+
+# add windday to sum_ dfs. 
+sum_gcki <- left_join(sum_gcki, windday, by = "day_of_yr")
+sum_wiwr <- left_join(sum_wiwr, windday, by = "day_of_yr")
+sum_bcch <- left_join(sum_bcch, windday, by = "day_of_yr")
+sum_ybsa <- left_join(sum_ybsa, windday, by = "day_of_yr")
+sum_heth <- left_join(sum_heth, windday, by = "day_of_yr")
+
+## end create # of individs per day dfs-----------------------------------------
+
 ## remove no....ct dfs, now that that data is incorporated into each species df
 rm(nobcchct, nogckict, nowiwrct, noybsact, nohethct, dropa, dropb, 
-   sunrise_times)
+   sunrise_times, windday)
 
 ## Exploratory plots -----------------------------------------------------------
 hist(ptct$count, main = "number of individs")
@@ -271,63 +330,44 @@ plot(heth$day_of_yr, heth$count,
 plot(gcki$day_of_yr, gcki$count, 
      main = "gcki per pt count over time")
 
-# #TODO fix so this actually sums the count column
-#  add up number of individs detected per day for each 
-# sum_wiwr <- wiwr %>% 
-#   group_by(day_of_yr) %>% 
-#   sum(count)
-# 
-# sum_ybsa <- ybsa %>% 
-#   group_by(day_of_yr) %>% 
-#   summarise(count = n())
-# 
-# sum_bcch <- bcch %>% 
-#   group_by(day_of_yr) %>% 
-#   summarise(count = n())
-# 
-# sum_heth <- heth %>% 
-#   group_by(day_of_yr) %>% 
-#   summarise(count = n())
-# 
-# sum_gcki <- gcki %>% 
-#   group_by(day_of_yr) %>% 
-#   summarise(count = n())
 
-# plot(sum_gcki$day_of_yr, sum_gcki$count, 
-#      main = "gcki per day over time")
-# plot(sum_ybsa$day_of_yr, sum_ybsa$count, 
-#      main = "ybsa per day over time")
-# plot(sum_wiwr$day_of_yr, sum_wiwr$count, 
-#      main = "wiwr per day over time")
-# plot(sum_bcch$day_of_yr, sum_bcch$count, 
-#      main = "bcch per day over time")
-# plot(sum_heth$day_of_yr, sum_heth$count, 
-#      main = "heth per day over time")
+
+
+plot(sum_gcki$day_of_yr, sum_gcki$count,
+     main = "gcki per day over time")
+plot(sum_ybsa$day_of_yr, sum_ybsa$count,
+     main = "ybsa per day over time")
+plot(sum_wiwr$day_of_yr, sum_wiwr$count,
+     main = "wiwr per day over time")
+plot(sum_bcch$day_of_yr, sum_bcch$count,
+     main = "bcch per day over time")
+plot(sum_heth$day_of_yr, sum_heth$count,
+     main = "heth per day over time")
 
 ## end Exploratory plots -------------------------------------------------------
 
 ## GLM for GCKI counts over time------------------------------------------------
 ## model for the number of GCKI detected per point count, depending on weather
 gcki.ct <- glm(count ~ 1 + wind + rain + noise + cloud_cover + day_of_yr_c + 
-                 day_sq,
+                 day_sq + min_past_sun,
                 data = gcki, 
                 family = "poisson")
 
 summary(gcki.ct)
-plot(gcki.ct)
+#plot(gcki.ct)
 
 vif(gcki.ct)
-resids <- rstandard(gcki.ct)
+#resids <- rstandard(gcki.ct)
 
 p.resids <- residuals(gcki.ct, type = "deviance")
 gcki$pois_devresids <- p.resids
 
 gcki[gcki$pois_devresids > 2, ]
 
-hist(resids, main = "Standardized Residuals for sp_det model", xlab = 
-       "standardized residuals")
-boxplot(resids, main = "standardized residuals for sp_det model", ylab = 
-          "standardize residuals")
+hist(p.resids, main = "Deviance Residuals for gcki model", xlab = 
+       "residuals")
+boxplot(p.resids, main = "Deviance residuals for gcki model", ylab = 
+          "residuals")
 
 
 gcount <-  table(gcki$count)
@@ -349,27 +389,113 @@ gcki.ct$df.residual
 with(gcki.ct, deviance/df.residual)
 #(this gives us a p-value for that ratio)
 with(gcki.ct, pchisq(deviance, df.residual, lower.tail = FALSE))
-## this shows us that we might have overdispersion; ratio is 1.3 instead of 1.
+## this shows us that we might have overdispersion; ratio is 1.4 instead of 1.
 
-## test of quasi poisson glm
 
+## test of quasi poisson glm for gcki per point count model
 gcki.ct.qp <- glm(count ~ 1 + wind + rain + noise + cloud_cover + day_of_yr_c + 
                    day_sq,
                data = gcki, 
                family = "quasipoisson")
 summary(gcki.ct.qp)
-plot(gcki.ct.qp)
+#plot(gcki.ct.qp)
 
 ## test of negative binomial glm 
-gcki.ct.nb <- glm.nb(count ~ 1 + wind + rain + noise + cloud_cover + day_of_yr_c + 
-                    day_sq,
+gcki.ct.nb <- glm.nb(count ~ 1 + wind + rain + noise + cloud_cover + 
+                             day_of_yr_c + day_sq,
                   data = gcki)
 
 summary(gcki.ct.nb)
-plot(gcki.ct.nb)
+
+# get fitted values for nb model
+gcki$fv <- predict(gcki.ct.nb, type="response")
+
+#melt data so that I can plot fit val AND original counts over time
+mgcki <- data.frame(day_of_yr = gcki$day_of_yr, 
+                    fv = gcki$fv, 
+                    count = gcki$count)
+mgcki <- melt(mgcki, id.vars = "day_of_yr")
+
+
+#plot fitted values for nb model over time, alongside actual values
+nbgcki_time <- ggplot(mgcki, aes(x=day_of_yr, y=value, colour=variable)) + 
+        geom_point() + 
+        theme_bw() +
+        scale_colour_viridis_d() + 
+        scale_y_continuous() + 
+        ylab("Number of GCKI") +
+        xlab("Day of Year")
+nbgcki_time
+
+plot(gcki$count ~ gcki$fv)
+abline(0, 1)
+
+td <- data.frame(simulate(gcki.ct.nb, nsim = 10))
+td$obs <- gcki$count
+td$doy <- gcki$day_of_yr
+td <- pivot_longer(td, 1:(ncol(td)-2), names_to = "case", values_to = "n_sp")
+
+ggplot(data = td, aes(x = n_sp, y = obs)) + 
+        geom_point() + 
+        geom_jitter() + 
+        geom_smooth()
+
+ggplot() + 
+        geom_point(data = td, aes(x = doy, y = n_sp), alpha = 0.1) + 
+        geom_point(data = td[td$case == "obs", ], aes(x = doy, y = n_sp), 
+                   col = "red")
+
+
 ## end GLM for GCKI counts------------------------------------------------------
 
+## GLM for GCKI **per day** counts----------------------------------------------
+## model of GCKI ** per day ** over time
+gcki.day <- glm(count ~ 1 + wind + day_of_yr_c + day_sq,
+                data = sum_gcki, 
+                family = "poisson")
 
+summary(gcki.day)
+#plot(gcki.day)
+
+vif(gcki.day)
+resids <- rstandard(gcki.day)
+
+p.day.resids <- residuals(gcki.day, type = "deviance")
+sum_gcki$pois_devresids <- p.day.resids
+
+sum_gcki[sum_gcki$pois_devresids > 2, ]
+
+hist(p.day.resids, main = "Deviance Residuals for gcki (day) model", xlab = 
+             "residuals")
+boxplot(p.day.resids, main = "Deviance residuals for gcki (day) model", ylab = 
+                "residuals")
+
+
+gdaycount <-  table(sum_gcki$count)
+barplot(gdaycount, main = "distribution of # of gcki per day", xlab = "count", 
+        ylab = "frequency")
+
+# check unconditional mean and variance for sp_detected (response variable)
+# (we ultimately care only about CONDITIONAL mean and variance being equal after
+# model is fit but this is a good indicator of whether it might be a problem)
+mean(sum_gcki$count)
+var(sum_gcki$count)
+# doesn't look great! overdispersion may be a problem here.
+
+#look at deviance statistic of fit model divided by its d.f. to see if ratio
+# is over 1
+gcki.day$deviance
+gcki.day$df.residual
+#(this is the ratio we care about)
+with(gcki.day, deviance/df.residual)
+#(this gives us a p-value for that ratio)
+with(gcki.day, pchisq(deviance, df.residual, lower.tail = FALSE))
+## this is TERRIBLE-- ratio is 2.4, definitely different from 1!!! 
+## Poisson assumptions pretty definitively not met. 
+
+
+
+## end GLM for GCKI per day-----------------------------------------------------
 
 ## Boosted Regression Tree for GCKI counts--------------------------------------
 
@@ -410,7 +536,114 @@ pred_gcki$cloud_cover <- factor(pred_gcki$cloud_cover,
                           levels = c("0-33", "33-66", "66-100"), 
                           labels = c("0-33", "33-66", "66-100"))
 
+# get predictions with new data
+pred_gcki$p1 <- predict(gcki.brt, newdata = pred_gcki, n.trees = 1000, 
+                        type = "response")
 
-p1 <- predict(gcki.brt, newdata = pred_gcki, n.trees = 1000, type = "response")
+#plot predictions over time 
+predgcki_time <- ggplot(pred_gcki, aes(x=day_of_yr, y=p1)) + 
+        geom_line() + 
+        geom_point(data = gcki,
+                   aes(x = day_of_yr, y = count)) +
+        theme_bw() +
+        scale_colour_viridis_d() + 
+        scale_y_continuous() + 
+        ylab("Number of GCKI") +
+        xlab("Day of Year")
+predgcki_time
+
+
 ## end predictions with BRT-----------------------------------------------------
 
+## GLM for WIWR counts over time------------------------------------------------
+## model for the number of GCKI detected per point count, depending on weather
+wiwr.ct <- glm(count ~ 1 + wind + rain + noise + cloud_cover + day_of_yr_c + 
+                       day_sq,
+               data = wiwr, 
+               family = "poisson")
+
+summary(gcki.ct)
+#plot(gcki.ct)
+
+vif(wiwr.ct)
+wiwr.s.resids <- rstandard(wiwr.ct)
+
+wiwr.p.resids <- residuals(wiwr.ct, type = "deviance")
+wiwr$pois_devresids <- wiwr.p.resids
+
+wiwr[wiwr$pois_devresids > 2, ]
+
+hist(wiwr.p.resids, main = "Deviance Residuals for wiwr model", xlab = 
+             "residuals")
+boxplot(wiwr.p.resids, main = "Deviance residuals for wiwr model", ylab = 
+                "residuals")
+
+
+wcount <-  table(wiwr$count)
+barplot(gcount, main = "distribution of # of wiwr per count", xlab = "count", 
+        ylab = "frequency")
+
+# check unconditional mean and variance for sp_detected (response variable)
+# (we ultimately care only about CONDITIONAL mean and variance being equal after
+# model is fit but this is a good indicator of whether it might be a problem)
+mean(wiwr$count)
+var(wiwr$count)
+# doesn't look great! overdispersion may be a problem here.
+
+#look at deviance statistic of fit model divided by its d.f. to see if ratio
+# is over 1
+wiwr.ct$deviance
+wiwr.ct$df.residual
+#(this is the ratio we care about)
+with(wiwr.ct, deviance/df.residual)
+#(this gives us a p-value for that ratio)
+with(wiwr.ct, pchisq(deviance, df.residual, lower.tail = FALSE))
+## ??? ratio is .8, p-value is .9....
+
+## test of negative binomial glm 
+wiwr.ct.nb <- glm.nb(count ~ 1 + wind + rain + noise + cloud_cover + 
+                             day_of_yr_c + day_sq + min_past_sun,
+                     data = wiwr)
+## warning about theta iteration reached...
+summary(wiwr.ct.nb)
+
+# get fitted values for nb model
+wiwr$fv <- predict(wiwr.ct.nb, type="response")
+
+#melt data so that I can plot fit val AND original counts over time
+mwiwr <- data.frame(day_of_yr = wiwr$day_of_yr, 
+                    fv = wiwr$fv, 
+                    count = wiwr$count)
+mwiwr <- melt(mwiwr, id.vars = "day_of_yr")
+
+
+#plot fitted values for nb model over time, alongside actual values
+nbwiwr_time <- ggplot(mwiwr, aes(x=day_of_yr, y=value, colour=variable)) + 
+        geom_point() + 
+        theme_bw() +
+        scale_colour_viridis_d() + 
+        scale_y_continuous() + 
+        ylab("Number of WIWR") +
+        xlab("Day of Year")
+nbwiwr_time
+
+plot(wiwr$count ~ wiwr$fv)
+abline(0, 1)
+
+td2 <- data.frame(simulate(wiwr.ct.nb, nsim = 10))
+td2$obs <- wiwr$count
+td2$doy <- wiwr$day_of_yr
+td2 <- pivot_longer(td2, 1:(ncol(td2)-2), names_to = "case", values_to = "n_sp")
+
+ggplot(data = td2, aes(x = n_sp, y = obs)) + 
+        geom_point() + 
+        geom_jitter() + 
+        geom_smooth()
+
+ggplot() + 
+        geom_point(data = td, aes(x = doy, y = n_sp), alpha = 0.1) + 
+        geom_point(data = td[td$case == "obs", ], aes(x = doy, y = n_sp), 
+                   col = "red")
+
+
+## end GLM for WIWR counts------------------------------------------------------
