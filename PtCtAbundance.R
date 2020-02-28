@@ -36,7 +36,7 @@ ptct$day_of_yr <- yday(ptct$date)
 # make pt ct id column
 ptct$ptct_id <- paste(as.character(ptct$date), ptct$point_id, sep = "_")
 
-## prep data frame ensuring all variables are factors
+## prep data frames
 # make wind df to average windspeed for each day to use in day-aggregate models
 windday <- ptct %>%
         dplyr::select(wind, day_of_yr)
@@ -335,6 +335,9 @@ plot(gcki$day_of_yr, gcki$count,
 
 plot(sum_gcki$day_of_yr, sum_gcki$count,
      main = "gcki per day over time")
+ggplot(data = sum_gcki, aes(x = day_of_yr, y = count)) + 
+        geom_point() + 
+        geom_smooth()
 plot(sum_ybsa$day_of_yr, sum_ybsa$count,
      main = "ybsa per day over time")
 plot(sum_wiwr$day_of_yr, sum_wiwr$count,
