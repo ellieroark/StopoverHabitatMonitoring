@@ -22,7 +22,9 @@ library(car)
 library(MASS)
 library(gbm)
 library(data.table)
+library(mgcv)
 
+rm(list = ls())
 set.seed(28022020) # 28 Feb 2020
 
 setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
@@ -348,14 +350,30 @@ plot(sum_gcki$day_of_yr, sum_gcki$count,
 ggplot(data = sum_gcki, aes(x = day_of_yr, y = count)) + 
         geom_point() + 
         geom_smooth()
+
 plot(sum_ybsa$day_of_yr, sum_ybsa$count,
      main = "ybsa per day over time")
+ggplot(data = sum_ybsa, aes(x = day_of_yr, y = count)) + 
+        geom_point() + 
+        geom_smooth()
+
 plot(sum_wiwr$day_of_yr, sum_wiwr$count,
      main = "wiwr per day over time")
+ggplot(data = sum_wiwr, aes(x = day_of_yr, y = count)) + 
+        geom_point() + 
+        geom_smooth()
+
 plot(sum_bcch$day_of_yr, sum_bcch$count,
      main = "bcch per day over time")
+ggplot(data = sum_bcch, aes(x = day_of_yr, y = count)) + 
+        geom_point() + 
+        geom_smooth()
+
 plot(sum_heth$day_of_yr, sum_heth$count,
      main = "heth per day over time")
+ggplot(data = sum_heth, aes(x = day_of_yr, y = count)) + 
+        geom_point() + 
+        geom_smooth()
 
 ## end Exploratory plots -------------------------------------------------------
 
@@ -507,6 +525,41 @@ plot(sum_heth$day_of_yr, sum_heth$count,
 # ## Poisson assumptions pretty definitively not met. 
 # 
 
+# test neg binom model for GCKI per day to see if it helps with overdispersion
+gcki.day.nb <- glm.nb(count ~ 1 + wind + day_of_yr_c + day_sq,
+                data = sum_gcki)
+
+#get fitted values
+sum_gcki$nbfv <- predict(gcki.day.nb, type="response")
+
+plot(sum_gcki$count ~ sum_gcki$nbfv)
+abline(0, 1)
+
+td <- data.frame(simulate(gcki.day.nb, nsim = 10))
+td$obs <- sum_gcki$count
+td$doy <- sum_gcki$day_of_yr
+td <- pivot_longer(td, 1:(ncol(td)-2), names_to = "case", values_to = "n_sp")
+
+ggplot(data = td, aes(x = n_sp, y = obs)) +
+        geom_point() +
+        geom_jitter() +
+        geom_smooth()
+
+ggplot() +
+        geom_point(data = td, aes(x = doy, y = n_sp), alpha = 0.1) +
+        geom_point(data = td[td$case == "obs", ], aes(x = doy, y = n_sp),
+                   col = "red")
+
+#look at deviance statistic of fit model divided by its d.f. to see if ratio
+# is over 1
+gcki.day.nb$deviance
+gcki.day.nb$df.residual
+#(this is the ratio we care about)
+with(gcki.day.nb, deviance/df.residual)
+#(this gives us a p-value for that ratio)
+with(gcki.day.nb, pchisq(deviance, df.residual, lower.tail = FALSE))
+## this is way better than poisson-- ratio is 1.09, pvalue is .3-- not sig.
+## different from 1.
 
 ## end GLM for GCKI per day-----------------------------------------------------
 
@@ -564,8 +617,6 @@ predgcki_time <- ggplot(pred_gcki, aes(x=day_of_yr, y=p1)) +
         ylab("Number of GCKI") +
         xlab("Day of Year")
 predgcki_time
-
-
 ## end predictions with BRT **GCKI per count model**----------------------------
 
 ## Boosted Regression Tree for GCKI per DAY-----------------------------------
@@ -578,7 +629,8 @@ blocks <- rep(1:n_blocks, 3)
 blocks <- blocks[order(blocks)]
 start_row <- sample(1:nrow(days), size = 1)
 days$block[start_row:nrow(days)] <- blocks[1:length(start_row:nrow(days))]
-days$block[1:(start_row - 1)] <- blocks[(length(start_row:nrow(days)) + 1):nrow(days)]
+days$block[1:(start_row - 1)] <- blocks[(length(start_row:nrow(days)) + 1):
+                                                nrow(days)]
 
 # assign blocks to CV folds
 fold_assignments <- data.frame(
@@ -599,7 +651,7 @@ fit_brt <- function(test_fold, sp_data) {
         f_m <- gbm(count ~ 1 + wind + day_of_yr_c, 
                                    distribution = "poisson", 
                                    data = train_dat, 
-                                   interaction.depth = 2, 
+                                   interaction.depth = 1, 
                                    n.trees = 2000, 
                                    n.minobsinnode = 1, 
                                    shrinkage = 0.001, 
@@ -616,16 +668,18 @@ brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = sum_gcki)
 
 ## evaluate BRT ----------------------------------------------------------------
 # get predictions to test data
-gcki_predictions <- bind_rows(lapply(brt_test_folds, FUN = function(x) x$test_predictions))
-gcki_predictions$error = gcki_predictions$OOB_preds - gcki_predictions$count
+gcki_brt_predictions <- bind_rows(lapply(brt_test_folds, 
+                                     FUN = function(x) x$test_predictions))
+gcki_brt_predictions$error = gcki_brt_predictions$OOB_preds - gcki_brt_predictions$count
 
-# calculate r^2 (square of Pearson correlation coefficient, see Bahn & McGill 2013)
-gcki_brt_r2 <- cor(gcki_predictions$day_of_yr, gcki_predictions$OOB_preds, 
+# calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
+# McGill 2013)
+gcki_brt_r2 <- cor(gcki_brt_predictions$day_of_yr, gcki_brt_predictions$OOB_preds, 
                    method = "pearson")^2
 # calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
-gcki_brt_R2 <- 1 - (sum(gcki_predictions$error^2) / 
-                            (sum((gcki_predictions$count - 
-                                         mean(gcki_predictions$count))^2)))
+gcki_brt_R2 <- 1 - (sum(gcki_brt_predictions$error^2) / 
+                            (sum((gcki_brt_predictions$count - 
+                                         mean(gcki_brt_predictions$count))^2)))
 ## end evaluate BRT ------------------------------------------------------------
 
 ## predictions with BRT **per DAY model***-----------------------------------
@@ -662,15 +716,91 @@ pgcki_day_time <- ggplot(gcki_preds_newdata, aes(x=day_of_yr, y=predictions)) +
 pgcki_day_time
 
 # plot predicted vs. observed values
-ggplot(data = gcki_predictions, aes(x = OOB_preds, y = count)) + 
+ggplot(data = gcki_brt_predictions, aes(x = count, y = OOB_preds)) + 
         geom_point() + 
-        geom_smooth()
+        geom_smooth() + 
+        geom_abline(intercept = 0, slope = 1) + 
+        ggtitle("BRT predicted vs. observed") + 
+        ylim(c(0, 9))
 ## end predictions with BRT **GCKI per DAY model**----------------------------
 
+## GAM with GCKI per day--------------------------------------------------------
+k <- 6 # k should be large enough that EDF is a good bit less than k-1.  
+
+## test GAM fitting with all data
+# for interaction discussion, see Section 5.6.3 and p 344 of Wood
+#  + ti(wind, day_of_yr_c, k = k)
+gcki.day.gam <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k), 
+                    data = sum_gcki, 
+                    family = "nb", select = TRUE)
 
 
+# fit brt to data in CV folds
+gam_test_folds <- unique(sum_gcki$fold)
+names(gam_test_folds) <- as.character(gam_test_folds)
+
+fit_gam <- function(test_fold, sp_data) {
+        train_dat <- sp_data[sp_data$fold != test_fold, ]
+        f_m <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k), 
+                   data = sp_data, 
+                   family = "nb", select = TRUE)
+        test_pred <- sp_data[sp_data$fold == test_fold, ]
+        test_pred$OOB_preds <- predict(f_m, newdata = test_pred, 
+                                           type = "response")
+        list(mod = f_m, test_predictions = test_pred)
+}
+
+gam_test_folds <- lapply(gam_test_folds, fit_gam, sp_data = sum_gcki)
+## end GAM with GCKI per day----------------------------------------------------
+
+## evaluate GAM (GCKI per day model)--------------------------------------------
+gcki.day.gam
+gam.check(gcki.day.gam)
+plot(gcki.day.gam, pages = 1, all.terms = T)
+
+# get predictions to test data
+gcki_gam_predictions <- bind_rows(lapply(gam_test_folds, 
+                                         FUN = function(x) x$test_predictions))
+gcki_gam_predictions$error = gcki_gam_predictions$OOB_preds - gcki_gam_predictions$count
+
+# calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
+# McGill 2013)
+gcki_gam_r2 <- cor(gcki_gam_predictions$day_of_yr, gcki_gam_predictions$OOB_preds, 
+                   method = "pearson")^2
+# calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
+gcki_gam_R2 <- 1 - (sum(gcki_gam_predictions$error^2) / 
+                            (sum((gcki_gam_predictions$count - 
+                                          mean(gcki_gam_predictions$count))^2)))
+## end evaluate GAM (GCKI per day model)----------------------------------------
+
+##predictions with GAM (GCKI per day model)-------------------------------------
+
+## end predictions with GAM (GCKI per day model)--------------------------------
 
 
+## join brt and gam predictions and errors -------------------------------------
+gcki_gam_predictions$method = "gam"
+gcki_brt_predictions$method = "brt"
+gcki_predictions <- bind_rows(gcki_gam_predictions, gcki_brt_predictions)
+gcki_predictions <- pivot_longer(gcki_predictions, 
+                                 cols = c(error, OOB_preds), 
+                                 names_to = "metric")
+
+ggplot(data = gcki_predictions[gcki_predictions$metric == "error", ], 
+       aes(x = day_of_yr, y = value, color = method)) + 
+        geom_point() + 
+        ggtitle("Prediction error")
+
+ggplot(data = gcki_predictions[gcki_predictions$metric == "OOB_preds", ], 
+       aes(x = day_of_yr, y = value, color = method)) + 
+        geom_point()  + 
+        geom_smooth() + 
+        geom_point(aes(x = day_of_yr, y = count), color = "black") + 
+        ggtitle("Predictions")
+
+plot(gcki_gam_predictions$OOB_preds ~ gcki_brt_predictions$OOB_preds)
+plot(gcki_gam_predictions$error ~ gcki_brt_predictions$error)
+## end brt and gam predictions plot --------------------------------------------
 
 ## GLM for WIWR counts over time------------------------------------------------
 ## model for the number of GCKI detected per point count, depending on weather
