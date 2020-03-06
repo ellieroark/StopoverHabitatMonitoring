@@ -3,7 +3,7 @@
 ## 
 ## author: Ellie Roark
 ## created: 15 Jan 2020
-## last modified: 5 Feb 2020
+## last modified: 6 Mar 2020
 ## 
 ## This script organizes the workflow for the ARU vs Point Counts in migration
 ## stopover habitat analysis.
@@ -68,7 +68,18 @@ source("./StopoverHabitatMonitoring/GLMM_SR_20randommin.R")
 # script that cleans point count data to prep it for abundance models
 # 
 ## MUST FIRST RUN [nothing]
-source("./StopoverHabitatMonitoring/PtCtAbundance.R")
+source("./StopoverHabitatMonitoring/DataPrep_PtCtAbundance.R")
+
+# script that runs boosted regression trees to model abundance of GCKI and WIWR
+# 
+## MUST FIRST RUN DataPrep_PtCtAbundance.R
+source("./StopoverHabitatMonitoring/BRT_abundance.R")
+
+# run generalized additive model to for abundance of GCKI and WIWR
+# 
+## MUST FIRST RUN DataPrep_PtCtAbundance.R
+## AND BRT_Abundance.R
+source("./StopoverHabitatMonitoring/GAM_abundance.R")
 
 
 ### End Abundance Analyses------------------------------------------------------

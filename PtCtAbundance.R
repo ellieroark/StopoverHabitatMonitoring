@@ -2,9 +2,9 @@
 ## Abundance estimation for Point Counts
 ## Point Abbaye 2019 data
 ## 
-## author: Ellie Roark
+## author: Ellie Roark, Willson Gaul
 ## created: 10 Feb 2020
-## last modified: 28 Feb 2020
+## last modified: 5 Mar 2020
 ## 
 ## inputs: *Corrected_PointCounts_PtAbbaye2019.csv- original data file with all 
 ##           point count data from the 2019 field season at Point Abbaye
@@ -57,8 +57,8 @@ windday$beaufort <- windday$wind
 windday[which(windday$beaufort == "0"), "wind"] <- "0"
 windday[which(windday$beaufort == "1"), "wind"] <- "2"
 windday[which(windday$beaufort == "2"), "wind"] <- "5"
-windday[which(windday$beaufort == "3"), "wind"] <- "8"
-windday[which(windday$beaufort == "4"), "wind"] <- "13"
+windday[which(windday$beaufort == "3"), "wind"] <- "8.5"
+windday[which(windday$beaufort == "4"), "wind"] <- "13.5"
 windday[which(windday$beaufort == "5"), "wind"] <- "19"
 
 windday$wind <- as.numeric(windday$wind)
