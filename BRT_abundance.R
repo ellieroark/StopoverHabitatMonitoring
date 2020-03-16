@@ -15,59 +15,60 @@
 ## TODO: * 
 ################################
 
+set.seed(28022020) # 28 Feb 2020
 
 ## Exploratory plots -----------------------------------------------------------
-hist(ptct$count, main = "number of individs")
-
-
-# plot wren counts over time
-plot(wiwr$day_of_yr, wiwr$count, 
-     main = "wiwr per pt count over time")
-
-plot(ybsa$day_of_yr, ybsa$count, 
-     main = "ybsa per pt count over time")
-
-plot(bcch$day_of_yr, bcch$count, 
-     main = "bcch per pt count over time")
-
-plot(heth$day_of_yr, heth$count, 
-     main = "heth per pt count over time")
-
-plot(gcki$day_of_yr, gcki$count, 
-     main = "gcki per pt count over time")
-
-
-
-
-plot(sum_gcki$day_of_yr, sum_gcki$count,
-     main = "gcki per day over time")
-ggplot(data = sum_gcki, aes(x = day_of_yr, y = count)) + 
-  geom_point() + 
-  geom_smooth()
-
-plot(sum_ybsa$day_of_yr, sum_ybsa$count,
-     main = "ybsa per day over time")
-ggplot(data = sum_ybsa, aes(x = day_of_yr, y = count)) + 
-  geom_point() + 
-  geom_smooth()
-
-plot(sum_wiwr$day_of_yr, sum_wiwr$count,
-     main = "wiwr per day over time")
-ggplot(data = sum_wiwr, aes(x = day_of_yr, y = count)) + 
-  geom_point() + 
-  geom_smooth()
-
-plot(sum_bcch$day_of_yr, sum_bcch$count,
-     main = "bcch per day over time")
-ggplot(data = sum_bcch, aes(x = day_of_yr, y = count)) + 
-  geom_point() + 
-  geom_smooth()
-
-plot(sum_heth$day_of_yr, sum_heth$count,
-     main = "heth per day over time")
-ggplot(data = sum_heth, aes(x = day_of_yr, y = count)) + 
-  geom_point() + 
-  geom_smooth()
+# #hist(ptct$count, main = "number of individs")
+# 
+# 
+# # plot wren counts over time
+# plot(wiwr$day_of_yr, wiwr$count, 
+#      main = "wiwr per pt count over time")
+# 
+# plot(ybsa$day_of_yr, ybsa$count, 
+#      main = "ybsa per pt count over time")
+# 
+# plot(bcch$day_of_yr, bcch$count, 
+#      main = "bcch per pt count over time")
+# 
+# plot(heth$day_of_yr, heth$count, 
+#      main = "heth per pt count over time")
+# 
+# plot(gcki$day_of_yr, gcki$count, 
+#      main = "gcki per pt count over time")
+# 
+# 
+# 
+# 
+# plot(sum_gcki$day_of_yr, sum_gcki$count,
+#      main = "gcki per day over time")
+# ggplot(data = sum_gcki, aes(x = day_of_yr, y = count)) + 
+#   geom_point() + 
+#   geom_smooth()
+# 
+# plot(sum_ybsa$day_of_yr, sum_ybsa$count,
+#      main = "ybsa per day over time")
+# ggplot(data = sum_ybsa, aes(x = day_of_yr, y = count)) + 
+#   geom_point() + 
+#   geom_smooth()
+# 
+# plot(sum_wiwr$day_of_yr, sum_wiwr$count,
+#      main = "wiwr per day over time")
+# ggplot(data = sum_wiwr, aes(x = day_of_yr, y = count)) + 
+#   geom_point() + 
+#   geom_smooth()
+# 
+# plot(sum_bcch$day_of_yr, sum_bcch$count,
+#      main = "bcch per day over time")
+# ggplot(data = sum_bcch, aes(x = day_of_yr, y = count)) + 
+#   geom_point() + 
+#   geom_smooth()
+# 
+# plot(sum_heth$day_of_yr, sum_heth$count,
+#      main = "heth per day over time")
+# ggplot(data = sum_heth, aes(x = day_of_yr, y = count)) + 
+#   geom_point() + 
+#   geom_smooth()
 
 ## end Exploratory plots -------------------------------------------------------
 
@@ -361,16 +362,18 @@ brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = sum_gcki)
 ## alternate BRT with interaction depth of 2 instead of 1 
 gcki.brt2 <- gbm(count ~ 1 + wind + day_of_yr_c, 
            distribution = "poisson", 
-           data = train_dat, 
+           data = sum_gcki, 
            interaction.depth = 2, 
            n.trees = 2000, 
            n.minobsinnode = 1, 
            shrinkage = 0.001, 
            bag.fraction = 0.8)
+
 ## end BRT for GCKI per DAY model---------------------------------------------
 
 
 ## evaluate BRT ----------------------------------------------------------------
+## BRT with interaction depth 1
 # get predictions to test data
 gcki_brt_predictions <- bind_rows(lapply(brt_test_folds, 
                                          FUN = function(x) x$test_predictions))
@@ -384,6 +387,24 @@ gcki_brt_r2 <- cor(gcki_brt_predictions$day_of_yr, gcki_brt_predictions$OOB_pred
 gcki_brt_R2 <- 1 - (sum(gcki_brt_predictions$error^2) / 
                       (sum((gcki_brt_predictions$count - 
                               mean(gcki_brt_predictions$count))^2)))
+
+## BRT with interaction depth 2
+# get predictions to test data
+gcki_brt2_predictions <- sum_gcki
+gcki_brt2_predictions$fv <- predict(gcki.brt2, n.trees = 2000, type = "response")
+
+gcki_brt2_predictions$error = gcki_brt2_predictions$fv -
+  gcki_brt_predictions$count
+
+# calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
+# McGill 2013)
+gcki_brt2_r2 <- cor(gcki_brt2_predictions$day_of_yr, gcki_brt2_predictions$fv, 
+                   method = "pearson")^2
+# calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
+gcki_brt2_R2 <- 1 - (sum(gcki_brt2_predictions$error^2) / 
+                      (sum((gcki_brt2_predictions$count - 
+                              mean(gcki_brt2_predictions$count))^2)))
+
 ## end evaluate BRT ------------------------------------------------------------
 
 ## predictions with BRT **per DAY model***-----------------------------------
