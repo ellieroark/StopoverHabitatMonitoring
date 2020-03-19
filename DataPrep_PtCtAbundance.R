@@ -318,7 +318,7 @@ sum_heth <- left_join(sum_heth, windday, by = "day_of_yr")
 
 ## remove no....ct dfs, now that that data is incorporated into each species df
 rm(nobcchct, nogckict, nowiwrct, noybsact, nohethct, dropa, dropb, 
-   sunrise_times, windday)
+   sunrise_times)
 
 rm(bcch, heth, ptct, sum_bcch, sum_heth, sum_ybsa, ybsa)
 

@@ -70,14 +70,21 @@ source("./StopoverHabitatMonitoring/GLMM_SR_20randommin.R")
 ## MUST FIRST RUN [nothing]
 source("./StopoverHabitatMonitoring/DataPrep_PtCtAbundance.R")
 
+# script that cleans aru data to prep it for abundance models
+# 
+## MUST FIRST RUN DataPrep_PtCtAbundance.R
+source("./StopoverHabitatMonitoring/DataPrep_ARUabundance.R")
+
 # script that runs boosted regression trees to model abundance of GCKI and WIWR
 # 
 ## MUST FIRST RUN DataPrep_PtCtAbundance.R
+## AND DataPrep_ARUabundance.R
 source("./StopoverHabitatMonitoring/BRT_abundance.R")
 
 # run generalized additive model to for abundance of GCKI and WIWR
 # 
 ## MUST FIRST RUN DataPrep_PtCtAbundance.R
+## AND DataPrep_ARUabundance.R
 ## AND BRT_Abundance.R
 source("./StopoverHabitatMonitoring/GAM_abundance.R")
 
