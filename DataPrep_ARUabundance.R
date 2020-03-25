@@ -334,7 +334,7 @@ aruwiwr <- left_join(aruwiwr, weathervar, by = "ptct_id")
 ### aggregate wiwr observations per day-----------------------------------------
 sum_aruwiwr <- aruwiwr %>%
   group_by(day_of_yr) %>%
-  summarize(count = sum(count)),mn 
+  summarize(count = sum(count))
 
 ## add average windspeed for the day to sum_aruwiwr df
 sum_aruwiwr <- left_join(sum_aruwiwr, windday, by = "day_of_yr")
