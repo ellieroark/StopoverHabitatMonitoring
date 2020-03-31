@@ -625,22 +625,22 @@ fit_arubrt <- function(test_fold, sp_data) {
              distribution = "poisson", 
              data = atrain_dat, 
              interaction.depth = 1, 
-             n.trees = 2000, 
+             n.trees = 1000, 
              n.minobsinnode = 1, 
              shrinkage = 0.001, 
              bag.fraction = 0.8)
   atest_pred <- sp_data[sp_data$fold == test_fold, ]
   atest_pred$OOB_preds <- predict(f_ma, newdata = atest_pred, 
-                                 n.trees = 2000, type = "response")
+                                 n.trees = 1000, type = "response")
   list(mod = f_ma, test_predictions = atest_pred)
 }
 
 brt_test_folds <- lapply(brt_test_folds, fit_arubrt, sp_data = sum_arugcki)
 
-## end BRT for GCKI per DAY model---------------------------------------------
+## end BRT for GCKI per DAY model (ARU)-----------------------------------------
 
 
-## evaluate BRT ----------------------------------------------------------------
+## evaluate BRT (ARU)-----------------------------------------------------------
 ## BRT with interaction depth 1
 # get predictions to test data
 arugcki_brt_predictions <- bind_rows(lapply(brt_test_folds, 
@@ -658,9 +658,9 @@ arugcki_brt_R2 <- 1 - (sum(arugcki_brt_predictions$error^2) /
                       (sum((arugcki_brt_predictions$count - 
                               mean(arugcki_brt_predictions$count))^2)))
 
-## end evaluate BRT ------------------------------------------------------------
+## end evaluate BRT (ARU)-------------------------------------------------------
 
-## predictions with BRT **per DAY model*** (ARU)-----------------------------------
+## predictions with BRT **per DAY model*** (ARU)--------------------------------
 # create new data to predict with
 parugcki_day <- data.frame(day_of_yr = seq(min(sum_arugcki$day_of_yr), 
                                         max(sum_arugcki$day_of_yr), by = 1))
@@ -676,7 +676,153 @@ arugcki_preds_newdata <- bind_rows(
            test_data <- newdata[newdata$fold == x, ]
            test_data$predictions <- predict(brts[[x]]$mod, 
                                             newdata = test_data, 
-                                            n.trees = 2000, 
+                                            n.trees = 1000, 
+                                            type = "response")
+           test_data}, 
+         newdata = parugcki_day, brts = brt_test_folds))
+
+#plot predictions over time 
+parugcki_day_time <- ggplot(arugcki_preds_newdata, aes(x=day_of_yr, 
+                                                       y=predictions)) + 
+  geom_line() + 
+  geom_point(data = sum_arugcki,
+             aes(x = day_of_yr, y = count)) +
+  theme_bw() +
+  scale_colour_viridis_d() + 
+  scale_y_continuous() + 
+  ylab("Number of GCKI per day (ARU)") +
+  xlab("Day of Year")
+parugcki_day_time
+
+  # plot predicted vs. observed values
+ggplot(data = arugcki_brt_predictions, aes(x = count, y = OOB_preds)) + 
+  geom_point() + 
+  geom_smooth() + 
+  geom_abline(intercept = 0, slope = 1) + 
+  ggtitle("BRT predicted vs. observed (ARU)") + 
+  ylim(c(0, 9))
+## end predictions with BRT **GCKI per DAY model** (ARU)------------------------
+
+
+###############################################################################
+## WIWR models ################################################################
+## GLM for WIWR **per day** counts----------------------------------------------
+# model of WIWR ** per day ** over time
+wiwr.day <- glm(count ~ 1 + wind + day_of_yr_c + day_sq,
+                data = sum_wiwr,
+                family = "poisson")
+
+summary(wiwr.day)
+#plot(gcki.day)
+
+vif(wiwr.day)
+resids <- rstandard(wiwr.day)
+
+p.wday.resids <- residuals(wiwr.day, type = "deviance")
+sum_wiwr$pois_devresids <- p.wday.resids
+
+sum_wiwr[sum_wiwr$pois_devresids > 2, ]
+
+hist(p.wday.resids, main = "Deviance Residuals for wiwr (day) model", xlab =
+             "residuals")
+boxplot(p.wday.resids, main = "Deviance residuals for wiwr (day) model", ylab =
+                "residuals")
+
+
+wdaycount <-  table(sum_wiwr$count)
+barplot(wdaycount, main = "distribution of # of wiwr per day", xlab = "count",
+        ylab = "frequency")
+
+# check unconditional mean and variance for sp_detected (response variable)
+# (we ultimately care only about CONDITIONAL mean and variance being equal after
+# model is fit but this is a good indicator of whether it might be a problem)
+mean(sum_wiwr$count)
+var(sum_wiwr$count)
+# doesn't look great! overdispersion may be a problem here.
+
+#look at deviance statistic of fit model divided by its d.f. to see if ratio
+# is over 1
+wiwr.day$deviance
+wiwr.day$df.residual
+#(this is the ratio we care about)
+with(wiwr.day, deviance/df.residual)
+#(this gives us a p-value for that ratio)
+with(wiwr.day, pchisq(deviance, df.residual, lower.tail = FALSE))
+## this actually looks fine-- ratio is 1.1; p = .31, indicating that this is not
+## sig different from 1 and therefore not overdispersed.
+
+## end GLM for GCKI per day-----------------------------------------------------
+
+## Boosted Regression Tree for WIWR per DAY (ptct)-------------------------------
+
+# assign days to 3-day blocks
+# assign blocks to CV folds --> will use "days" dataframe from previous model 
+
+# join CV fold info onto bird data
+sum_arugcki <- left_join(sum_arugcki, days, by = c("day_of_yr" = "day"))
+
+# fit brt to data in CV folds
+brt_test_folds <- unique(sum_arugcki$fold)
+names(brt_test_folds) <- as.character(brt_test_folds)
+
+fit_arubrt <- function(test_fold, sp_data) {
+  atrain_dat <- sp_data[sp_data$fold != test_fold, ]
+  f_ma <- gbm(count ~ 1 + wind + day_of_yr_c, 
+              distribution = "poisson", 
+              data = atrain_dat, 
+              interaction.depth = 1, 
+              n.trees = 1000, 
+              n.minobsinnode = 1, 
+              shrinkage = 0.001, 
+              bag.fraction = 0.8)
+  atest_pred <- sp_data[sp_data$fold == test_fold, ]
+  atest_pred$OOB_preds <- predict(f_ma, newdata = atest_pred, 
+                                  n.trees = 1000, type = "response")
+  list(mod = f_ma, test_predictions = atest_pred)
+}
+
+brt_test_folds <- lapply(brt_test_folds, fit_arubrt, sp_data = sum_arugcki)
+
+## end BRT for WIWR per DAY model (ptct)----------------------------------------
+
+
+## evaluate BRT (ptct) ---------------------------------------------------------
+## BRT with interaction depth 1
+# get predictions to test data
+arugcki_brt_predictions <- bind_rows(lapply(brt_test_folds, 
+                                            FUN = function(x) x$test_predictions))
+arugcki_brt_predictions$error = arugcki_brt_predictions$OOB_preds - 
+  arugcki_brt_predictions$count
+
+# calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
+# McGill 2013)
+arugcki_brt_r2 <- cor(arugcki_brt_predictions$day_of_yr, 
+                      arugcki_brt_predictions$OOB_preds, 
+                      method = "pearson")^2
+# calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
+arugcki_brt_R2 <- 1 - (sum(arugcki_brt_predictions$error^2) / 
+                         (sum((arugcki_brt_predictions$count - 
+                                 mean(arugcki_brt_predictions$count))^2)))
+
+## end evaluate BRT (ptct) -----------------------------------------------------
+
+## predictions with BRT **per DAY model*** (ptct)-------------------------------
+# create new data to predict with
+parugcki_day <- data.frame(day_of_yr = seq(min(sum_arugcki$day_of_yr), 
+                                           max(sum_arugcki$day_of_yr), by = 1))
+parugcki_day$day_of_yr_c <- parugcki_day$day_of_yr-mean(parugcki_day$day_of_yr)
+parugcki_day$wind <- mean(sum_arugcki$wind)
+parugcki_day <- left_join(parugcki_day, days, by = c("day_of_yr" = "day"))
+
+# get predictions with new data.  Predict to days using the model for which 
+# those days were not in the training set
+arugcki_preds_newdata <- bind_rows(
+  lapply(1:length(brt_test_folds), 
+         FUN = function(x, newdata, brts) {
+           test_data <- newdata[newdata$fold == x, ]
+           test_data$predictions <- predict(brts[[x]]$mod, 
+                                            newdata = test_data, 
+                                            n.trees = 1000, 
                                             type = "response")
            test_data}, 
          newdata = parugcki_day, brts = brt_test_folds))
@@ -701,5 +847,4 @@ ggplot(data = arugcki_brt_predictions, aes(x = count, y = OOB_preds)) +
   geom_abline(intercept = 0, slope = 1) + 
   ggtitle("BRT predicted vs. observed (ARU)") + 
   ylim(c(0, 9))
-## end predictions with BRT **GCKI per DAY model**----------------------------
-
+## end predictions with BRT **WIWR per DAY model** (ptct)-----------------------
