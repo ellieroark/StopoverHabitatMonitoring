@@ -243,7 +243,7 @@ spdetmod <- glm(sp_detected ~ 1 + count_type + wind + rain + noise +
                 family = "gaussian")
 
 summary(spdetmod)
-plot(spdetmod)
+plot(spdetmod, ask = FALSE)
 
 ## this gaussian regression does NOT meet constant variance assumption because 
 ## residuals show a distinctive shape. so instead we try:  
@@ -256,7 +256,7 @@ pois_spdetmod <- glm(sp_detected ~ 1 + count_type + wind + rain + noise +
                      data = spdet_all, family = "poisson")
 
 summary(pois_spdetmod)
-plot(pois_spdetmod)
+plot(pois_spdetmod, ask = FALSE)
 
 ## test significance of whole model agains null model (that count type doesn't
 ## matter)
@@ -480,7 +480,7 @@ aruspdetmod <- glm(sp_detected ~ 1 + wind + rain + noise + aru_id +
                    family = "poisson")
 
 summary(aruspdetmod)
-#plot(aruspdetmod)
+#plot(aruspdetmod, ask = FALSE)
 
 ## none of the aru values appear significant, but now test significance of 
 ## overall term:
@@ -842,3 +842,4 @@ CI.r1 <- confint.merMod(r1.spdetmm, level = 0.95, method = "Wald")
 
 
 # END GLMM 2.0------------------------------------------------------------------
+
