@@ -21,26 +21,11 @@
 ## GAM with GCKI per day (ptct)-------------------------------------------------
 k <- 12 # k should be large enough that EDF is a good bit less than k-1.  
 
-## test GAM fitting with all data
-# for interaction discussion, see Section 5.6.3 and p 344 of Wood
-#  + ti(wind, day_of_yr_c, k = k)
-gcki.day.gam <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k), 
-                    data = sum_gcki, 
-                    family = "nb", select = TRUE)
-
-## test GAM fitting with all data and thin plate spline smooth
-gcki.day.gam2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp"), 
-            data = sum_gcki, 
-            family = "nb", select = TRUE)
-
-# fit gam to data in CV folds
-gam_test_folds <- unique(sum_gcki$fold)
-names(gam_test_folds) <- as.character(gam_test_folds)
-
 # GAM fit by wg using k (see above) knots for smoothing
+# uses cubic regression spline as smoothing basis
 fit_gam <- function(test_fold, sp_data) {
   train_dat <- sp_data[sp_data$fold != test_fold, ]
-  f_m <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k), 
+  f_m <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k, bs = "cr"), 
              data = sp_data, 
              family = "nb", select = TRUE)
   test_pred <- sp_data[sp_data$fold == test_fold, ]
@@ -49,7 +34,68 @@ fit_gam <- function(test_fold, sp_data) {
   list(mod = f_m, test_predictions = test_pred)
 }
 
-gam_test_folds <- lapply(gam_test_folds, fit_gam, sp_data = sum_gcki)
+## test GAM fitting with all data and cubic regression spline smooth
+# for interaction discussion, see Section 5.6.3 and p 344 of Wood
+#  + ti(wind, day_of_yr_c, k = k)
+gcki.day.gam <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k, 
+                                                   bs = "cr"), 
+                    data = sum_gcki, 
+                    family = "nb", select = TRUE)
+
+## test GAM fitting with all data and thin plate spline smooth
+gcki.day.gam2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, , k= k, 
+                                                        bs = "tp"), 
+            data = sum_gcki, 
+            family = "nb", select = TRUE)
+
+
+
+
+# make a list to hold fitted models and predictions from models with many 
+# replicate folds splits
+# At the end of the following for loop, fits_gcki_gam should have results from 
+# 200 different 5-fold CV splits (so 1000 different models fit, 5 for each fold
+# in each of 200 different fold splits)
+fits_gcki_gam <- list()
+
+for (i in 1:200) {
+  # assign days to 3-day blocks
+  days <- data.frame(day = min(sum_gcki$day_of_yr):max(sum_gcki$day_of_yr), 
+                     block = NA)
+  n_blocks <- nrow(days)/3
+  blocks <- rep(1:n_blocks, 3)
+  blocks <- blocks[order(blocks)]
+  start_row <- sample(1:nrow(days), size = 1)
+  days$block[start_row:nrow(days)] <- blocks[1:length(start_row:nrow(days))]
+  if(start_row != 1) {
+    days$block[1:(start_row - 1)] <- blocks[(length(start_row:nrow(days)) + 1):
+                                              nrow(days)]
+  }
+  
+  # assign blocks to CV folds
+  fold_assignments <- data.frame(
+    block = unique(days$block), 
+    fold = sample(rep_len(1:5, length.out = length(unique(days$block)))))
+  days <- left_join(days, fold_assignments, by = "block")
+  rm(blocks, n_blocks, start_row, fold_assignments)
+  
+  # join CV fold info onto bird data
+  bird_dat <- left_join(sum_gcki, days, by = c("day_of_yr" = "day"))
+  
+  # fit brt to data in CV folds
+  brt_test_folds <- unique(bird_dat$fold)
+  names(brt_test_folds) <- as.character(brt_test_folds) 
+  
+  brt_test_folds <- lapply(brt_test_folds, fit_gam, sp_data = bird_dat)
+  
+  # put predictions for these 5 folds into the big list for all splits
+  fits_gcki_gam[[i]] <- brt_test_folds
+}
+names(fits_gcki_gam) <- 1:length(fits_gcki_gam)
+
+
+
+
 
 
 # GAM fit using thin plate splines as smoother
