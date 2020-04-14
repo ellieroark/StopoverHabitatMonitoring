@@ -294,9 +294,8 @@ predgcki_time
 ## end predictions with BRT **GCKI per count model**----------------------------
 
 ## Boosted Regression Tree for GCKI per DAY-----------------------------------
-
 # define function to fit boosted regression tree
-fit_brt <- function(test_fold, sp_data) {
+fit_brt <- function(test_fold, sp_data, newdata) {
   train_dat <- sp_data[sp_data$fold != test_fold, ]
   f_m <- gbm(count ~ 1 + wind + day_of_yr_c, 
              distribution = "poisson", 
@@ -309,15 +308,25 @@ fit_brt <- function(test_fold, sp_data) {
   test_pred <- sp_data[sp_data$fold == test_fold, ]
   test_pred$OOB_preds <- predict(f_m, newdata = test_pred, 
                                  n.trees = nt, type = "response")
-  list(mod = f_m, test_predictions = test_pred)
+  
+  # Get standardized predictions to new data
+  stand_pred <- newdata[newdata$fold == test_fold, ]
+  stand_pred$predictions <- predict(f_m, newdata = stand_pred, 
+                                 n.trees = nt, type = "response")
+  
+  # return fitted model, predictions to the observed data from the test fold, 
+  # and predictions to new data (with standardized covariates)
+  list(mod = f_m, test_predictions = test_pred, standardized_preds = stand_pred)
 }
 
-# make a data frame to hold predictions from models with many replicate folds splits
-# At the end of the following for loop, pred_gcki_brt should have results from 
+
+# make a list to hold fitted models and predictions from models with many 
+# replicate folds splits
+# At the end of the following for loop, fits_gcki_brt should have results from 
 # 200 different 5-fold CV splits (so 1000 different models fit, 5 for each fold
 # in each of 200 different fold splits)
-pred_gcki_brt <- data.frame()
-
+fits_gcki_brt <- list()
+warning("WE need to model mean per day, not sum per day.  14 April WG.")
 for (i in 1:200) {
   # assign days to 3-day blocks
   days <- data.frame(day = min(sum_gcki$day_of_yr):max(sum_gcki$day_of_yr), 
@@ -331,13 +340,20 @@ for (i in 1:200) {
     days$block[1:(start_row - 1)] <- blocks[(length(start_row:nrow(days)) + 1):
                                               nrow(days)]
   }
-
+  
   # assign blocks to CV folds
   fold_assignments <- data.frame(
     block = unique(days$block), 
     fold = sample(rep_len(1:5, length.out = length(unique(days$block)))))
   days <- left_join(days, fold_assignments, by = "block")
   rm(blocks, n_blocks, start_row, fold_assignments)
+  
+  # create new data to predict with
+  pgcki_day <- data.frame(day_of_yr = seq(min(sum_gcki$day_of_yr), 
+                                          max(sum_gcki$day_of_yr), by = 1))
+  pgcki_day$day_of_yr_c <- pgcki_day$day_of_yr-mean(pgcki_day$day_of_yr)
+  pgcki_day$wind <- mean(sum_gcki$wind)
+  pgcki_day <- left_join(pgcki_day, days, by = c("day_of_yr" = "day"))
   
   # join CV fold info onto bird data
   bird_dat <- left_join(sum_gcki, days, by = c("day_of_yr" = "day"))
@@ -346,18 +362,14 @@ for (i in 1:200) {
   brt_test_folds <- unique(bird_dat$fold)
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
-  brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat)
+  brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
+                           newdata = pgcki_day)
   
-  # get a df with predictions for all 5 folds
-  this_pred <- bind_rows(lapply(brt_test_folds, FUN = function(x) {
-    x$test_predictions}))
-  this_pred <- this_pred[order(this_pred$day_of_yr), ]
-  
-  # put predictions for these 5 folds into the big predictions data frame
-  pred_gcki_brt <- bind_rows(pred_gcki_brt, this_pred)
+  # put predictions for these 5 folds into the big list for all splits
+  fits_gcki_brt[[i]] <- brt_test_folds
 }
-
-stop("HEre")
+names(fits_gcki_brt) <- 1:length(fits_gcki_brt)
+stop("here wg")
 
 ## alternate BRT with interaction depth of 2 instead of 1 
 # gcki.brt2 <- gbm(count ~ 1 + wind + day_of_yr_c, 
@@ -374,9 +386,7 @@ stop("HEre")
 
 ## evaluate BRT ----------------------------------------------------------------
 ## BRT with interaction depth 1
-# get predictions to test data
-gcki_brt_predictions <- bind_rows(lapply(brt_test_folds, 
-                                         FUN = function(x) x$test_predictions))
+
 gcki_brt_predictions$error = gcki_brt_predictions$OOB_preds - gcki_brt_predictions$count
 
 # calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
@@ -408,12 +418,26 @@ gcki_brt2_R2 <- 1 - (sum(gcki_brt2_predictions$error^2) /
 ## end evaluate BRT ------------------------------------------------------------
 
 ## predictions with BRT **per DAY model***-----------------------------------
-# create new data to predict with
-pgcki_day <- data.frame(day_of_yr = seq(min(sum_gcki$day_of_yr), 
-                                        max(sum_gcki$day_of_yr), by = 1))
-pgcki_day$day_of_yr_c <- pgcki_day$day_of_yr-mean(pgcki_day$day_of_yr)
-pgcki_day$wind <- mean(sum_gcki$wind)
-pgcki_day <- left_join(pgcki_day, days, by = c("day_of_yr" = "day"))
+
+
+stop("This is totally fucked up as of 14 April. wg.")
+get_predictions_brt <- function(mod, new_data) {
+  # get predictions with new data.  Predict to days using the model for which 
+  # those days were not in the training set
+  preds_newdata <- bind_rows(
+    lapply(1:length(brt_test_folds), 
+           FUN = function(x, newdata, brts) {
+             test_data <- newdata[newdata$fold == x, ]
+             test_data$predictions <- predict(brts[[x]]$mod, 
+                                              newdata = test_data, 
+                                              n.trees = nt, 
+                                              type = "response")
+             test_data}, 
+           newdata = pgcki_day, brts = brt_test_folds))
+}
+
+
+
 
 # get predictions with new data.  Predict to days using the model for which 
 # those days were not in the training set
@@ -537,35 +561,55 @@ with(arugcki.day.nb, pchisq(deviance, df.residual, lower.tail = FALSE))
 ## end GLM for GCKI per day (ARU)-----------------------------------------------
 
 ## Boosted Regression Tree for GCKI per DAY (ARU)-------------------------------
-##NEXT PLACE FOR WG
-# assign days to 3-day blocks
-# assign blocks to CV folds --> will use "days" dataframe from previous model 
+# make a list to hold fitted models and predictions from models with many 
+# replicate folds splits
+# At the end of the following for loop, fits_arugcki_brt should have results from 
+# 200 different 5-fold CV splits (so 1000 different models fit, 5 for each fold
+# in each of 200 different fold splits)
+fits_arugcki_brt <- list()
 
-# join CV fold info onto bird data
-sum_arugcki <- left_join(sum_arugcki, days, by = c("day_of_yr" = "day"))
-
-# fit brt to data in CV folds
-brt_test_folds <- unique(sum_arugcki$fold)
-names(brt_test_folds) <- as.character(brt_test_folds)
-
-fit_arubrt <- function(test_fold, sp_data) {
-  atrain_dat <- sp_data[sp_data$fold != test_fold, ]
-  f_ma <- gbm(count ~ 1 + wind + day_of_yr_c, 
-             distribution = "poisson", 
-             data = atrain_dat, 
-             interaction.depth = 1, 
-             n.trees = nt, 
-             n.minobsinnode = 1, 
-             shrinkage = 0.001, 
-             bag.fraction = 0.8)
-  atest_pred <- sp_data[sp_data$fold == test_fold, ]
-  atest_pred$OOB_preds <- predict(f_ma, newdata = atest_pred, 
-                                 n.trees = nt, type = "response")
-  list(mod = f_ma, test_predictions = atest_pred)
+for (i in 1:200) {
+  # assign days to 3-day blocks
+  days <- data.frame(day = min(sum_arugcki$day_of_yr):max(sum_arugcki$day_of_yr), 
+                     block = NA)
+  n_blocks <- nrow(days)/3
+  blocks <- rep(1:n_blocks, 3)
+  blocks <- blocks[order(blocks)]
+  start_row <- sample(1:nrow(days), size = 1)
+  days$block[start_row:nrow(days)] <- blocks[1:length(start_row:nrow(days))]
+  if(start_row != 1) {
+    days$block[1:(start_row - 1)] <- blocks[(length(start_row:nrow(days)) + 1):
+                                              nrow(days)]
+  }
+  
+  # assign blocks to CV folds
+  fold_assignments <- data.frame(
+    block = unique(days$block), 
+    fold = sample(rep_len(1:5, length.out = length(unique(days$block)))))
+  days <- left_join(days, fold_assignments, by = "block")
+  rm(blocks, n_blocks, start_row, fold_assignments)
+  
+  # create new data to predict with
+  parugcki_day <- data.frame(day_of_yr = seq(min(sum_arugcki$day_of_yr), 
+                                             max(sum_arugcki$day_of_yr), by = 1))
+  parugcki_day$day_of_yr_c <- parugcki_day$day_of_yr-mean(parugcki_day$day_of_yr)
+  parugcki_day$wind <- mean(sum_arugcki$wind)
+  parugcki_day <- left_join(parugcki_day, days, by = c("day_of_yr" = "day"))
+  
+  # join CV fold info onto bird data
+  bird_dat <- left_join(sum_arugcki, days, by = c("day_of_yr" = "day"))
+  
+  # fit brt to data in CV folds
+  brt_test_folds <- unique(bird_dat$fold)
+  names(brt_test_folds) <- as.character(brt_test_folds) 
+  
+  brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
+                           newdata = parugcki_day)
+  
+  # put predictions for these 5 folds into the big list for all splits
+  fits_arugcki_brt[[i]] <- brt_test_folds
 }
-
-brt_test_folds <- lapply(brt_test_folds, fit_arubrt, sp_data = sum_arugcki)
-
+names(fits_arugcki_brt) <- 1:length(fits_arugcki_brt)
 ## end BRT for GCKI per DAY model (ARU)-----------------------------------------
 
 
@@ -590,12 +634,7 @@ arugcki_brt_R2 <- 1 - (sum(arugcki_brt_predictions$error^2) /
 ## end evaluate BRT (ARU)-------------------------------------------------------
 
 ## predictions with BRT **per DAY model*** (ARU)--------------------------------
-# create new data to predict with
-parugcki_day <- data.frame(day_of_yr = seq(min(sum_arugcki$day_of_yr), 
-                                        max(sum_arugcki$day_of_yr), by = 1))
-parugcki_day$day_of_yr_c <- parugcki_day$day_of_yr-mean(parugcki_day$day_of_yr)
-parugcki_day$wind <- mean(sum_arugcki$wind)
-parugcki_day <- left_join(parugcki_day, days, by = c("day_of_yr" = "day"))
+
 
 # get predictions with new data.  Predict to days using the model for which 
 # those days were not in the training set
@@ -769,35 +808,55 @@ with(wiwr.day, pchisq(deviance, df.residual, lower.tail = FALSE))
 
 
 ## Boosted Regression Tree for WIWR per DAY (ptct)-------------------------------
+# make a list to hold fitted models and predictions from models with many 
+# replicate folds splits
+# At the end of the following for loop, fits_gcki_brt should have results from 
+# 200 different 5-fold CV splits (so 1000 different models fit, 5 for each fold
+# in each of 200 different fold splits)
+fits_wiwr_brt <- list()
 
-# assign days to 3-day blocks
-# assign blocks to CV folds --> will use "days" dataframe from previous model 
-
-# join CV fold info onto bird data
-sum_wiwr <- left_join(sum_wiwr, days, by = c("day_of_yr" = "day"))
-
-# fit brt to data in CV folds
-brt_test_folds <- unique(sum_wiwr$fold)
-names(brt_test_folds) <- as.character(brt_test_folds)
-
-fit_wbrt <- function(test_fold, sp_data) {
-  wtrain_dat <- sp_data[sp_data$fold != test_fold, ]
-  f_mw <- gbm(count ~ 1 + wind + day_of_yr_c, 
-              distribution = "poisson", 
-              data = wtrain_dat, 
-              interaction.depth = 1, 
-              n.trees = nt, 
-              n.minobsinnode = 1, 
-              shrinkage = 0.001, 
-              bag.fraction = 0.8)
-  wtest_pred <- sp_data[sp_data$fold == test_fold, ]
-  wtest_pred$OOB_preds <- predict(f_mw, newdata = wtest_pred, 
-                                  n.trees = nt, type = "response")
-  list(mod = f_mw, test_predictions = wtest_pred)
+for (i in 1:200) {
+  # assign days to 3-day blocks
+  days <- data.frame(day = min(sum_wiwr$day_of_yr):max(sum_wiwr$day_of_yr), 
+                     block = NA)
+  n_blocks <- nrow(days)/3
+  blocks <- rep(1:n_blocks, 3)
+  blocks <- blocks[order(blocks)]
+  start_row <- sample(1:nrow(days), size = 1)
+  days$block[start_row:nrow(days)] <- blocks[1:length(start_row:nrow(days))]
+  if(start_row != 1) {
+    days$block[1:(start_row - 1)] <- blocks[(length(start_row:nrow(days)) + 1):
+                                              nrow(days)]
+  }
+  
+  # assign blocks to CV folds
+  fold_assignments <- data.frame(
+    block = unique(days$block), 
+    fold = sample(rep_len(1:5, length.out = length(unique(days$block)))))
+  days <- left_join(days, fold_assignments, by = "block")
+  rm(blocks, n_blocks, start_row, fold_assignments)
+  
+  # create new data to predict with
+  pwiwr_day <- data.frame(day_of_yr = seq(min(sum_wiwr$day_of_yr), 
+                                          max(sum_wiwr$day_of_yr), by = 1))
+  pwiwr_day$day_of_yr_c <- pwiwr_day$day_of_yr-mean(pwiwr_day$day_of_yr)
+  pwiwr_day$wind <- mean(sum_wiwr$wind)
+  pwiwr_day <- left_join(pwiwr_day, days, by = c("day_of_yr" = "day"))
+  
+  # join CV fold info onto bird data
+  bird_dat <- left_join(sum_wiwr, days, by = c("day_of_yr" = "day"))
+  
+  # fit brt to data in CV folds
+  brt_test_folds <- unique(bird_dat$fold)
+  names(brt_test_folds) <- as.character(brt_test_folds) 
+  
+  brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
+                           newdata = pwiwr_day)
+  
+  # put predictions for these 5 folds into the big list for all splits
+  fits_wiwr_brt[[i]] <- brt_test_folds
 }
-
-brt_test_folds <- lapply(brt_test_folds, fit_wbrt, sp_data = sum_wiwr)
-
+names(fits_wiwr_brt) <- 1:length(fits_wiwr_brt)
 ## end BRT for WIWR per DAY model (ptct)----------------------------------------
 
 
@@ -822,12 +881,6 @@ wiwr_brt_R2 <- 1 - (sum(wiwr_brt_predictions$error^2) /
 ## end evaluate WIWR BRT (ptct) -----------------------------------------------------
 
 ## predictions with WIWR BRT **per DAY model*** (ptct)-------------------------------
-# create new data to predict with
-pwiwr_day <- data.frame(day_of_yr = seq(min(sum_wiwr$day_of_yr), 
-                                           max(sum_wiwr$day_of_yr), by = 1))
-pwiwr_day$day_of_yr_c <- pwiwr_day$day_of_yr-mean(pwiwr_day$day_of_yr)
-pwiwr_day$wind <- mean(sum_wiwr$wind)
-pwiwr_day <- left_join(pwiwr_day, days, by = c("day_of_yr" = "day"))
 
 # get predictions with new data.  Predict to days using the model for which 
 # those days were not in the training set
@@ -865,35 +918,55 @@ ggplot(data = wiwr_brt_predictions, aes(x = count, y = OOB_preds)) +
 ## end predictions with WIWR BRT **WIWR per DAY model** (ptct)-----------------------
 
 ## Boosted Regression Tree for WIWR per DAY (ARU)-------------------------------
+# make a list to hold fitted models and predictions from models with many 
+# replicate folds splits
+# At the end of the following for loop, fits_aruwiwr_brt should have results from 
+# 200 different 5-fold CV splits (so 1000 different models fit, 5 for each fold
+# in each of 200 different fold splits)
+fits_aruwiwr_brt <- list()
 
-# assign days to 3-day blocks
-# assign blocks to CV folds --> will use "days" dataframe from previous model 
-
-# join CV fold info onto bird data
-sum_aruwiwr <- left_join(sum_aruwiwr, days, by = c("day_of_yr" = "day"))
-
-# fit brt to data in CV folds
-brt_test_folds <- unique(sum_aruwiwr$fold)
-names(brt_test_folds) <- as.character(brt_test_folds)
-
-fit_awbrt <- function(test_fold, sp_data) {
-  awtrain_dat <- sp_data[sp_data$fold != test_fold, ]
-  f_maw <- gbm(count ~ 1 + wind + day_of_yr_c, 
-              distribution = "poisson", 
-              data = awtrain_dat, 
-              interaction.depth = 1, 
-              n.trees = nt, 
-              n.minobsinnode = 1, 
-              shrinkage = 0.001, 
-              bag.fraction = 0.8)
-  awtest_pred <- sp_data[sp_data$fold == test_fold, ]
-  awtest_pred$OOB_preds <- predict(f_maw, newdata = awtest_pred, 
-                                  n.trees = nt, type = "response")
-  list(mod = f_maw, test_predictions = awtest_pred)
+for (i in 1:200) {
+  # assign days to 3-day blocks
+  days <- data.frame(day = min(sum_aruwiwr$day_of_yr):max(sum_aruwiwr$day_of_yr), 
+                     block = NA)
+  n_blocks <- nrow(days)/3
+  blocks <- rep(1:n_blocks, 3)
+  blocks <- blocks[order(blocks)]
+  start_row <- sample(1:nrow(days), size = 1)
+  days$block[start_row:nrow(days)] <- blocks[1:length(start_row:nrow(days))]
+  if(start_row != 1) {
+    days$block[1:(start_row - 1)] <- blocks[(length(start_row:nrow(days)) + 1):
+                                              nrow(days)]
+  }
+  
+  # assign blocks to CV folds
+  fold_assignments <- data.frame(
+    block = unique(days$block), 
+    fold = sample(rep_len(1:5, length.out = length(unique(days$block)))))
+  days <- left_join(days, fold_assignments, by = "block")
+  rm(blocks, n_blocks, start_row, fold_assignments)
+  
+  # create new data to predict with
+  paruwiwr_day <- data.frame(day_of_yr = seq(min(sum_aruwiwr$day_of_yr), 
+                                             max(sum_aruwiwr$day_of_yr), by = 1))
+  paruwiwr_day$day_of_yr_c <- paruwiwr_day$day_of_yr-mean(paruwiwr_day$day_of_yr)
+  paruwiwr_day$wind <- mean(sum_aruwiwr$wind)
+  paruwiwr_day <- left_join(paruwiwr_day, days, by = c("day_of_yr" = "day"))
+  
+  # join CV fold info onto bird data
+  bird_dat <- left_join(sum_aruwiwr, days, by = c("day_of_yr" = "day"))
+  
+  # fit brt to data in CV folds
+  brt_test_folds <- unique(bird_dat$fold)
+  names(brt_test_folds) <- as.character(brt_test_folds) 
+  
+  brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
+                           newdata = paruwiwr_day)
+  
+  # put predictions for these 5 folds into the big list for all splits
+  fits_aruwiwr_brt[[i]] <- brt_test_folds
 }
-
-brt_test_folds <- lapply(brt_test_folds, fit_awbrt, sp_data = sum_aruwiwr)
-
+names(fits_aruwiwr_brt) <- 1:length(fits_aruwiwr_brt)
 ## end BRT for WIWR per DAY model (ARU)----------------------------------------
 
 
@@ -918,12 +991,6 @@ aruwiwr_brt_R2 <- 1 - (sum(aruwiwr_brt_predictions$error^2) /
 ## end evaluate WIWR BRT (ARU) -----------------------------------------------------
 
 ## predictions with WIWR BRT **per DAY model*** (ARU)-------------------------------
-# create new data to predict with
-paruwiwr_day <- data.frame(day_of_yr = seq(min(sum_aruwiwr$day_of_yr), 
-                                        max(sum_aruwiwr$day_of_yr), by = 1))
-paruwiwr_day$day_of_yr_c <- paruwiwr_day$day_of_yr-mean(paruwiwr_day$day_of_yr)
-paruwiwr_day$wind <- mean(sum_aruwiwr$wind)
-paruwiwr_day <- left_join(paruwiwr_day, days, by = c("day_of_yr" = "day"))
 
 # get predictions with new data.  Predict to days using the model for which 
 # those days were not in the training set
