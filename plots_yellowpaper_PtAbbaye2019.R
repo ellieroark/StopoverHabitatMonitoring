@@ -33,6 +33,100 @@ library(lme4)
 rm(allaru_s, spdet_arudup, arudiag, drop_counts, i, lm_on, mmdiag, plotson,
    poisdiag, regdiag)
 
+
+### SUMMARY PLOTS FOR ABUNDANCE MODELS------------------------------------------
+## scatterplot of number of GCKI per day (point counts) over time, with fitted 
+## average model (BRT) as a line
+
+# get standardized predictions for predictions to test data from all 1000 models
+gcki_ptct_preds_brt <- bind_rows(lapply(fits_gcki_brt, FUN = function(x) {
+  bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
+}))
+
+# get average prediction for each day from the 200 iterations of the 5-fold CV
+warning("Add standard error to this at some point.  14 April WG.")
+gcki_ptct_preds_brt <- group_by(gcki_ptct_preds_brt, day_of_yr) %>%
+  summarise(mean_pred = mean(predictions))
+
+ggplot(data = gcki_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  geom_line() + 
+  geom_point(data = sum_gcki, aes(x = day_of_yr, y = count)) + 
+  ggtitle("Golden-crowned Kinglet\nIn-person point counts (10 min)") + 
+  xlab("Julian day of year") + 
+  ylab("Total number of individuals detected") + 
+  theme_bw()
+
+
+## scatterplot of number of GCKI per day (ARU consecutive 10 min) over time, 
+## with fitted average model (BRT) as a line
+# get standardized predictions for predictions to test data from all 1000 models
+gcki_aru10c_preds_brt <- bind_rows(lapply(fits_arugcki_brt, FUN = function(x) {
+  bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
+}))
+
+# get average prediction for each day from the 200 iterations of the 5-fold CV
+warning("Add standard error to this at some point.  14 April WG.")
+gcki_aru10c_preds_brt <- group_by(gcki_aru10c_preds_brt, day_of_yr) %>%
+  summarise(mean_pred = mean(predictions))
+
+ggplot(data = gcki_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  geom_line() + 
+  geom_point(data = sum_arugcki, aes(x = day_of_yr, y = count)) + 
+  ggtitle("Golden-crowned Kinglet\nARU - consecutive 10 min") + 
+  xlab("Julian day of year") + 
+  ylab("Total number of 30-second intervals\nwith a vocalization") + 
+  theme_bw()
+
+
+## scatterplot of number of WIWR per day (Point Counts 10 min) over time, 
+## with fitted average model (BRT) as a line
+# get standardized predictions for predictions to test data from all 1000 models
+wiwr_ptct_preds_brt <- bind_rows(lapply(fits_wiwr_brt, FUN = function(x) {
+  bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
+}))
+
+# get average prediction for each day from the 200 iterations of the 5-fold CV
+warning("Add standard error to this at some point.  14 April WG.")
+wiwr_ptct_preds_brt <- group_by(wiwr_ptct_preds_brt, day_of_yr) %>%
+  summarise(mean_pred = mean(predictions))
+
+ggplot(data = wiwr_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  geom_line() + 
+  geom_point(data = sum_wiwr, aes(x = day_of_yr, y = count)) + 
+  ggtitle("Winter Wren\nIn-person point counts (10 min)") + 
+  xlab("Julian day of year") + 
+  ylab("Total number of\nindividuals detected") + 
+  theme_bw()
+
+
+## scatterplot of number of WIWR per day (ARU consecutive 10 min) over time, 
+## with fitted average model (BRT) as a line
+# get standardized predictions for predictions to test data from all 1000 models
+wiwr_aru10c_preds_brt <- bind_rows(lapply(fits_aruwiwr_brt, FUN = function(x) {
+  bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
+}))
+
+# get average prediction for each day from the 200 iterations of the 5-fold CV
+warning("Add standard error to this at some point.  14 April WG.")
+wiwr_aru10c_preds_brt <- group_by(wiwr_aru10c_preds_brt, day_of_yr) %>%
+  summarise(mean_pred = mean(predictions))
+
+ggplot(data = wiwr_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  geom_line() + 
+  geom_point(data = sum_aruwiwr, aes(x = day_of_yr, y = count)) + 
+  ggtitle("Winter Wren\nARU - consecutive 10 min") + 
+  xlab("Julian day of year") + 
+  ylab("Total number of 30-second intervals\nwith a vocalization") + 
+  theme_bw()
+
+#### END ABUNDANCE SUMMARY PLOTS-----------------------------------------------
+
+
+
+
+
+
+
 #### SUMMARY PLOTS FOR SPECIES RICHNESS GLMM------------------------------------
 ##boxplot for sp detected by each count type
 count_type_box <- ggplot(spdet_paired, aes(x=count_type, y=sp_detected)) + 
