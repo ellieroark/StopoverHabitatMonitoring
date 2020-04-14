@@ -295,31 +295,7 @@ predgcki_time
 
 ## Boosted Regression Tree for GCKI per DAY-----------------------------------
 
-# assign days to 3-day blocks
-days <- data.frame(day = min(sum_gcki$day_of_yr):max(sum_gcki$day_of_yr), 
-                   block = NA)
-n_blocks <- nrow(days)/3
-blocks <- rep(1:n_blocks, 3)
-blocks <- blocks[order(blocks)]
-start_row <- sample(1:nrow(days), size = 1)
-days$block[start_row:nrow(days)] <- blocks[1:length(start_row:nrow(days))]
-days$block[1:(start_row - 1)] <- blocks[(length(start_row:nrow(days)) + 1):
-                                          nrow(days)]
-
-# assign blocks to CV folds
-fold_assignments <- data.frame(
-  block = unique(days$block), 
-  fold = sample(rep_len(1:5, length.out = length(unique(days$block)))))
-days <- left_join(days, fold_assignments, by = "block")
-rm(blocks, n_blocks, start_row, fold_assignments)
-
-# join CV fold info onto bird data
-sum_gcki <- left_join(sum_gcki, days, by = c("day_of_yr" = "day"))
-
-# fit brt to data in CV folds
-brt_test_folds <- unique(sum_gcki$fold)
-names(brt_test_folds) <- as.character(brt_test_folds)
-
+# define function to fit boosted regression tree
 fit_brt <- function(test_fold, sp_data) {
   train_dat <- sp_data[sp_data$fold != test_fold, ]
   f_m <- gbm(count ~ 1 + wind + day_of_yr_c, 
@@ -336,17 +312,62 @@ fit_brt <- function(test_fold, sp_data) {
   list(mod = f_m, test_predictions = test_pred)
 }
 
-brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = sum_gcki)
+# make a data frame to hold predictions from models with many replicate folds splits
+# At the end of the following for loop, pred_gcki_brt should have results from 
+# 200 different 5-fold CV splits (so 1000 different models fit, 5 for each fold
+# in each of 200 different fold splits)
+pred_gcki_brt <- data.frame()
+
+for (i in 1:200) {
+  # assign days to 3-day blocks
+  days <- data.frame(day = min(sum_gcki$day_of_yr):max(sum_gcki$day_of_yr), 
+                     block = NA)
+  n_blocks <- nrow(days)/3
+  blocks <- rep(1:n_blocks, 3)
+  blocks <- blocks[order(blocks)]
+  start_row <- sample(1:nrow(days), size = 1)
+  days$block[start_row:nrow(days)] <- blocks[1:length(start_row:nrow(days))]
+  if(start_row != 1) {
+    days$block[1:(start_row - 1)] <- blocks[(length(start_row:nrow(days)) + 1):
+                                              nrow(days)]
+  }
+
+  # assign blocks to CV folds
+  fold_assignments <- data.frame(
+    block = unique(days$block), 
+    fold = sample(rep_len(1:5, length.out = length(unique(days$block)))))
+  days <- left_join(days, fold_assignments, by = "block")
+  rm(blocks, n_blocks, start_row, fold_assignments)
+  
+  # join CV fold info onto bird data
+  bird_dat <- left_join(sum_gcki, days, by = c("day_of_yr" = "day"))
+ 
+  # fit brt to data in CV folds
+  brt_test_folds <- unique(bird_dat$fold)
+  names(brt_test_folds) <- as.character(brt_test_folds) 
+  
+  brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat)
+  
+  # get a df with predictions for all 5 folds
+  this_pred <- bind_rows(lapply(brt_test_folds, FUN = function(x) {
+    x$test_predictions}))
+  this_pred <- this_pred[order(this_pred$day_of_yr), ]
+  
+  # put predictions for these 5 folds into the big predictions data frame
+  pred_gcki_brt <- bind_rows(pred_gcki_brt, this_pred)
+}
+
+stop("HEre")
 
 ## alternate BRT with interaction depth of 2 instead of 1 
-gcki.brt2 <- gbm(count ~ 1 + wind + day_of_yr_c, 
-           distribution = "poisson", 
-           data = sum_gcki, 
-           interaction.depth = 2, 
-           n.trees = nt, 
-           n.minobsinnode = 1, 
-           shrinkage = 0.001, 
-           bag.fraction = 0.8)
+# gcki.brt2 <- gbm(count ~ 1 + wind + day_of_yr_c, 
+#            distribution = "poisson", 
+#            data = sum_gcki, 
+#            interaction.depth = 2, 
+#            n.trees = nt, 
+#            n.minobsinnode = 1, 
+#            shrinkage = 0.001, 
+#            bag.fraction = 0.8)
 
 ## end BRT for GCKI per DAY model---------------------------------------------
 
@@ -516,7 +537,7 @@ with(arugcki.day.nb, pchisq(deviance, df.residual, lower.tail = FALSE))
 ## end GLM for GCKI per day (ARU)-----------------------------------------------
 
 ## Boosted Regression Tree for GCKI per DAY (ARU)-------------------------------
-
+##NEXT PLACE FOR WG
 # assign days to 3-day blocks
 # assign blocks to CV folds --> will use "days" dataframe from previous model 
 
