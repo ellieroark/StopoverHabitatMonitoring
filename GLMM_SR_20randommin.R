@@ -4,7 +4,7 @@
 ## 
 ## author: Ellie Roark
 ## created: 7 Feb 2020
-## last modified: 7 Feb 2020
+## last modified: 15 Apr 2020
 ## 
 ## inputs: *
 ##
@@ -19,7 +19,6 @@ library(tidyverse)
 library(lme4)
 library(car)
 
-set.seed(3271989)
 
 #change wind from dbl to factor with 3 levels (0-1, 2, 3+)
 spdet_3ct[which(spdet_3ct$wind <= "1"), "wind"] <- "0-1"

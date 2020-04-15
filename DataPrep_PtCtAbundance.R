@@ -4,7 +4,7 @@
 ## 
 ## author: Ellie Roark
 ## created: 10 Feb 2020
-## last modified: 6 Mar 2020
+## last modified: 15 Apr 2020
 ## 
 ## inputs: *Corrected_PointCounts_PtAbbaye2019.csv- original data file with all 
 ##           point count data from the 2019 field season at Point Abbaye
@@ -25,7 +25,8 @@ library(data.table)
 library(mgcv)
 
 rm(list = ls())
-set.seed(28022020) # 28 Feb 2020
+#set.seed(28022020) # no longer setting seed because I set it in main workflow
+# script
 
 ptct <- read_csv(file = "./2019data/Corrected_PointCounts_PtAbbaye2019.csv")
 sunrise_times <- read_csv(file = "./2019data/SunriseTimes_PtAbbaye2019.csv")

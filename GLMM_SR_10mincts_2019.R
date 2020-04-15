@@ -4,7 +4,7 @@
 ## 
 ## author: Ellie Roark
 ## created: 29 August 2019
-## last modified: 19 December 2019
+## last modified: 15 April 2020
 ## 
 ## inputs: *ARUDuplicateReview2019- script that randomly selects which of the 
 ##            duplicate ARU recordings to use, and sources:
@@ -44,8 +44,8 @@ library(afex)
 #setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
 
 
-
-set.seed(3271989)
+# NB: I now set seed in the main SHM workflow script, so I do not need this
+#set.seed(3271989)
 
 
 ### control whether I make exploratory plots and run diagnostics:

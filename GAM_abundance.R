@@ -4,7 +4,7 @@
 ## 
 ## author: Ellie Roark, Willson Gaul
 ## created: 6 Mar 2020
-## last modified: 20 Mar 2020
+## last modified: 14 Apr 2020
 ## 
 ## inputs: *MUST FIRST RUN: DataPrep_PtCtAbundance.R- script reads in original
 ##          point count data and prepares dataframes with the number of observed 

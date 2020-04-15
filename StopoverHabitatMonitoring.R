@@ -12,6 +12,7 @@
 ################################
 
 setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
+set.seed(1542020) #set seed: 15 Apr 2020
 
 ### Species Richness Analyses--------------------------------------------------
 
