@@ -23,27 +23,34 @@ k <- 12 # k should be large enough that EDF is a good bit less than k-1.
 
 # GAM fit by wg using k (see above) knots for smoothing
 # uses cubic regression spline as smoothing basis
-fit_gam <- function(test_fold, sp_data) {
+fit_gam <- function(test_fold, sp_data, newdata) {
   train_dat <- sp_data[sp_data$fold != test_fold, ]
-  f_m <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k, bs = "cr"), 
-             data = sp_data, 
+  f_m <- gam(meandet ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k, bs = "cr"), 
+             data = train_dat, 
              family = "nb", select = TRUE)
   test_pred <- sp_data[sp_data$fold == test_fold, ]
   test_pred$OOB_preds <- predict(f_m, newdata = test_pred, 
                                  type = "response")
-  list(mod = f_m, test_predictions = test_pred)
+  # Get standardized predictions to new data
+  stand_pred <- newdata[newdata$fold == test_fold, ]
+  stand_pred$predictions <- predict(f_m, newdata = stand_pred, 
+                                   type = "response")
+  
+  # return predictions to the observed data from the test fold, 
+  # and predictions to new data (with standardized covariates)
+  list(mod = f_m, test_predictions = test_pred, standardized_preds = stand_pred)
 }
 
 ## test GAM fitting with all data and cubic regression spline smooth
 # for interaction discussion, see Section 5.6.3 and p 344 of Wood
 #  + ti(wind, day_of_yr_c, k = k)
-gcki.day.gam <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k, 
+gcki.day.gam <- gam(meandet ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k, 
                                                    bs = "cr"), 
                     data = sum_gcki, 
                     family = "nb", select = TRUE)
 
 ## test GAM fitting with all data and thin plate spline smooth
-gcki.day.gam2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, , k= k, 
+gcki.day.gam2 <- gam(meandet ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, , k= k, 
                                                         bs = "tp"), 
             data = sum_gcki, 
             family = "nb", select = TRUE)
@@ -79,6 +86,13 @@ for (i in 1:200) {
   days <- left_join(days, fold_assignments, by = "block")
   rm(blocks, n_blocks, start_row, fold_assignments)
   
+  # create new data to predict with
+  pgcki_day <- data.frame(day_of_yr = seq(min(sum_gcki$day_of_yr), 
+                                             max(sum_gcki$day_of_yr), by = 1))
+  pgcki_day$day_of_yr_c <- pgcki_day$day_of_yr-mean(pgcki_day$day_of_yr)
+  pgcki_day$wind <- mean(sum_gcki$wind)
+  pgcki_day <- left_join(pgcki_day, days, by = c("day_of_yr" = "day"))
+  
   # join CV fold info onto bird data
   bird_dat <- left_join(sum_gcki, days, by = c("day_of_yr" = "day"))
   
@@ -86,7 +100,8 @@ for (i in 1:200) {
   brt_test_folds <- unique(bird_dat$fold)
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
-  brt_test_folds <- lapply(brt_test_folds, fit_gam, sp_data = bird_dat)
+  brt_test_folds <- lapply(brt_test_folds, fit_gam, sp_data = bird_dat, 
+                           newdata = pgcki_day)
   
   # put predictions for these 5 folds into the big list for all splits
   fits_gcki_gam[[i]] <- brt_test_folds
@@ -165,6 +180,52 @@ gcki_gam2_R2 <- 1 - (sum(gcki_gam2_predictions$error^2) /
 
 ## GAM with GCKI per day (ARU)-------------------------------------------------
 k = 15
+
+fits_arugcki_gam <- list()
+
+for (i in 1:200) {
+  # assign days to 3-day blocks
+  days <- data.frame(day = min(sum_arugcki$day_of_yr):max(sum_arugcki$day_of_yr), 
+                     block = NA)
+  n_blocks <- nrow(days)/3
+  blocks <- rep(1:n_blocks, 3)
+  blocks <- blocks[order(blocks)]
+  start_row <- sample(1:nrow(days), size = 1)
+  days$block[start_row:nrow(days)] <- blocks[1:length(start_row:nrow(days))]
+  if(start_row != 1) {
+    days$block[1:(start_row - 1)] <- blocks[(length(start_row:nrow(days)) + 1):
+                                              nrow(days)]
+  }
+  
+  # assign blocks to CV folds
+  fold_assignments <- data.frame(
+    block = unique(days$block), 
+    fold = sample(rep_len(1:5, length.out = length(unique(days$block)))))
+  days <- left_join(days, fold_assignments, by = "block")
+  rm(blocks, n_blocks, start_row, fold_assignments)
+  
+  # create new data to predict with
+  pgcki_day <- data.frame(day_of_yr = seq(min(sum_gcki$day_of_yr), 
+                                          max(sum_gcki$day_of_yr), by = 1))
+  pgcki_day$day_of_yr_c <- pgcki_day$day_of_yr-mean(pgcki_day$day_of_yr)
+  pgcki_day$wind <- mean(sum_gcki$wind)
+  pgcki_day <- left_join(pgcki_day, days, by = c("day_of_yr" = "day"))
+  
+  # join CV fold info onto bird data
+  bird_dat <- left_join(sum_arugcki, days, by = c("day_of_yr" = "day"))
+  
+  # fit brt to data in CV folds
+  brt_test_folds <- unique(bird_dat$fold)
+  names(brt_test_folds) <- as.character(brt_test_folds) 
+  
+  brt_test_folds <- lapply(brt_test_folds, fit_gam, sp_data = bird_dat, 
+                           newdata = pgcki_day)
+  
+  # put predictions for these 5 folds into the big list for all splits
+  fits_arugcki_gam[[i]] <- brt_test_folds
+}
+names(fits_arugcki_gam) <- 1:length(fits_arugcki_gam)
+
 
 ## test GAM fitting with all data
 # for interaction discussion, see Section 5.6.3 and p 344 of Wood
@@ -281,23 +342,51 @@ wiwr.day.gam2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp"),
                      data = sum_wiwr, 
                      family = "poisson", select = TRUE)
 
-# fit gam to data in CV folds
-gam_test_folds <- unique(sum_wiwr$fold)
-names(gam_test_folds) <- as.character(gam_test_folds)
 
-# GAM fit by wg using k (see above) knots for smoothing
-fit_wgam <- function(test_fold, sp_data) {
-  wtrain_dat <- sp_data[sp_data$fold != test_fold, ]
-  f_mw <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k), 
-             data = sp_data, 
-             family = "poisson", select = TRUE)
-  wtest_pred <- sp_data[sp_data$fold == test_fold, ]
-  wtest_pred$OOB_preds <- predict(f_mw, newdata = wtest_pred, 
-                                 type = "response")
-  list(mod = f_mw, test_predictions = wtest_pred)
+## WIWR point count GAM with 1000 iterations
+fits_wiwr_gam <- list()
+for (i in 1:200) {
+  # assign days to 3-day blocks
+  days <- data.frame(day = min(sum_wiwr$day_of_yr):max(sum_wiwr$day_of_yr), 
+                     block = NA)
+  n_blocks <- nrow(days)/3
+  blocks <- rep(1:n_blocks, 3)
+  blocks <- blocks[order(blocks)]
+  start_row <- sample(1:nrow(days), size = 1)
+  days$block[start_row:nrow(days)] <- blocks[1:length(start_row:nrow(days))]
+  if(start_row != 1) {
+    days$block[1:(start_row - 1)] <- blocks[(length(start_row:nrow(days)) + 1):
+                                              nrow(days)]
+  }
+  
+  # assign blocks to CV folds
+  fold_assignments <- data.frame(
+    block = unique(days$block), 
+    fold = sample(rep_len(1:5, length.out = length(unique(days$block)))))
+  days <- left_join(days, fold_assignments, by = "block")
+  rm(blocks, n_blocks, start_row, fold_assignments)
+  
+  # create new data to predict with
+  pwiwr_day <- data.frame(day_of_yr = seq(min(sum_wiwr$day_of_yr), 
+                                          max(sum_wiwr$day_of_yr), by = 1))
+  pwiwr_day$day_of_yr_c <- pwiwr_day$day_of_yr-mean(pwiwr_day$day_of_yr)
+  pwiwr_day$wind <- mean(sum_wiwr$wind)
+  pwiwr_day <- left_join(pwiwr_day, days, by = c("day_of_yr" = "day"))
+  
+  # join CV fold info onto bird data
+  bird_dat <- left_join(sum_wiwr, days, by = c("day_of_yr" = "day"))
+  
+  # fit brt to data in CV folds
+  brt_test_folds <- unique(bird_dat$fold)
+  names(brt_test_folds) <- as.character(brt_test_folds) 
+  
+  brt_test_folds <- lapply(brt_test_folds, fit_gam, sp_data = bird_dat, 
+                           newdata = pwiwr_day)
+  
+  # put predictions for these 5 folds into the big list for all splits
+  fits_wiwr_gam[[i]] <- brt_test_folds
 }
-
-gam_test_folds <- lapply(gam_test_folds, fit_wgam, sp_data = sum_wiwr)
+names(fits_wiwr_gam) <- 1:length(fits_wiwr_gam)
 
 
 # GAM fit using thin plate splines as smoother
@@ -366,7 +455,53 @@ wiwr_gam2_R2 <- 1 - (sum(wiwr_gam2_predictions$error^2) /
 
 
 ## TODO: GAM with WIWR per day (ARU)-------------------------------------------------
-k = 15
+
+## WIWR GAM with 1000 iterations
+fits_aruwiwr_gam <- list()
+for (i in 1:200) {
+  # assign days to 3-day blocks
+  days <- data.frame(day = min(sum_aruwiwr$day_of_yr):max(sum_aruwiwr$day_of_yr), 
+                     block = NA)
+  n_blocks <- nrow(days)/3
+  blocks <- rep(1:n_blocks, 3)
+  blocks <- blocks[order(blocks)]
+  start_row <- sample(1:nrow(days), size = 1)
+  days$block[start_row:nrow(days)] <- blocks[1:length(start_row:nrow(days))]
+  if(start_row != 1) {
+    days$block[1:(start_row - 1)] <- blocks[(length(start_row:nrow(days)) + 1):
+                                              nrow(days)]
+  }
+  
+  # assign blocks to CV folds
+  fold_assignments <- data.frame(
+    block = unique(days$block), 
+    fold = sample(rep_len(1:5, length.out = length(unique(days$block)))))
+  days <- left_join(days, fold_assignments, by = "block")
+  rm(blocks, n_blocks, start_row, fold_assignments)
+  
+  # create new data to predict with
+  pwiwr_day <- data.frame(day_of_yr = seq(min(sum_wiwr$day_of_yr), 
+                                          max(sum_wiwr$day_of_yr), by = 1))
+  pwiwr_day$day_of_yr_c <- pwiwr_day$day_of_yr-mean(pwiwr_day$day_of_yr)
+  pwiwr_day$wind <- mean(sum_wiwr$wind)
+  pwiwr_day <- left_join(pwiwr_day, days, by = c("day_of_yr" = "day"))
+  
+  # join CV fold info onto bird data
+  bird_dat <- left_join(sum_aruwiwr, days, by = c("day_of_yr" = "day"))
+  
+  # fit brt to data in CV folds
+  brt_test_folds <- unique(bird_dat$fold)
+  names(brt_test_folds) <- as.character(brt_test_folds) 
+  
+  brt_test_folds <- lapply(brt_test_folds, fit_gam, sp_data = bird_dat, 
+                           newdata = pwiwr_day)
+  
+  # put predictions for these 5 folds into the big list for all splits
+  fits_aruwiwr_gam[[i]] <- brt_test_folds
+}
+names(fits_aruwiwr_gam) <- 1:length(fits_aruwiwr_gam)
+
+
 
 ## test GAM fitting with all data
 # for interaction discussion, see Section 5.6.3 and p 344 of Wood

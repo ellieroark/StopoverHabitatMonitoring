@@ -21,40 +21,45 @@
 #set number of trees for BRT models
 nt = 2000
 
-## Exploratory plots -----------------------------------------------------------
-# #hist(ptct$count, main = "number of individs")
-# 
-# 
-# # plot wren counts over time
-# plot(wiwr$day_of_yr, wiwr$count, 
-#      main = "wiwr per pt count over time")
-# 
-# plot(gcki$day_of_yr, gcki$count, 
-#      main = "gcki per pt count over time")
-# 
-# 
-# 
-# 
-# plot(sum_gcki$day_of_yr, sum_gcki$count,
-#      main = "gcki per day over time")
-# ggplot(data = sum_gcki, aes(x = day_of_yr, y = count)) + 
-#   geom_point() + 
-#   geom_smooth()
-# 
-# plot(sum_wiwr$day_of_yr, sum_wiwr$count,
-#      main = "wiwr per day over time")
-# ggplot(data = sum_wiwr, aes(x = day_of_yr, y = count)) + 
-#   geom_point() + 
-#   geom_smooth()
+# Exploratory plots -----------------------------------------------------------
+#hist(ptct$count, main = "number of individs")
 
 
-## end Exploratory plots -------------------------------------------------------
+# plot wren mean detections over time
+plot(wiwr$day_of_yr, wiwr$count,
+     main = "wiwr per pt count over time")
 
-## GLM for GCKI counts over time------------------------------------------------
+plot(gcki$day_of_yr, gcki$count,
+     main = "gcki per pt count over time")
+
+
+
+
+plot(sum_gcki$day_of_yr, sum_gcki$meandet,
+     main = "avg. gcki per count per day over time")
+ggplot(data = sum_gcki, aes(x = day_of_yr, y = meandet)) +
+  geom_point() +
+  geom_smooth()
+
+plot(sum_wiwr$day_of_yr, sum_wiwr$meandet,
+     main = "avg. wiwr per count per day over time")
+ggplot(data = sum_wiwr, aes(x = day_of_yr, y = meandet)) +
+  geom_point() +
+  geom_smooth()
+
+hist(sum_gcki$meandet)
+hist(sum_arugcki$meandet)
+hist(sum_wiwr$meandet)
+hist(sum_aruwiwr$meandet)
+
+
+# end Exploratory plots -------------------------------------------------------
+
+# # GLM for GCKI counts over time------------------------------------------------
 # ## model for the number of GCKI detected per point count, depending on weather
-# gcki.ct <- glm(count ~ 1 + wind + rain + noise + cloud_cover + day_of_yr_c + 
+# gcki.ct <- glm(count ~ 1 + wind + rain + noise + cloud_cover + day_of_yr_c +
 #                  day_sq + min_past_sun,
-#                 data = gcki, 
+#                 data = gcki,
 #                 family = "poisson")
 # 
 # summary(gcki.ct)
@@ -68,14 +73,14 @@ nt = 2000
 # 
 # gcki[gcki$pois_devresids > 2, ]
 # 
-# hist(p.resids, main = "Deviance Residuals for gcki model", xlab = 
+# hist(p.resids, main = "Deviance Residuals for gcki model", xlab =
 #        "residuals")
-# boxplot(p.resids, main = "Deviance residuals for gcki model", ylab = 
+# boxplot(p.resids, main = "Deviance residuals for gcki model", ylab =
 #           "residuals")
 # 
 # 
 # gcount <-  table(gcki$count)
-# barplot(gcount, main = "distribution of # of gcki per count", xlab = "count", 
+# barplot(gcount, main = "distribution of # of gcki per count", xlab = "count",
 #         ylab = "frequency")
 # 
 # # check unconditional mean and variance for sp_detected (response variable)
@@ -97,15 +102,15 @@ nt = 2000
 # 
 # 
 # ## test of quasi poisson glm for gcki per point count model
-# gcki.ct.qp <- glm(count ~ 1 + wind + rain + noise + cloud_cover + day_of_yr_c + 
+# gcki.ct.qp <- glm(count ~ 1 + wind + rain + noise + cloud_cover + day_of_yr_c +
 #                    day_sq,
-#                data = gcki, 
+#                data = gcki,
 #                family = "quasipoisson")
 # summary(gcki.ct.qp)
 # #plot(gcki.ct.qp)
 # 
-# ## test of negative binomial glm 
-# gcki.ct.nb <- glm.nb(count ~ 1 + wind + rain + noise + cloud_cover + 
+# ## test of negative binomial glm
+# gcki.ct.nb <- glm.nb(count ~ 1 + wind + rain + noise + cloud_cover +
 #                              day_of_yr_c + day_sq,
 #                   data = gcki)
 # 
@@ -115,18 +120,18 @@ nt = 2000
 # gcki$fv <- predict(gcki.ct.nb, type="response")
 # 
 # #make data long format so that I can plot fit val AND original counts over time
-# mgcki <- data.frame(day_of_yr = gcki$day_of_yr, 
-#                     fv = gcki$fv, 
+# mgcki <- data.frame(day_of_yr = gcki$day_of_yr,
+#                     fv = gcki$fv,
 #                     count = gcki$count)
 # mgcki <- pivot_longer(mgcki, cols = fv:count, names_to = 'data_type')
 # 
 # 
 # #plot fitted values for nb model over time, alongside actual values
-# nbgcki_time <- ggplot(mgcki, aes(x=day_of_yr, y=value, colour=data_type)) + 
-#         geom_point() + 
+# nbgcki_time <- ggplot(mgcki, aes(x=day_of_yr, y=value, colour=data_type)) +
+#         geom_point() +
 #         theme_bw() +
-#         scale_colour_viridis_d() + 
-#         scale_y_continuous() + 
+#         scale_colour_viridis_d() +
+#         scale_y_continuous() +
 #         ylab("Number of GCKI") +
 #         xlab("Day of Year")
 # nbgcki_time
@@ -139,27 +144,29 @@ nt = 2000
 # td$doy <- gcki$day_of_yr
 # td <- pivot_longer(td, 1:(ncol(td)-2), names_to = "case", values_to = "n_sp")
 # 
-# ggplot(data = td, aes(x = n_sp, y = obs)) + 
-#         geom_point() + 
-#         geom_jitter() + 
+# ggplot(data = td, aes(x = n_sp, y = obs)) +
+#         geom_point() +
+#         geom_jitter() +
 #         geom_smooth()
 # 
-# ggplot() + 
-#         geom_point(data = td, aes(x = doy, y = n_sp), alpha = 0.1) + 
-#         geom_point(data = td[td$case == "obs", ], aes(x = doy, y = n_sp), 
+# ggplot() +
+#         geom_point(data = td, aes(x = doy, y = n_sp), alpha = 0.1) +
+#         geom_point(data = td[td$case == "obs", ], aes(x = doy, y = n_sp),
 #                    col = "red")
 # 
-
-## end GLM for GCKI counts------------------------------------------------------
-
-## GLM for GCKI **per day** counts----------------------------------------------
-## model of GCKI ** per day ** over time
-# gcki.day <- glm(count ~ 1 + wind + day_of_yr_c + day_sq,
-#                 data = sum_gcki, 
+# # end GLM for GCKI counts----------------------------------------------------
+# 
+# # GLM for avg # of GCKI per count per day--------------------------------------
+# # model of avg GCKI ** per sampling unit ** over time
+# gcki.day <- glm(meandet ~ 1 + wind + day_of_yr_c + day_sq,
+#                 data = sum_gcki,
 #                 family = "poisson")
 # 
 # summary(gcki.day)
-# #plot(gcki.day)
+# plot(gcki.day)
+# 
+# ## this is not great-- residuals vs fitted vals look flared still-- indicating 
+# ## that variance does not change with the mean
 # 
 # vif(gcki.day)
 # resids <- rstandard(gcki.day)
@@ -169,22 +176,23 @@ nt = 2000
 # 
 # sum_gcki[sum_gcki$pois_devresids > 2, ]
 # 
-# hist(p.day.resids, main = "Deviance Residuals for gcki (day) model", xlab = 
+# hist(p.day.resids, main = "Deviance Residuals for gcki (day) model", xlab =
 #              "residuals")
-# boxplot(p.day.resids, main = "Deviance residuals for gcki (day) model", ylab = 
+# boxplot(p.day.resids, main = "Deviance residuals for gcki (day) model", ylab =
 #                 "residuals")
 # 
 # 
-# gdaycount <-  table(sum_gcki$count)
-# barplot(gdaycount, main = "distribution of # of gcki per day", xlab = "count", 
+# gdaymeandet <-  table(sum_gcki$meandet)
+# barplot(gdaymeandet, main = "distribution of avg # of gcki per count per day", 
+#         xlab = "mean detected per count",
 #         ylab = "frequency")
 # 
 # # check unconditional mean and variance for sp_detected (response variable)
 # # (we ultimately care only about CONDITIONAL mean and variance being equal after
 # # model is fit but this is a good indicator of whether it might be a problem)
-# mean(sum_gcki$count)
-# var(sum_gcki$count)
-# # doesn't look great! overdispersion may be a problem here.
+# mean(sum_gcki$meandet)
+# var(sum_gcki$meandet)
+# # this actually looks okay, probably.
 # 
 # #look at deviance statistic of fit model divided by its d.f. to see if ratio
 # # is over 1
@@ -194,110 +202,108 @@ nt = 2000
 # with(gcki.day, deviance/df.residual)
 # #(this gives us a p-value for that ratio)
 # with(gcki.day, pchisq(deviance, df.residual, lower.tail = FALSE))
-# ## this is TERRIBLE-- ratio is 2.4, definitely different from 1!!! 
-# ## Poisson assumptions pretty definitively not met. 
+# ## this is okay-- ratio is 0.74, p-valye is .89-- not sig different from 1
 # 
+# # test neg binom model for GCKI per day
+# gcki.day.nb <- glm.nb(meandet ~ 1 + wind + day_of_yr_c + day_sq,
+#                       data = sum_gcki)
+# 
+# #get fitted values
+# sum_gcki$nbfv <- predict(gcki.day.nb, type="response")
+# 
+# plot(sum_gcki$meandet ~ sum_gcki$nbfv)
+# abline(0, 1)
+# 
+# td <- data.frame(simulate(gcki.day.nb, nsim = 10))
+# td$obs <- sum_gcki$meandet
+# td$doy <- sum_gcki$day_of_yr
+# td <- pivot_longer(td, 1:(ncol(td)-2), names_to = "case", values_to = "n_sp")
+# 
+# ggplot(data = td, aes(x = n_sp, y = obs)) +
+#   geom_point() +
+#   geom_jitter() +
+#   geom_smooth()
+# 
+# ggplot() +
+#   geom_point(data = td, aes(x = doy, y = n_sp), alpha = 0.1) +
+#   geom_point(data = td[td$case == "obs", ], aes(x = doy, y = n_sp),
+#              col = "red")
+# 
+# #look at deviance statistic of fit model divided by its d.f. to see if ratio
+# # is over 1
+# gcki.day.nb$deviance
+# gcki.day.nb$df.residual
+# #(this is the ratio we care about)
+# with(gcki.day.nb, deviance/df.residual)
+# #(this gives us a p-value for that ratio)
+# with(gcki.day.nb, pchisq(deviance, df.residual, lower.tail = FALSE))
+# ## this is way better than poisson-- ratio is 1.09, pvalue is .3-- not sig.
+# ## different from 1.
+# 
+# ## end GLM for GCKI per day-----------------------------------------------------
 
-# test neg binom model for GCKI per day to see if it helps with overdispersion
-gcki.day.nb <- glm.nb(count ~ 1 + wind + day_of_yr_c + day_sq,
-                      data = sum_gcki)
-
-#get fitted values
-sum_gcki$nbfv <- predict(gcki.day.nb, type="response")
-
-plot(sum_gcki$count ~ sum_gcki$nbfv)
-abline(0, 1)
-
-td <- data.frame(simulate(gcki.day.nb, nsim = 10))
-td$obs <- sum_gcki$count
-td$doy <- sum_gcki$day_of_yr
-td <- pivot_longer(td, 1:(ncol(td)-2), names_to = "case", values_to = "n_sp")
-
-ggplot(data = td, aes(x = n_sp, y = obs)) +
-  geom_point() +
-  geom_jitter() +
-  geom_smooth()
-
-ggplot() +
-  geom_point(data = td, aes(x = doy, y = n_sp), alpha = 0.1) +
-  geom_point(data = td[td$case == "obs", ], aes(x = doy, y = n_sp),
-             col = "red")
-
-#look at deviance statistic of fit model divided by its d.f. to see if ratio
-# is over 1
-gcki.day.nb$deviance
-gcki.day.nb$df.residual
-#(this is the ratio we care about)
-with(gcki.day.nb, deviance/df.residual)
-#(this gives us a p-value for that ratio)
-with(gcki.day.nb, pchisq(deviance, df.residual, lower.tail = FALSE))
-## this is way better than poisson-- ratio is 1.09, pvalue is .3-- not sig.
-## different from 1.
-
-## end GLM for GCKI per day-----------------------------------------------------
-
-## Boosted Regression Tree for GCKI per COUNT-----------------------------------
-
-gcki.brt <- gbm(count ~ 1 + wind + rain + noise + day_of_yr_c + cloud_cover +
-                  day_sq + min_past_sun, 
-                distribution = "poisson", 
-                data = gcki, 
-                interaction.depth = 3, 
-                n.trees = nt, 
-                n.minobsinnode = 5, 
-                shrinkage = 0.01, 
-                bag.fraction = 0.8)
-
-## end BRT for GCKI per COUNT model---------------------------------------------
-
-## predictions with BRT **per count model***-----------------------------------
-# create new data to predict with
-pred_gcki <- data.frame(day_of_yr = seq(min(gcki$day_of_yr), 
-                                        max(gcki$day_of_yr), by = 1))
-pred_gcki$day_of_yr_c <- pred_gcki$day_of_yr-mean(pred_gcki$day_of_yr)
-pred_gcki$day_sq <- pred_gcki$day_of_yr_c^2
-pred_gcki$min_past_sun <- median(gcki$min_past_sun)
-pred_gcki$wind <- as.factor("0-1")
-pred_gcki$rain <- as.factor("Dry")
-pred_gcki$noise <- as.factor("0")
-pred_gcki$cloud_cover <- as.factor("0-33")
-#coerce factor variables to contain the same number of levels as the original 
-pred_gcki$wind <- factor(pred_gcki$wind, 
-                         levels = c("0-1", "2", "3+"),
-                         labels = c("0-1", "2", "3+"))
-pred_gcki$rain <- factor(pred_gcki$rain, 
-                         levels = c("Dry", "wet"),
-                         labels = c("Dry", "wet"))
-pred_gcki$noise <- factor(pred_gcki$noise, 
-                          levels = c("0", "1", ">2"), 
-                          labels = c("0", "1", ">2"))
-pred_gcki$cloud_cover <- factor(pred_gcki$cloud_cover, 
-                                levels = c("0-33", "33-66", "66-100"), 
-                                labels = c("0-33", "33-66", "66-100"))
-
-# get predictions with new data
-pred_gcki$p1 <- predict(gcki.brt, newdata = pred_gcki, n.trees = nt, 
-                        type = "response")
-
-#plot predictions over time 
-predgcki_time <- ggplot(pred_gcki, aes(x=day_of_yr, y=p1)) + 
-  geom_line() + 
-  geom_point(data = gcki,
-             aes(x = day_of_yr, y = count)) +
-  theme_bw() +
-  scale_colour_viridis_d() + 
-  scale_y_continuous() + 
-  ylab("Number of GCKI") +
-  xlab("Day of Year")
-predgcki_time
-## end predictions with BRT **GCKI per count model**----------------------------
+# ## Boosted Regression Tree for GCKI per COUNT-----------------------------------
+# 
+# gcki.brt <- gbm(count ~ 1 + wind + rain + noise + day_of_yr_c + cloud_cover +
+#                   day_sq + min_past_sun, 
+#                 distribution = "poisson", 
+#                 data = gcki, 
+#                 interaction.depth = 3, 
+#                 n.trees = nt, 
+#                 n.minobsinnode = 5, 
+#                 shrinkage = 0.01, 
+#                 bag.fraction = 0.8)
+# 
+# ## end BRT for GCKI per COUNT model---------------------------------------------
+# 
+# ## predictions with BRT **per count model***-----------------------------------
+# # create new data to predict with
+# pred_gcki <- data.frame(day_of_yr = seq(min(gcki$day_of_yr), 
+#                                         max(gcki$day_of_yr), by = 1))
+# pred_gcki$day_of_yr_c <- pred_gcki$day_of_yr-mean(pred_gcki$day_of_yr)
+# pred_gcki$day_sq <- pred_gcki$day_of_yr_c^2
+# pred_gcki$min_past_sun <- median(gcki$min_past_sun)
+# pred_gcki$wind <- as.factor("0-1")
+# pred_gcki$rain <- as.factor("Dry")
+# pred_gcki$noise <- as.factor("0")
+# pred_gcki$cloud_cover <- as.factor("0-33")
+# #coerce factor variables to contain the same number of levels as the original 
+# pred_gcki$wind <- factor(pred_gcki$wind, 
+#                          levels = c("0-1", "2", "3+"),
+#                          labels = c("0-1", "2", "3+"))
+# pred_gcki$rain <- factor(pred_gcki$rain, 
+#                          levels = c("Dry", "wet"),
+#                          labels = c("Dry", "wet"))
+# pred_gcki$noise <- factor(pred_gcki$noise, 
+#                           levels = c("0", "1", ">2"), 
+#                           labels = c("0", "1", ">2"))
+# pred_gcki$cloud_cover <- factor(pred_gcki$cloud_cover, 
+#                                 levels = c("0-33", "33-66", "66-100"), 
+#                                 labels = c("0-33", "33-66", "66-100"))
+# 
+# # get predictions with new data
+# pred_gcki$p1 <- predict(gcki.brt, newdata = pred_gcki, n.trees = nt, 
+#                         type = "response")
+# 
+# #plot predictions over time 
+# predgcki_time <- ggplot(pred_gcki, aes(x=day_of_yr, y=p1)) + 
+#   geom_line() + 
+#   geom_point(data = gcki,
+#              aes(x = day_of_yr, y = count)) +
+#   theme_bw() +
+#   scale_colour_viridis_d() + 
+#   scale_y_continuous() + 
+#   ylab("Number of GCKI") +
+#   xlab("Day of Year")
+# predgcki_time
+# ## end predictions with BRT **GCKI per count model**----------------------------
 
 ## Boosted Regression Tree for GCKI per DAY-----------------------------------
 # define function to fit boosted regression tree
 fit_brt <- function(test_fold, sp_data, newdata) {
   train_dat <- sp_data[sp_data$fold != test_fold, ]
-  f_m <- gbm(count ~ 1 + wind + day_of_yr_c, 
-             distribution = "poisson", 
+  f_m <- gbm(meandet ~ 1 + wind + day_of_yr_c, 
+             distribution = "laplace", 
              data = train_dat, 
              interaction.depth = 1, 
              n.trees = nt, 
@@ -315,7 +321,7 @@ fit_brt <- function(test_fold, sp_data, newdata) {
   
   # return fitted model, predictions to the observed data from the test fold, 
   # and predictions to new data (with standardized covariates)
-  list(mod = f_m, test_predictions = test_pred, standardized_preds = stand_pred)
+  list(test_predictions = test_pred, standardized_preds = stand_pred) #mod = f_m, 
 }
 
 
@@ -325,7 +331,6 @@ fit_brt <- function(test_fold, sp_data, newdata) {
 # 200 different 5-fold CV splits (so 1000 different models fit, 5 for each fold
 # in each of 200 different fold splits)
 fits_gcki_brt <- list()
-warning("WE need to model mean per day, not sum per day.  14 April WG.")
 for (i in 1:200) {
   # assign days to 3-day blocks
   days <- data.frame(day = min(sum_gcki$day_of_yr):max(sum_gcki$day_of_yr), 
@@ -368,10 +373,13 @@ for (i in 1:200) {
   fits_gcki_brt[[i]] <- brt_test_folds
 }
 names(fits_gcki_brt) <- 1:length(fits_gcki_brt)
+saveRDS(fits_gcki_brt, "fits_gcki_brt.rds")
+#rm(fits_gcki_brt)
+
 stop("here wg")
 
 ## alternate BRT with interaction depth of 2 instead of 1 
-# gcki.brt2 <- gbm(count ~ 1 + wind + day_of_yr_c, 
+# gcki.brt2 <- gbm(meandet ~ 1 + wind + day_of_yr_c, 
 #            distribution = "poisson", 
 #            data = sum_gcki, 
 #            interaction.depth = 2, 
@@ -386,16 +394,17 @@ stop("here wg")
 ## evaluate BRT ----------------------------------------------------------------
 ## BRT with interaction depth 1
 
-gcki_brt_predictions$error = gcki_brt_predictions$OOB_preds - gcki_brt_predictions$count
+gcki_brt_predictions$error = gcki_brt_predictions$OOB_preds - gcki_brt_predictions$meandet
 
 # calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
 # McGill 2013)
-gcki_brt_r2 <- cor(gcki_brt_predictions$day_of_yr, gcki_brt_predictions$OOB_preds, 
+gcki_brt_r2 <- cor(gcki_brt_predictions$day_of_yr, 
+                   gcki_brt_predictions$OOB_preds, 
                    method = "pearson")^2
 # calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
 gcki_brt_R2 <- 1 - (sum(gcki_brt_predictions$error^2) / 
-                      (sum((gcki_brt_predictions$count - 
-                              mean(gcki_brt_predictions$count))^2)))
+                      (sum((gcki_brt_predictions$meandet - 
+                              mean(gcki_brt_predictions$meandet))^2)))
 
 ## BRT with interaction depth 2
 # get predictions to test data
@@ -403,7 +412,7 @@ gcki_brt2_predictions <- sum_gcki
 gcki_brt2_predictions$fv <- predict(gcki.brt2, n.trees = nt, type = "response")
 
 gcki_brt2_predictions$error = gcki_brt2_predictions$fv -
-  gcki_brt_predictions$count
+  gcki_brt_predictions$meandet
 
 # calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
 # McGill 2013)
@@ -411,8 +420,8 @@ gcki_brt2_r2 <- cor(gcki_brt2_predictions$day_of_yr, gcki_brt2_predictions$fv,
                    method = "pearson")^2
 # calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
 gcki_brt2_R2 <- 1 - (sum(gcki_brt2_predictions$error^2) / 
-                      (sum((gcki_brt2_predictions$count - 
-                              mean(gcki_brt2_predictions$count))^2)))
+                      (sum((gcki_brt2_predictions$meandet - 
+                              mean(gcki_brt2_predictions$meandet))^2)))
 
 ## end evaluate BRT ------------------------------------------------------------
 
@@ -455,7 +464,7 @@ gcki_preds_newdata <- bind_rows(
 pgcki_day_time <- ggplot(gcki_preds_newdata, aes(x=day_of_yr, y=predictions)) + 
   geom_line() + 
   geom_point(data = sum_gcki,
-             aes(x = day_of_yr, y = count)) +
+             aes(x = day_of_yr, y = meandet)) +
   theme_bw() +
   scale_colour_viridis_d() + 
   scale_y_continuous() + 
@@ -464,7 +473,7 @@ pgcki_day_time <- ggplot(gcki_preds_newdata, aes(x=day_of_yr, y=predictions)) +
 pgcki_day_time
 
 # plot predicted vs. observed values
-ggplot(data = gcki_brt_predictions, aes(x = count, y = OOB_preds)) + 
+ggplot(data = gcki_brt_predictions, aes(x = meandet, y = OOB_preds)) + 
   geom_point() + 
   geom_smooth() + 
   geom_abline(intercept = 0, slope = 1) + 
@@ -473,9 +482,9 @@ ggplot(data = gcki_brt_predictions, aes(x = count, y = OOB_preds)) +
 ## end predictions with BRT **GCKI per DAY model**----------------------------
 
 ################################################################################
-## GLM for GCKI **per day** counts with ARUs------------------------------------
-# model of GCKI ** per day ** over time with ARU data
-arugcki.day <- glm(count ~ 1 + wind + day_of_yr_c + day_sq,
+## GLM for avg # of GCKI **per count, per day** with ARUs------------------------------------
+# model of avg # GCKI ** per count per day ** over time with ARU data
+arugcki.day <- glm(meandet ~ 1 + wind + day_of_yr_c + day_sq,
                 data = sum_arugcki,
                 family = "poisson")
 
@@ -496,15 +505,16 @@ boxplot(p.day.aresids, main = "Deviance residuals for gcki (day, aru) model",
         ylab ="residuals")
 
 
-arugdaycount <-  table(sum_arugcki$count)
-barplot(arugdaycount, main = "distribution of # of gcki per day", xlab = "count",
+arugdaymeandet <-  table(sum_arugcki$meandet)
+barplot(arugdaymeandet, main = "distribution of avg # gcki per count", 
+        xlab = "mean # detected per count",
         ylab = "frequency")
 
 # check unconditional mean and variance for sp_detected (response variable)
 # (we ultimately care only about CONDITIONAL mean and variance being equal after
 # model is fit but this is a good indicator of whether it might be a problem)
-mean(sum_arugcki$count)
-var(sum_arugcki$count)
+mean(sum_arugcki$meandet)
+var(sum_arugcki$meandet)
 # looks real bad! suspect overdispersion.
 
 #look at deviance statistic of fit model divided by its d.f. to see if ratio
@@ -520,19 +530,19 @@ with(arugcki.day, pchisq(deviance, df.residual, lower.tail = FALSE))
 
 # test neg binom model for GCKI per day (aru) to see if it helps with 
 # overdispersion
-arugcki.day.nb <- glm.nb(count ~ 1 + wind + day_of_yr_c + day_sq,
+arugcki.day.nb <- glm.nb(meandet ~ 1 + wind + day_of_yr_c + day_sq,
                       data = sum_arugcki, control = glm.control(maxit = 1000))
 ## this does not converge
 
 #get fitted values
 sum_arugcki$nbfv <- predict(arugcki.day.nb, type="response")
 
-plot(sum_arugcki$count ~ sum_arugcki$nbfv)
+plot(sum_arugcki$meandet ~ sum_arugcki$nbfv)
 abline(0, 1)
 
 # TODO what does this section of code do?? ask wg
 gtd <- data.frame(simulate(arugcki.day.nb, nsim = 10))
-gtd$obs <- sum_arugcki$count
+gtd$obs <- sum_arugcki$meandet
 gtd$doy <- sum_arugcki$day_of_yr
 gtd <- pivot_longer(gtd, 1:(ncol(gtd)-2), names_to = "case", values_to = "n_sp")
 
@@ -609,6 +619,8 @@ for (i in 1:200) {
   fits_arugcki_brt[[i]] <- brt_test_folds
 }
 names(fits_arugcki_brt) <- 1:length(fits_arugcki_brt)
+#saveRDS(fits_arugcki_brt, "fits_arugcki_brt.rds")
+#rm(fits_arugcki_brt)
 ## end BRT for GCKI per DAY model (ARU)-----------------------------------------
 
 
@@ -618,7 +630,7 @@ names(fits_arugcki_brt) <- 1:length(fits_arugcki_brt)
 arugcki_brt_predictions <- bind_rows(lapply(brt_test_folds, 
                                          FUN = function(x) x$test_predictions))
 arugcki_brt_predictions$error = arugcki_brt_predictions$OOB_preds - 
-  arugcki_brt_predictions$count
+  arugcki_brt_predictions$meandet
 
 # calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
 # McGill 2013)
@@ -627,8 +639,8 @@ arugcki_brt_r2 <- cor(arugcki_brt_predictions$day_of_yr,
                    method = "pearson")^2
 # calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
 arugcki_brt_R2 <- 1 - (sum(arugcki_brt_predictions$error^2) / 
-                      (sum((arugcki_brt_predictions$count - 
-                              mean(arugcki_brt_predictions$count))^2)))
+                      (sum((arugcki_brt_predictions$meandet - 
+                              mean(arugcki_brt_predictions$meandet))^2)))
 
 ## end evaluate BRT (ARU)-------------------------------------------------------
 
@@ -653,7 +665,7 @@ parugcki_day_time <- ggplot(arugcki_preds_newdata, aes(x=day_of_yr,
                                                        y=predictions)) + 
   geom_line() + 
   geom_point(data = sum_arugcki,
-             aes(x = day_of_yr, y = count)) +
+             aes(x = day_of_yr, y = meandet)) +
   theme_bw() +
   scale_colour_viridis_d() + 
   scale_y_continuous() + 
@@ -662,7 +674,7 @@ parugcki_day_time <- ggplot(arugcki_preds_newdata, aes(x=day_of_yr,
 parugcki_day_time
 
   # plot predicted vs. observed values
-ggplot(data = arugcki_brt_predictions, aes(x = count, y = OOB_preds)) + 
+ggplot(data = arugcki_brt_predictions, aes(x = meandet, y = OOB_preds)) + 
   geom_point() + 
   geom_smooth() + 
   geom_abline(intercept = 0, slope = 1) + 
@@ -758,9 +770,9 @@ ggplot(data = arugcki_brt_predictions, aes(x = count, y = OOB_preds)) +
 #                    col = "red")
 ## end GLM for WIWR counts over time--------------------------------------------
 
-## GLM for WIWR **per day** counts----------------------------------------------
-# model of WIWR ** per day ** over time
-wiwr.day <- glm(count ~ 1 + wind + day_of_yr_c + day_sq,
+## GLM for avg WIWR **per count, per day**----------------------------------------------
+# model of avg WIWR ** per count per day** over time
+wiwr.day <- glm(meandet ~ 1 + wind + day_of_yr_c + day_sq,
                 data = sum_wiwr,
                 family = "poisson")
 
@@ -781,15 +793,16 @@ boxplot(p.wday.resids, main = "Deviance residuals for wiwr (day) model", ylab =
                 "residuals")
 
 
-wdaycount <-  table(sum_wiwr$count)
-barplot(wdaycount, main = "distribution of # of wiwr per day", xlab = "count",
+wdaymeandet <-  table(sum_wiwr$meandet)
+barplot(wdaymeandet, main = "distribution of avg # of wiwr per count", 
+        xlab = "mean # WIWR per count",
         ylab = "frequency")
 
 # check unconditional mean and variance for sp_detected (response variable)
 # (we ultimately care only about CONDITIONAL mean and variance being equal after
 # model is fit but this is a good indicator of whether it might be a problem)
-mean(sum_wiwr$count)
-var(sum_wiwr$count)
+mean(sum_wiwr$meandet)
+var(sum_wiwr$meandet)
 # 2.2/4.6-- doesn't look great! overdispersion may be a problem here.
 
 #look at deviance statistic of fit model divided by its d.f. to see if ratio
@@ -865,7 +878,7 @@ names(fits_wiwr_brt) <- 1:length(fits_wiwr_brt)
 wiwr_brt_predictions <- bind_rows(lapply(brt_test_folds, 
                                             FUN = function(x) x$test_predictions))
 wiwr_brt_predictions$error = wiwr_brt_predictions$OOB_preds - 
-  wiwr_brt_predictions$count
+  wiwr_brt_predictions$meandet
 
 # calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
 # McGill 2013)
@@ -874,8 +887,8 @@ wiwr_brt_r2 <- cor(wiwr_brt_predictions$day_of_yr,
                       method = "pearson")^2
 # calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
 wiwr_brt_R2 <- 1 - (sum(wiwr_brt_predictions$error^2) / 
-                         (sum((wiwr_brt_predictions$count - 
-                                 mean(wiwr_brt_predictions$count))^2)))
+                         (sum((wiwr_brt_predictions$meandet - 
+                                 mean(wiwr_brt_predictions$meandet))^2)))
 
 ## end evaluate WIWR BRT (ptct) -----------------------------------------------------
 
@@ -899,7 +912,7 @@ pwiwr_day_time <- ggplot(wiwr_preds_newdata, aes(x=day_of_yr,
                                                        y=predictions)) + 
   geom_line() + 
   geom_point(data = sum_wiwr,
-             aes(x = day_of_yr, y = count)) +
+             aes(x = day_of_yr, y = meandet)) +
   theme_bw() +
   scale_colour_viridis_d() + 
   scale_y_continuous() + 
@@ -908,7 +921,7 @@ pwiwr_day_time <- ggplot(wiwr_preds_newdata, aes(x=day_of_yr,
 pwiwr_day_time
 
 # plot predicted vs. observed values
-ggplot(data = wiwr_brt_predictions, aes(x = count, y = OOB_preds)) + 
+ggplot(data = wiwr_brt_predictions, aes(x = meandet, y = OOB_preds)) + 
   geom_point() + 
   geom_smooth() + 
   geom_abline(intercept = 0, slope = 1) + 
@@ -975,7 +988,7 @@ names(fits_aruwiwr_brt) <- 1:length(fits_aruwiwr_brt)
 aruwiwr_brt_predictions <- bind_rows(lapply(brt_test_folds, 
                                          FUN = function(x) x$test_predictions))
 aruwiwr_brt_predictions$error = aruwiwr_brt_predictions$OOB_preds - 
-  aruwiwr_brt_predictions$count
+  aruwiwr_brt_predictions$meandet
 
 # calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
 # McGill 2013)
@@ -984,8 +997,8 @@ aruwiwr_brt_r2 <- cor(aruwiwr_brt_predictions$day_of_yr,
                    method = "pearson")^2
 # calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
 aruwiwr_brt_R2 <- 1 - (sum(aruwiwr_brt_predictions$error^2) / 
-                      (sum((aruwiwr_brt_predictions$count - 
-                              mean(aruwiwr_brt_predictions$count))^2)))
+                      (sum((aruwiwr_brt_predictions$meandet - 
+                              mean(aruwiwr_brt_predictions$meandet))^2)))
 
 ## end evaluate WIWR BRT (ARU) -----------------------------------------------------
 
@@ -1009,7 +1022,7 @@ paruwiwr_day_time <- ggplot(aruwiwr_preds_newdata, aes(x=day_of_yr,
                                                  y=predictions)) + 
   geom_line() + 
   geom_point(data = sum_aruwiwr,
-             aes(x = day_of_yr, y = count)) +
+             aes(x = day_of_yr, y = meandet)) +
   theme_bw() +
   scale_colour_viridis_d() + 
   scale_y_continuous() + 
@@ -1018,7 +1031,7 @@ paruwiwr_day_time <- ggplot(aruwiwr_preds_newdata, aes(x=day_of_yr,
 paruwiwr_day_time
 
 # plot predicted vs. observed values
-ggplot(data = aruwiwr_brt_predictions, aes(x = count, y = OOB_preds)) + 
+ggplot(data = aruwiwr_brt_predictions, aes(x = meandet, y = OOB_preds)) + 
   geom_point() + 
   geom_smooth() + 
   geom_abline(intercept = 0, slope = 1) + 

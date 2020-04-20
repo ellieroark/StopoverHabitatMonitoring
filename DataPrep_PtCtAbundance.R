@@ -280,26 +280,28 @@ ybsa <- full_join(ybsa, noybsact)
 
 ## end create YBSA df----------------------------------------------------------- 
 
-## create dataframes with # of individs. per day, instead of per count----------
+## create dataframes with average # of individs. per pt ct each day, instead of 
+## just  # of individuals per count---------------------------------------------
 #  add up number of individs detected per day for each 
 sum_wiwr <- wiwr %>%
         group_by(day_of_yr) %>%
-        summarize(count = sum(count))
+        summarize(meandet = mean(count), count = sum(count))
 
-sum_ybsa <- ybsa %>%
-        group_by(day_of_yr) %>%
-        summarize(count = sum(count))
+# sum_ybsa <- ybsa %>%
+#         group_by(day_of_yr) %>%
+#         summarize(count = mean(count))
+# 
+# sum_bcch <- bcch %>%
+#         group_by(day_of_yr) %>%
+#         summarize(count = mean(count))
+# 
+# sum_heth <- heth %>%
+#         group_by(day_of_yr) %>%
+#         summarize(count = mean(count))
 
-sum_bcch <- bcch %>%
-        group_by(day_of_yr) %>%
-        summarize(count = sum(count))
-
-sum_heth <- heth %>%
-        group_by(day_of_yr) %>%
-        summarize(count = sum(count))
 sum_gcki <- gcki %>%
         group_by(day_of_yr) %>%
-        summarize(count = sum(count))
+        summarize(meandet = mean(count), count = sum(count))
 
 # add centered and squared day of year cols to windday df before joining to 
 # sum_dfs
@@ -311,9 +313,9 @@ windday$day_sq <- windday$day_of_yr_c^2
 # add windspeed rating in knots to sum_ dfs. 
 sum_gcki <- left_join(sum_gcki, windday, by = "day_of_yr")
 sum_wiwr <- left_join(sum_wiwr, windday, by = "day_of_yr")
-sum_bcch <- left_join(sum_bcch, windday, by = "day_of_yr")
-sum_ybsa <- left_join(sum_ybsa, windday, by = "day_of_yr")
-sum_heth <- left_join(sum_heth, windday, by = "day_of_yr")
+#sum_bcch <- left_join(sum_bcch, windday, by = "day_of_yr")
+#sum_ybsa <- left_join(sum_ybsa, windday, by = "day_of_yr")
+#sum_heth <- left_join(sum_heth, windday, by = "day_of_yr")
 
 ## end create # of individs per day dfs-----------------------------------------
 
@@ -321,5 +323,5 @@ sum_heth <- left_join(sum_heth, windday, by = "day_of_yr")
 rm(nobcchct, nogckict, nowiwrct, noybsact, nohethct, dropa, dropb, 
    sunrise_times)
 
-rm(bcch, heth, ptct, sum_bcch, sum_heth, sum_ybsa, ybsa)
+rm(bcch, heth, ptct, ybsa)
 

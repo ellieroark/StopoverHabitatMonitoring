@@ -175,10 +175,12 @@ arugcki <- left_join(arugcki, weathervar, by = "ptct_id")
 
 ### end add predictor variables for analysis------------------------------------
 
-### aggregate GCKI observations per day-----------------------------------------
+### aggregate GCKI observations per day to get mean # of 30 sec intervals with a 
+### vocalization per recorder each day (meandet), and total # of 30 sec 
+### intervals per day (count)
 sum_arugcki <- arugcki %>%
   group_by(day_of_yr) %>%
-  summarize(count = sum(count))
+  summarize(meandet = mean(count), count = sum(count))
 
 ## add average windspeed for the day to sum_arugcki df
 sum_arugcki <- left_join(sum_arugcki, windday, by = "day_of_yr")
@@ -334,7 +336,7 @@ aruwiwr <- left_join(aruwiwr, weathervar, by = "ptct_id")
 ### aggregate wiwr observations per day-----------------------------------------
 sum_aruwiwr <- aruwiwr %>%
   group_by(day_of_yr) %>%
-  summarize(count = sum(count))
+  summarize(meandet = mean(count), count = sum(count))
 
 ## add average windspeed for the day to sum_aruwiwr df
 sum_aruwiwr <- left_join(sum_aruwiwr, windday, by = "day_of_yr")
