@@ -21,6 +21,9 @@
 #set number of trees for BRT models
 nt = 2000
 
+plotson <- TRUE
+
+if(plotson){
 # Exploratory plots -----------------------------------------------------------
 #hist(ptct$count, main = "number of individs")
 
@@ -54,6 +57,7 @@ hist(sum_aruwiwr$meandet)
 
 
 # end Exploratory plots -------------------------------------------------------
+}
 
 # # GLM for GCKI counts over time------------------------------------------------
 # ## model for the number of GCKI detected per point count, depending on weather
@@ -313,11 +317,13 @@ fit_brt <- function(test_fold, sp_data, newdata) {
   test_pred <- sp_data[sp_data$fold == test_fold, ]
   test_pred$OOB_preds <- predict(f_m, newdata = test_pred, 
                                  n.trees = nt, type = "response")
+  #test_pred$error <- test_pred$OOB_preds - test_pred$meandet
   
   # Get standardized predictions to new data
   stand_pred <- newdata[newdata$fold == test_fold, ]
   stand_pred$predictions <- predict(f_m, newdata = stand_pred, 
                                  n.trees = nt, type = "response")
+  #stand_pred$error <- stand_pred$predictions - stand_pred$meandet
   
   # return fitted model, predictions to the observed data from the test fold, 
   # and predictions to new data (with standardized covariates)

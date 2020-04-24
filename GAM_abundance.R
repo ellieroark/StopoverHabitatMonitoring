@@ -19,7 +19,7 @@
 
 
 ## GAM with GCKI per day (ptct)-------------------------------------------------
-k <- 12 # k should be large enough that EDF is a good bit less than k-1.  
+k <- -1 # k should be large enough that EDF is a good bit less than k-1.  
 
 # GAM fit by wg using k (see above) knots for smoothing
 # uses cubic regression spline as smoothing basis
@@ -179,7 +179,7 @@ gcki_gam2_R2 <- 1 - (sum(gcki_gam2_predictions$error^2) /
 
 
 ## GAM with GCKI per day (ARU)-------------------------------------------------
-k = 15
+k = -1
 
 fits_arugcki_gam <- list()
 
