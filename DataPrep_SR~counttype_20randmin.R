@@ -18,15 +18,15 @@
 
 ### read in random minute aru observations and file name key
 
-aru20r <- read_csv(file = "./2019data/ARU20randmin.csv")
+arurand <- read_csv(file = "./2019data/ARU20randmin_final.csv")
 filenames <- read_csv(file = "./2019data/filename_key_20randmin.csv", 
                       col_types = cols(.default = "?", folder = "c"))
 
 ##cut columns down to just anon_filename and species_code
-aru20r <- subset(aru20r, select = c(filename, species_code))
+arurand <- subset(arurand, select = c(filename, species_code))
 
-##change filename to anon_name in aru20r
-aru20r <- rename(aru20r, anon_name = "filename")
+##change filename to anon_name in arurand
+arurand <- rename(arurand, anon_name = "filename")
 
 ### un-anonymize the aru file names---------------------------------------------
 
@@ -34,7 +34,7 @@ aru20r <- rename(aru20r, anon_name = "filename")
 filenames <- subset(filenames, select = c(selec, sound.files, anon_name, date))
 
 #join filenames to allaru to add a column that has the un-anonymized file names
-aru20r <- left_join(aru20r, filenames, by = "anon_name")
+arurand <- left_join(arurand, filenames, by = "anon_name")
 
 ### end un-anonymize------------------------------------------------------------
 
@@ -46,17 +46,14 @@ aru_id <- c("swift02", "swift01", "AM", "swift03")
 recs <- data.frame(aru_id, rec)
 
 #create an aru_id col for allaru
-aru20r$rec <- gsub("day.._?", "", aru20r$anon_name)
-aru20r$rec <- gsub("_.*_.*", "", aru20r$rec)
+arurand$rec <- gsub("day.{2,3}_?", "", arurand$anon_name)
+arurand$rec <- gsub("_.*_.*", "", arurand$rec)
 
 #de-anonymize aru_id
-aru20r <- left_join(aru20r, recs, by = "rec")
+arurand <- left_join(arurand, recs, by = "rec")
 
 #remove "rec" column-- aru_id is all that's needed
-aru20r$rec <- NULL
-
-#create count type col
-aru20r$count_type <- "arurand"
+arurand$rec <- NULL
 
 # fetch the point id for a particular date and aru from the allaru df
 locs <- data.frame(allaru$point_id, allaru$date, allaru$aru_id)
@@ -66,7 +63,7 @@ locs <- rename(locs, point_id = "allaru.point_id", date = "allaru.date",
 #create an aruday column that says both the date and the aru
 locs$aruday <- paste(as.character(locs$date), as.character(locs$aru_id), 
                      sep = "_")
-aru20r$aruday <- paste(as.character(aru20r$date), as.character(aru20r$aru_id), 
+arurand$aruday <- paste(as.character(arurand$date), as.character(arurand$aru_id), 
                        sep = "_")
 
 #get rid of unnecessary columns and rows in locs
@@ -74,15 +71,26 @@ locs$date <- NULL
 locs$aru_id <- NULL
 locs <- unique(locs)
 
-#add point id to aru20r by joining locs and aru20r by aruday
-aru20r <- left_join(aru20r, locs, by = "aruday")
+#add point id to arurand by joining locs and arurand by aruday
+arurand <- left_join(arurand, locs, by = "aruday")
+
+#add locations to arudays 2019-04-16_swift02 and 2019-05-05_swift01 
+# these days had a five hour ARU rec but no paired in person/aru point count
+# so their locations are not in the allaru or ptct dataframes
+arurand[which(arurand$aruday == "2019-05-05_swift01"), "point_id"] <- "p3"
+arurand[which(arurand$aruday == "2019-04-16_swift02"), "point_id"] <- "p13"
+##NB: because these units on these days did not have in person surveys, there is
+## no wind, rain or noise rating. they will recieve the daily average wind
+## rating for inclusion in the abundance models but will be dropped from the 
+## species richness models since they do not have the required weather variables
+## create drop object to exclude these days from species richness models
+drop <- c("2019-05-05_swift01", "2019-04-16_swift02")
 
 #add a "ptct_id" column that pastes day and point_id (location) together
-aru20r$ptct_id <- paste(as.character(aru20r$date), aru20r$point_id, sep = "_")
+arurand$ptct_id <- paste(as.character(arurand$date), arurand$point_id, sep = "_")
 
 # create a new df with just weather variables, aru_id and date from ptct data
-weathervar <- allaru[ ,
-                   c("aru_id", "date", "wind", "rain", "noise")]
+weathervar <- allaru[ , c("aru_id", "date", "wind", "rain", "noise")]
 # create aruday for weathervar
 weathervar$aruday <- paste(as.character(weathervar$date), weathervar$aru_id, 
                            sep = "_")
@@ -94,64 +102,106 @@ weathervar <- distinct(weathervar)
 weathervar$aru_id <- NULL
 weathervar$date <- NULL
 
-# join to aru20r df to add weather and start time variables
-aru20r <- left_join(aru20r, weathervar, by = "aruday")
+# join to arurand df to add weather and start time variables
+arurand <- left_join(arurand, weathervar, by = "aruday")
 
 # make aru_sample col
-aru20r$aru_sample <- TRUE
+arurand$aru_sample <- TRUE
 
 ### end add pt id, count type, aru_id, etc. cols--------------------------------
 
+## get unique values of selec for each aruday
+min <- arurand %>% group_by(aruday) %>% distinct(selec)
+#table(min$aruday)
+
+##randomly sample 10 rand min from each aruday and 22 rand min from each aruday
+# get 10 random min for each aruday from "min" df 
+s10r <- sample_n(min, 10, replace = FALSE)
+
+# get 22 random min for each aruday from "min" df
+s22r <- sample_n(min, 22, replace = FALSE)
+
+# get dataframe with all species observations from the 22 randomly selected mins
+# for each aruday
+aru22r <- semi_join(arurand, s22r, by = c("selec", "aruday"))
+
+# get dataframe with all species observations from the 10 randomly selected mins
+# for each aruday
+aru10r <- semi_join(arurand, s10r, by = c("selec", "aruday"))
+
+
 ### add up species detected per 20 random minutes-------------------------------
 ## make new df that will have one row per aruday (effectively a count id). 
-# make unique ptct_id column
-aruday <- unique(aru20r$aruday)
+# get unique arudays
+aruday <- unique(arurand$aruday)
 # make sp_detected col
 sp_detected <- NA
 # combine them into df
-spdet_20r <- data.frame(aruday, sp_detected)
+spdet_22r <- data.frame(aruday, sp_detected)
 
 ## for loop that will add up the number of species detected per point count
-for (i in 1:nrow(spdet_20r)){
-  thisct <- spdet_20r$aruday[i]
-  thisdat <- aru20r[aru20r$aruday == thisct, ]
+for (i in 1:nrow(spdet_22r)){
+  thisct <- spdet_22r$aruday[i]
+  thisdat <- aru22r[aru22r$aruday == thisct, ]
   n_sp <- length(unique(thisdat$species_code))
   if (any(thisdat$species_code == "no birds")){
-    spdet_20r$sp_detected[i] <- n_sp-1
+    spdet_22r$sp_detected[i] <- n_sp-1
   }
-  else {spdet_20r$sp_detected[i] <- n_sp}
+  else {spdet_22r$sp_detected[i] <- n_sp}
 }
+
+spdet_10r <- data.frame(aruday, sp_detected)
+## add up species detected per 10 random min 
+for (i in 1:nrow(spdet_10r)){
+  thisct <- spdet_10r$aruday[i]
+  thisdat <- aru10r[aru10r$aruday == thisct, ]
+  n_sp <- length(unique(thisdat$species_code))
+  if (any(thisdat$species_code == "no birds")){
+    spdet_10r$sp_detected[i] <- n_sp-1
+  }
+  else {spdet_10r$sp_detected[i] <- n_sp}
+}
+
+#create count type col
+spdet_10r$count_type <- "aru_10r"
+spdet_22r$count_type <- "aru_22r"
 
 ### end total species detected per count ---------------------------------------
 
 ### merge with spdet_paired dataframe-----------------------------------------
+## join spdet_10r and spdet_22r
+spdet_r <- full_join(spdet_10r, spdet_22r)
 ## PREP for join-- add missing variables back to spdet20r
 # create dfs with place and date variables
-covs <- select(aru20r, c("aruday", "date", "point_id", "ptct_id", "aru_id", "count_type",
+covs <- select(arurand, c("aruday", "date", "point_id", "ptct_id", "aru_id",
                           "wind", "rain", "noise", "aru_sample"))
 
 # get rid of dupicate rows in the variable dataframes
 covs <- distinct(covs)
 
 # join variable dfs to spdet dfs
-spdet_20r <- left_join(spdet_20r, covs, by = "aruday")
+spdet_r <- left_join(spdet_r, covs, by = "aruday")
+
+## drop the two days with no associated weather variables from the spdet_r df
+spdet_r <- spdet_r[spdet_r$aruday %nin% drop, ]
 
 ##create day of year and min past sun cols in spdet_20r
-spdet_20r$day_of_yr <- yday(spdet_20r$date)
-spdet_20r$min_past_sun <- NA
+spdet_r$day_of_yr <- yday(spdet_r$date)
+#spdet_r$min_past_sun <- NA
 
 # actually merge spdet_aru and spdet_ptct
-spdet_3ct <- full_join(spdet_paired, spdet_20r, by = NULL)
+spdet_4ct <- full_join(spdet_paired, spdet_r, by = NULL)
 
 ### end merge dataframes--------------------------------------------------------
 
 ## organize df so that it's sorted by date and ptctid
-spdet_3ct <- spdet_3ct[order(spdet_3ct$date, spdet_3ct$ptct_id),]
+spdet_4ct <- spdet_4ct[order(spdet_4ct$date, spdet_4ct$ptct_id),]
 
 
 ### clean up environment
-rm(covs, filenames, locs, recs, spdet_20r, spdet_aru, spdet_ptct, thisdat,
-   weathervar, aru_id, aruday, n_sp, rec, sp_detected, thisct)
+rm(covs, aru10r, aru22r, filenames, locs, recs, s10r, s22r, spdet_22r, spdet_aru, 
+   spdet_10r, spdet_ptct, thisdat, weathervar, aru_id, aruday, n_sp, rec, 
+   sp_detected, thisct, min)
 
 
 
