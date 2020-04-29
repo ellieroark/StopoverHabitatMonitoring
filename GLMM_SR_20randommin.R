@@ -4,13 +4,13 @@
 ## 
 ## author: Ellie Roark
 ## created: 7 Feb 2020
-## last modified: 24 Apr 2020
+## last modified: 28 Apr 2020
 ## 
 ## inputs: *
 ##
 ##         
-## outputs: *r1.spdetmm - mixed model predicting the number of species detected
-##            based on count type, timing and weather variables
+## outputs: *max.rand.spdetmm - mixed model predicting the number of species 
+##          detected based on count type, timing and weather variables
 ##            
 ## TODO: * 
 ################################
@@ -278,6 +278,9 @@ max.rand.spdetmm <- update(rand.spdetmm,start=ss,control=glmerControl(
 
 summary(max.rand.spdetmm)
 
+## get 95% confidence intervals for coefficient estimates for for final model 
+CI.maxrand <- confint.merMod(max.rand.spdetmm, level = 0.95, method = "Wald")
+
 
 ## end GLMM with 4 ct types-----------------------------------------------------
 
@@ -289,3 +292,17 @@ spdet_time_4ct <- ggplot(spdet_4ct, aes(x=day_of_yr, y=sp_detected,
   geom_smooth(method="loess", 
               se=TRUE)     # Add confidence interval shading
 spdet_time_4ct
+
+
+## clean up workspace 
+rm(allaru, allobs_box, alpha_codes, aprcount_type_box, aru_id_box, aru_names, 
+   arurand, aruspdetmod, aruspdetmod2, CI.r1, count_type_box, derivs1, noise_box,
+   non_species, nonoise_spdetmod, nonoise.spdetmm, norain_spdetmod, 
+   norain.spdetmm, norm.4ct, nowind_spdetmod, nowind.spdetmm, nullpois_spdetmod,
+   obsfreq_hist, onlyaru, onlypt, pairplot, point_id_box, pois_cov, pois_spdetmod, 
+   pois.4ct, ptct, pts_spdet, qpois.4ct, r1.spdetmm, rain_box, rand.spdetmm, sdf, 
+   sp_detection_method, spdet_all, spdet_all_covs, spdet_aru, spdet_paired, 
+   spdet_r, spdet_time_4ct, spdet_time_ctype, spdet_time_ctype_loess, spdetmod,
+   ss, wind_box, arudet, arudiag, doy_spdet, drop, drop_counts, keep_sp, ll, 
+   lm_on, mmdiag, plotson, poisdiag, ptdet, regdiag, robust_SE, sc_grad1, 
+   tod_spdet, tt)
