@@ -17,7 +17,7 @@
 ## TODO: * 
 ################################
 
-
+stop("yay! this is the beginning of the GAM script! e")
 ## GAM with GCKI per day (ptct)-------------------------------------------------
 k <- -1 # k should be large enough that EDF is a good bit less than k-1.  
 
@@ -31,6 +31,10 @@ fit_gam <- function(test_fold, sp_data, newdata) {
   test_pred <- sp_data[sp_data$fold == test_fold, ]
   test_pred$OOB_preds <- predict(f_m, newdata = test_pred, 
                                  type = "response")
+  test_pred$OOB_logpreds <- predict(f_m, newdata = test_pred, 
+                                     type = "link")
+  test_pred$error <- test_pred$OOB_logpreds - log(test_pred$meandet)
+  
   # Get standardized predictions to new data
   stand_pred <- newdata[newdata$fold == test_fold, ]
   stand_pred$predictions <- predict(f_m, newdata = stand_pred, 
