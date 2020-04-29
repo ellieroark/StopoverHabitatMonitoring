@@ -4,7 +4,7 @@
 ## 
 ## author: Ellie Roark
 ## created: 27 Nov 2019
-## last modified: 16 Apr 2020
+## last modified: 28 Apr 2020
 ## 
 ## inputs: *ARUDuplicateReview2019- script that randomly selects which of the 
 ##            duplicate ARU recordings to use, and sources:
@@ -774,50 +774,98 @@ ggplot(data = wiwr_aru10c_testpreds_gam, aes(x = OOB_preds, y = meandet)) +
 
 
 #### SUMMARY PLOTS FOR SPECIES RICHNESS GLMM------------------------------------
-
-## plot of coefficients for GLMM (10 min vs 10 min)
+## plot of coefficients for GLMM (all count types)
 ## example from wg:
 ## # make a data frame to use in ggplot
-r1_df <- data.frame(matrix(nrow = 12, ncol = 4))
-colnames(r1_df) <- c("variable", "coef_estimate", "l_bound", "h_bound")
-r1_df$variable <- c("Count type (ARU)", "Wind (2)", "Wind (3+)",
-                      "Rain (Wet)", "Noise (1)", "Noise (>2)", "Day of year", 
-                      "Day of year squared", "Minutes past sunrise", 
-                      "Count type (ARU)*Rain (Wet)", 
-                      "Count type (ARU)*Day of Year",
-                      "Count type (ARU)*Day of year squared")
+maxrand_df <- data.frame(matrix(nrow = 19, ncol = 4))
+colnames(maxrand_df) <- c("variable", "coef_estimate", "l_bound", "h_bound")
+maxrand_df$variable <- c("Count type (ARU- 10 min consecutive)", 
+                    "Count type (ARU- 10 min random)", 
+                    "Count type (ARU- 22 min random)", "Wind (2)", "Wind (3+)",
+                    "Rain (Wet)", "Noise (1)", "Noise (>2)", "Day of year", 
+                    "Day of year squared",
+                    "Count type (ARU- 10 min consecutive)*Rain (Wet)", 
+                    "Count type (ARU- 10 min random)*Rain (Wet)",
+                    "Count type (ARU- 22 min random)*Rain (Wet)",
+                    "Count type (ARU- 10 min consecutive)*Day of Year",
+                    "Count type (ARU- 10 min random)*Day of Year",
+                    "Count type (ARU- 22 min random)*Day of Year",
+                    "Count type (ARU- 10 min consecutive)*Day of year squared",
+                    "Count type (ARU- 10 min random)*Day of year squared",
+                    "Count type (ARU- 22 min random)*Day of year squared")
 
 # get coefficient point estimate and lower and upper CI bounds for each
 # predictor variable
-for(i in 1:nrow(r1_df)) {
+for(i in 1:nrow(maxrand_df)) {
   # get coefficient point estimate
-  r1_df$coef_estimate[i] <- summary(r1.spdetmm)$coefficients[1 + i]
-  r1_df$l_bound[i] <- CI.r1[2 + i, "2.5 %"]
-  r1_df$h_bound[i] <- CI.r1[2 + i, "97.5 %"]
+  maxrand_df$coef_estimate[i] <- summary(max.rand.spdetmm)$coefficients[1 + i]
+  maxrand_df$pvalue[i] <- summary(max.rand.spdetmm)$coefficients[1+i, "Pr(>|z|)"]
+  maxrand_df$l_bound[i] <- CI.maxrand[2 + i, "2.5 %"]
+  maxrand_df$h_bound[i] <- CI.maxrand[2 + i, "97.5 %"]
 }
 
 # make graph
-print(ggplot(data = r1_df,
+print(ggplot(data = maxrand_df,
              aes(x = factor(variable,
-                            levels = c("Count type (ARU)", "Wind (2)", "Wind (3+)",
-                                       "Rain (Wet)", "Noise (1)", "Noise (>2)", 
-                                       "Day of year", "Day of year squared", 
-                                       "Minutes past sunrise", 
-                                       "Count type (ARU)*Rain (Wet)", 
-                                       "Count type (ARU)*Day of Year",
-                                       "Count type (ARU)*Day of year squared")),
+                            levels = c("Count type (ARU- 10 min consecutive)", 
+                                       "Count type (ARU- 10 min random)", 
+                                       "Count type (ARU- 22 min random)", "Wind (2)", "Wind (3+)",
+                                       "Rain (Wet)", "Noise (1)", "Noise (>2)", "Day of year", 
+                                       "Day of year squared",
+                                       "Count type (ARU- 10 min consecutive)*Rain (Wet)", 
+                                       "Count type (ARU- 10 min random)*Rain (Wet)",
+                                       "Count type (ARU- 22 min random)*Rain (Wet)",
+                                       "Count type (ARU- 10 min consecutive)*Day of Year",
+                                       "Count type (ARU- 10 min random)*Day of Year",
+                                       "Count type (ARU- 22 min random)*Day of Year",
+                                       "Count type (ARU- 10 min consecutive)*Day of year squared",
+                                       "Count type (ARU- 10 min random)*Day of year squared",
+                                       "Count type (ARU- 22 min random)*Day of year squared"),
+                            labels = c("Count type (ARU\n10 min consecutive)", 
+                                       "Count type (ARU\n10 min random)", 
+                                       "Count type (ARU\n22 min random)", "Wind (2)", "Wind (3+)",
+                                       "Rain (Wet)", "Noise (1)", "Noise (>2)", "Day of year", 
+                                       "Day of year squared",
+                                       "Count type (ARU\n10 min consecutive)*Rain (Wet)", 
+                                       "Count type (ARU\n10 min random)*Rain (Wet)",
+                                       "Count type (ARU\n22 min random)*Rain (Wet)",
+                                       "Count type (ARU\n10 min consecutive)*Day of Year",
+                                       "Count type (ARU\n10 min random)*Day of Year",
+                                       "Count type (ARU\n22 min random)*Day of Year",
+                                       "Count type (ARU\n10 min consecutive)*Day of year squared",
+                                       "Count type (ARU\n10 min random)*Day of year squared",
+                                       "Count type (ARU\n22 min random)*Day of year squared")),
                  y = coef_estimate)) +
         geom_point() +
         geom_linerange(aes(x = factor(variable,
-                                      levels = c("Count type (ARU)", "Wind (2)",
-                                                 "Wind (3+)", "Rain (Wet)", 
-                                                 "Noise (1)", "Noise (>2)", 
-                                                 "Day of year", 
-                                                 "Day of year squared", 
-                                                 "Minutes past sunrise", 
-                                                 "Count type (ARU)*Rain (Wet)", 
-                                                 "Count type (ARU)*Day of Year",
-                                                 "Count type (ARU)*Day of year squared")),
+                                      levels = c("Count type (ARU- 10 min consecutive)", 
+                                                 "Count type (ARU- 10 min random)", 
+                                                 "Count type (ARU- 22 min random)", "Wind (2)", "Wind (3+)",
+                                                 "Rain (Wet)", "Noise (1)", "Noise (>2)", "Day of year", 
+                                                 "Day of year squared",
+                                                 "Count type (ARU- 10 min consecutive)*Rain (Wet)", 
+                                                 "Count type (ARU- 10 min random)*Rain (Wet)",
+                                                 "Count type (ARU- 22 min random)*Rain (Wet)",
+                                                 "Count type (ARU- 10 min consecutive)*Day of Year",
+                                                 "Count type (ARU- 10 min random)*Day of Year",
+                                                 "Count type (ARU- 22 min random)*Day of Year",
+                                                 "Count type (ARU- 10 min consecutive)*Day of year squared",
+                                                 "Count type (ARU- 10 min random)*Day of year squared",
+                                                 "Count type (ARU- 22 min random)*Day of year squared"),
+                                      labels = c("Count type- ARU 10 min\nconsecutive", 
+                                                 "Count type- ARU 10 min\nrandom", 
+                                                 "Count type- ARU 22 min\nrandom", "Wind (2)", "Wind (3+)",
+                                                 "Rain (Wet)", "Noise (1)", "Noise (>2)", "Day of year", 
+                                                 "Day of year squared",
+                                                 "Count type- ARU 10 min\nconsecutive *Rain (Wet)", 
+                                                 "Count type- ARU 10 min random)*Rain (Wet)",
+                                                 "Count type (ARU\n22 min random)*Rain (Wet)",
+                                                 "Count type (ARU\n10 min consecutive)*Day of Year",
+                                                 "Count type (ARU\n10 min random)*Day of Year",
+                                                 "Count type (ARU\n22 min random)*Day of Year",
+                                                 "Count type (ARU\n10 min consecutive)*Day of year squared",
+                                                 "Count type (ARU\n10 min random)*Day of year squared",
+                                                 "Count type (ARU\n22 min random)*Day of year squared")),
                            ymin = l_bound,
                            ymax = h_bound)) +
         xlab("Predictor Variable") +
@@ -1036,6 +1084,7 @@ spdet_time <- ggplot(pred.4ct,
   
 spdet_time
 
+
 #### END summary plots for species richness GLMM-------------------------------
 
 
@@ -1043,3 +1092,14 @@ spdet_time
 ggsave(spdet_time, filename = "./saved_objects/spdet_time.jpg", 
        width = 10, height = 6, 
        units = "cm", device = "jpeg")
+
+### write out tables as .csvs---------------------------------------------------
+# write out table of mixed model results for species richness model with four
+# count types. 
+maxrand_df[,-1] <- round(maxrand_df[,-1], digits = 4)
+write_csv(maxrand_df, path = "./saved_objects/mixedmodel_results_speciesrichness.csv")
+
+
+
+### print numbers needed for manuscript-----------------------------------------
+
