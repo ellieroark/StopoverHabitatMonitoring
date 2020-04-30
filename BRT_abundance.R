@@ -1071,7 +1071,7 @@ rmse_aruwiwr22r_brt <- sapply(fits_aruwiwr22r_brt, FUN = function(x) {
     sqrt(mean(z$test_predictions$error^2))
   })
 })
-saveRDS(fits_aruwiwr22r_brt, "fits_aruwiwr10r_brt.rds")
+saveRDS(fits_aruwiwr22r_brt, "fits_aruwiwr22r_brt.rds")
 rm(fits_aruwiwr22r_brt)
 ## end BRT for wiwr per day- ARU 22 random min----------------------------------
 
