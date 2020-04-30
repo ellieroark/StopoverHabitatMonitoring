@@ -22,12 +22,10 @@
 ## TODO: * 
 ################################
 
+library(wgutil)
 library(tidyverse)
 library(Hmisc)
 library(lme4)
-
-
-stop("beginning of plots script. e")
 
 t_size <- 10
 #setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
@@ -39,18 +37,6 @@ rm(arugcki, arugcki.day.gam, arugcki.day.gam2, aruwiwr, aruwiwr.day.gam,
 ##extraneous objects  
 
 ### SUMMARY PLOTS FOR ABUNDANCE MODELS------------------------------------------
-
-## correlation plots for predicted and observed abundance metrics
-
-
-
-
-## plot of correlation between aru gcki observations (mean # of 30 sec intervals
-## per unit per day with a vocalization) and in person gcki observations 
-## (mean number of individuals per point count per day)
-
-
-
 
 
 ## scatterplot of number of GCKI per day (point counts) over time, with fitted 
@@ -67,7 +53,7 @@ warning("Add standard error to this at some point.  14 April WG.")
 gcki_ptct_preds_brt <- group_by(gcki_ptct_preds_brt, day_of_yr) %>%
   summarise(mean_pred = mean(predictions))
 
-ggplot(data = gcki_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+g4p1 <- ggplot(data = gcki_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   geom_line() + 
   geom_point(data = sum_gcki, aes(x = day_of_yr, y = meandet)) + 
   ggtitle("Golden-crowned Kinglet\nPoint counts (10 min); BRT") + 
@@ -75,75 +61,75 @@ ggplot(data = gcki_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
   ylab("Mean number of individuals per point count") + 
   theme_bw()
 
-b200_df <- bind_rows(lapply(fits_gcki_brt$`200`, 
-                            FUN = function(x) {x$standardized_preds}))
-ggplot(data = b200_df, aes(x = day_of_yr, y = predictions)) + 
-  geom_line() + 
-  geom_point(data = sum_gcki, aes(x = day_of_yr, y = meandet)) + 
-  ggtitle("Golden-crowned Kinglet\nPoint counts (10 min)\nBRT ex. model 200") + 
-  xlab("Julian day of year") + 
-  ylab("Mean number of individuals per point count") + 
-  theme_bw()
-
-## GCKIPointCounts over time- observed vs predicted values- one set of five-
-## fold CV models
-# put test predictions from all five folds into one df
-p200_df <- bind_rows(lapply(fits_gcki_brt$`200`, 
-                          FUN = function(x) {x$test_predictions}))
-
-ggplot(data = p200_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted individuals per count") +
-  ylab("mean observed individuals per count") +
-  ggtitle("model group 200")
-
-p19_df <- bind_rows(lapply(fits_gcki_brt$`19`, 
-                          FUN = function(x) {x$test_predictions}))
-
-ggplot(data = p19_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted individuals per count") +
-  ylab("mean observed individuals per count")+
-  ggtitle("model group 19")
-
-p112_df <- bind_rows(lapply(fits_gcki_brt$`112`, 
-                          FUN = function(x) {x$test_predictions}))
-
-ggplot(data = p112_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted individuals per count") +
-  ylab("mean observed individuals per count")+
-  ggtitle("model group 112")
-
-p94_df <- bind_rows(lapply(fits_gcki_brt$`94`, 
-                          FUN = function(x) {x$test_predictions}))
-
-ggplot(data = p94_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted individuals per count") +
-  ylab("mean observed individuals per count") +
-  ggtitle("model group 94")
-
-# get predictions to independent test data from all 1000 models
-gcki_ptct_testpreds_brt <- bind_rows(lapply(fits_gcki_brt, FUN = function(x) {
-  bind_rows(lapply(x, FUN = function(y) {y$test_predictions}))
-}))
-
-ggplot(data = gcki_ptct_testpreds_brt, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  xlab("mean predicted individuals per count") +
-  ylab("mean observed individuals per count") + 
-  ggtitle("Golden-crowned Kinglets\nPoint counts (10 min); 1000 BRTs")
-
+# b200_df <- bind_rows(lapply(fits_gcki_brt$`200`, 
+#                             FUN = function(x) {x$standardized_preds}))
+# ggplot(data = b200_df, aes(x = day_of_yr, y = predictions)) + 
+#   geom_line() + 
+#   geom_point(data = sum_gcki, aes(x = day_of_yr, y = meandet)) + 
+#   ggtitle("Golden-crowned Kinglet\nPoint counts (10 min)\nBRT ex. model 200") + 
+#   xlab("Julian day of year") + 
+#   ylab("Mean number of individuals per point count") + 
+#   theme_bw()
+# 
+# ## GCKIPointCounts over time- observed vs predicted values- one set of five-
+# ## fold CV models
+# # put test predictions from all five folds into one df
+# p200_df <- bind_rows(lapply(fits_gcki_brt$`200`, 
+#                           FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p200_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted individuals per count") +
+#   ylab("mean observed individuals per count") +
+#   ggtitle("model group 200")
+# 
+# p19_df <- bind_rows(lapply(fits_gcki_brt$`19`, 
+#                           FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p19_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted individuals per count") +
+#   ylab("mean observed individuals per count")+
+#   ggtitle("model group 19")
+# 
+# p112_df <- bind_rows(lapply(fits_gcki_brt$`112`, 
+#                           FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p112_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted individuals per count") +
+#   ylab("mean observed individuals per count")+
+#   ggtitle("model group 112")
+# 
+# p94_df <- bind_rows(lapply(fits_gcki_brt$`94`, 
+#                           FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p94_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted individuals per count") +
+#   ylab("mean observed individuals per count") +
+#   ggtitle("model group 94")
+# 
+# # get predictions to independent test data from all 1000 models
+# gcki_ptct_testpreds_brt <- bind_rows(lapply(fits_gcki_brt, FUN = function(x) {
+#   bind_rows(lapply(x, FUN = function(y) {y$test_predictions}))
+# }))
+# 
+# ggplot(data = gcki_ptct_testpreds_brt, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   xlab("mean predicted individuals per count") +
+#   ylab("mean observed individuals per count") + 
+#   ggtitle("Golden-crowned Kinglets\nPoint counts (10 min); 1000 BRTs")
+# 
 
 ##### THIS is a plot of observed values vs STANDARDIZED predictions
 # ## GCKIPointCounts over time- observed vs predicted values- mean of all models
@@ -175,7 +161,7 @@ warning("Add standard error to this at some point.  14 April WG.")
 gcki_aru10c_preds_brt <- group_by(gcki_aru10c_preds_brt, day_of_yr) %>%
   summarise(mean_pred = mean(predictions))
 
-ggplot(data = gcki_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+g4p2 <- ggplot(data = gcki_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   geom_line() + 
   geom_point(data = sum_arugcki, aes(x = day_of_yr, y = meandet)) + 
   ggtitle("Golden-crowned Kinglet\nARU - consecutive 10 min BRT") + 
@@ -183,66 +169,66 @@ ggplot(data = gcki_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
   ylab("Mean number of 30-second intervals\nwith a vocalization") + 
   theme_bw()
 
-## GCKIARU10c over time- observed vs predicted values- one set of five-
-## fold CV models
-# put test predictions from all five folds into one df
-p140_df <- bind_rows(lapply(fits_arugcki_brt$`140`, 
-                            FUN = function(x) {x$test_predictions}))
+# ## GCKIARU10c over time- observed vs predicted values- one set of five-
+# ## fold CV models
+# # put test predictions from all five folds into one df
+# p140_df <- bind_rows(lapply(fits_arugcki_brt$`140`, 
+#                             FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p140_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted 30-sec intervals\nwith a vocalization") +
+#   ylab("mean observed 30-sec intervals\nwith a vocalization") +
+#   ggtitle("model group 140")
+# 
+# p71_df <- bind_rows(lapply(fits_arugcki_brt$`71`, 
+#                            FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p71_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted 30-sec intervals\nwith a vocalization") +
+#   ylab("mean observed 30-sec intervals\nwith a vocalization")+
+#   ggtitle("model group 71")
+# 
+# p6_df <- bind_rows(lapply(fits_arugcki_brt$`6`, 
+#                             FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p6_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted 30-sec intervals\nwith a vocalization") +
+#   ylab("mean observed 30-sec intervals\nwith a vocalization")+
+#   ggtitle("model group 6")
+# 
+# p199_df <- bind_rows(lapply(fits_arugcki_brt$`199`, 
+#                            FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p199_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted 30-sec intervals\nwith a vocalization") +
+#   ylab("mean observed 30-sec intervals\nwith a vocalization") +
+#   ggtitle("model group 199")
+# 
+# # get predictions to independent test data from all 1000 models
+# gcki_aru10c_testpreds_brt <- bind_rows(lapply(fits_arugcki_brt, FUN = function(x) {
+#   bind_rows(lapply(x, FUN = function(y) {y$test_predictions}))
+# }))
+# 
+# ggplot(data = gcki_aru10c_testpreds_brt, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   xlab("mean predicted 30-sec intervals\nwith a vocalization") +
+#   ylab("mean observed 30-sec intervals\nwith a vocalization") + 
+#   ggtitle("Golden-crowned Kinglets\nARU- 10 consecutive min; 1000 BRTs")
 
-ggplot(data = p140_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted 30-sec intervals\nwith a vocalization") +
-  ylab("mean observed 30-sec intervals\nwith a vocalization") +
-  ggtitle("model group 140")
-
-p71_df <- bind_rows(lapply(fits_arugcki_brt$`71`, 
-                           FUN = function(x) {x$test_predictions}))
-
-ggplot(data = p71_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted 30-sec intervals\nwith a vocalization") +
-  ylab("mean observed 30-sec intervals\nwith a vocalization")+
-  ggtitle("model group 71")
-
-p6_df <- bind_rows(lapply(fits_arugcki_brt$`6`, 
-                            FUN = function(x) {x$test_predictions}))
-
-ggplot(data = p6_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted 30-sec intervals\nwith a vocalization") +
-  ylab("mean observed 30-sec intervals\nwith a vocalization")+
-  ggtitle("model group 6")
-
-p199_df <- bind_rows(lapply(fits_arugcki_brt$`199`, 
-                           FUN = function(x) {x$test_predictions}))
-
-ggplot(data = p199_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted 30-sec intervals\nwith a vocalization") +
-  ylab("mean observed 30-sec intervals\nwith a vocalization") +
-  ggtitle("model group 199")
-
-# get predictions to independent test data from all 1000 models
-gcki_aru10c_testpreds_brt <- bind_rows(lapply(fits_arugcki_brt, FUN = function(x) {
-  bind_rows(lapply(x, FUN = function(y) {y$test_predictions}))
-}))
-
-ggplot(data = gcki_aru10c_testpreds_brt, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  xlab("mean predicted 30-sec intervals\nwith a vocalization") +
-  ylab("mean observed 30-sec intervals\nwith a vocalization") + 
-  ggtitle("Golden-crowned Kinglets\nARU- 10 consecutive min; 1000 BRTs")
-
-
+rm(fits_arugcki_brt)
 # ## GCKI ARU 10c BRT- observed vs predicted values
 # gcki_aru10c_preds_brt <- left_join(gcki_aru10c_preds_brt, sum_gcki, 
 #                                    by = "day_of_yr")
@@ -274,13 +260,15 @@ warning("Add standard error to this at some point.  14 April WG.")
 gcki_aru10r_preds_brt <- group_by(gcki_aru10r_preds_brt, day_of_yr) %>%
   summarise(mean_pred = mean(predictions))
 
-ggplot(data = gcki_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+g4p3 <- ggplot(data = gcki_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   geom_line() + 
   geom_point(data = sum_arugcki10r, aes(x = day_of_yr, y = meandet)) + 
   ggtitle("Golden-crowned Kinglet\nARU (10 random min); BRT") + 
   xlab("Julian day of year") + 
   ylab("Mean number of vocalizations\nper 30-sec interval") + 
   theme_bw()
+
+rm(fits_arugcki10r_brt)
 
 ## scatterplot of number of GCKI per day (ARU random 22 min) over time, 
 ## with fitted average model (BRT) as a line
@@ -297,7 +285,7 @@ warning("Add standard error to this at some point.  14 April WG.")
 gcki_aru22r_preds_brt <- group_by(gcki_aru22r_preds_brt, day_of_yr) %>%
   summarise(mean_pred = mean(predictions))
 
-ggplot(data = gcki_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+g4p4 <- ggplot(data = gcki_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   geom_line() + 
   geom_point(data = sum_arugcki22r, aes(x = day_of_yr, y = meandet)) + 
   ggtitle("Golden-crowned Kinglet\nARU (22 random min); BRT") + 
@@ -305,10 +293,14 @@ ggplot(data = gcki_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
   ylab("Mean number of vocalizations\nper 30-sec interval") + 
   theme_bw()
 
+rm(fits_arugcki22r_brt)
+
+
 
 ## scatterplot of number of WIWR per day (Point Counts 10 min) over time, 
 ## with fitted average model (BRT) as a line
 # get standardized predictions for predictions to test data from all 1000 models
+fits_wiwr_brt <- readRDS("fits_wiwr_brt.rds")
 wiwr_ptct_preds_brt <- bind_rows(lapply(fits_wiwr_brt, FUN = function(x) {
   bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
 }))
@@ -318,13 +310,16 @@ warning("Add standard error to this at some point.  14 April WG.")
 wiwr_ptct_preds_brt <- group_by(wiwr_ptct_preds_brt, day_of_yr) %>%
   summarise(mean_pred = mean(predictions))
 
-ggplot(data = wiwr_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+g4p5 <- ggplot(data = wiwr_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   geom_line() + 
   geom_point(data = sum_wiwr, aes(x = day_of_yr, y = meandet)) + 
-  ggtitle("Winter Wren\nPoint counts (10 min); BRT") + 
-  xlab("Julian day of year") + 
-  ylab("Mean number of individuals per point count") + 
+  # ggtitle("Winter Wren\nPoint counts (10 min); BRT") + 
+  ggtitle("Point Counts\n(a)") + 
+  xlab("") + 
+  ylab("Mean number\nof individuals\nper point count") + 
   theme_bw()
+
+rm(fits_wiwr_brt)
 
 ## scatterplot of number of WIWR per day (ARU 10 rand min) over time, 
 ## with fitted average model (BRT) as a line
@@ -340,7 +335,7 @@ warning("Add standard error to this at some point.  14 April WG.")
 wiwr_aru10r_preds_brt <- group_by(wiwr_aru10r_preds_brt, day_of_yr) %>%
   summarise(mean_pred = mean(predictions))
 
-ggplot(data = wiwr_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+g4p7 <- ggplot(data = wiwr_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   geom_line() + 
   geom_point(data = sum_aruwiwr10r, aes(x = day_of_yr, y = meandet)) + 
   ggtitle("Winter Wren\nARU (10 random min); BRT") + 
@@ -348,65 +343,90 @@ ggplot(data = wiwr_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
   ylab("Mean number of vocalizations\nper 30-second interval") + 
   theme_bw()
 
+rm(fits_aruwiwr10r_brt)
 
-## WIWRPointCounts over time- observed vs predicted values- one set of five-
-## fold CV models
-# put test predictions from all five folds into one df
-p4_df <- bind_rows(lapply(fits_wiwr_brt$`4`, 
-                            FUN = function(x) {x$test_predictions}))
+## scatterplot of number of WIWR per day (ARU 22 rand min) over time, 
+## with fitted average model (BRT) as a line
+# get standardized predictions for predictions to test data from all 1000 models
+fits_aruwiwr22r_brt <- readRDS("fits_aruwiwr22r_brt.rds")
 
-ggplot(data = p4_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted individuals per count") +
-  ylab("mean observed individuals per count") +
-  ggtitle("model group 4")
-
-p18_df <- bind_rows(lapply(fits_wiwr_brt$`18`, 
-                           FUN = function(x) {x$test_predictions}))
-
-ggplot(data = p18_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted individuals per count") +
-  ylab("mean observed individuals per count")+
-  ggtitle("model group 18")
-
-p112_df <- bind_rows(lapply(fits_wiwr_brt$`112`, 
-                            FUN = function(x) {x$test_predictions}))
-
-ggplot(data = p112_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted individuals per count") +
-  ylab("mean observed individuals per count")+
-  ggtitle("model group 112")
-
-p94_df <- bind_rows(lapply(fits_wiwr_brt$`94`, 
-                           FUN = function(x) {x$test_predictions}))
-
-ggplot(data = p94_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted individuals per count") +
-  ylab("mean observed individuals per count") +
-  ggtitle("model group 94")
-
-# get predictions to independent test data from all 1000 models
-wiwr_ptct_testpreds_brt <- bind_rows(lapply(fits_wiwr_brt, FUN = function(x) {
-  bind_rows(lapply(x, FUN = function(y) {y$test_predictions}))
+wiwr_aru22r_preds_brt <- bind_rows(lapply(fits_aruwiwr22r_brt, FUN = function(x) {
+  bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
 }))
 
-ggplot(data = wiwr_ptct_testpreds_brt, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  xlab("mean predicted individuals per count") +
-  ylab("mean observed individuals per count") + 
-  ggtitle("Winter Wren\nPoint counts (10 min); 1000 BRTs")
+# get average prediction for each day from the 200 iterations of the 5-fold CV
+warning("Add standard error to this at some point.  14 April WG.")
+wiwr_aru22r_preds_brt <- group_by(wiwr_aru22r_preds_brt, day_of_yr) %>%
+  summarise(mean_pred = mean(predictions))
+
+g4p8 <- ggplot(data = wiwr_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  geom_line() + 
+  geom_point(data = sum_aruwiwr22r, aes(x = day_of_yr, y = meandet)) + 
+  ggtitle("Winter Wren\nARU (22 random min); BRT") + 
+  xlab("Julian day of year") + 
+  ylab("Mean number of vocalizations\nper 30-second interval") + 
+  theme_bw()
+
+rm(fits_aruwiwr10r_brt)
+
+# ## WIWRPointCounts over time- observed vs predicted values- one set of five-
+# ## fold CV models
+# # put test predictions from all five folds into one df
+# p4_df <- bind_rows(lapply(fits_wiwr_brt$`4`, 
+#                             FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p4_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted individuals per count") +
+#   ylab("mean observed individuals per count") +
+#   ggtitle("model group 4")
+# 
+# p18_df <- bind_rows(lapply(fits_wiwr_brt$`18`, 
+#                            FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p18_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted individuals per count") +
+#   ylab("mean observed individuals per count")+
+#   ggtitle("model group 18")
+# 
+# p112_df <- bind_rows(lapply(fits_wiwr_brt$`112`, 
+#                             FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p112_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted individuals per count") +
+#   ylab("mean observed individuals per count")+
+#   ggtitle("model group 112")
+# 
+# p94_df <- bind_rows(lapply(fits_wiwr_brt$`94`, 
+#                            FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p94_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted individuals per count") +
+#   ylab("mean observed individuals per count") +
+#   ggtitle("model group 94")
+# 
+# # get predictions to independent test data from all 1000 models
+# wiwr_ptct_testpreds_brt <- bind_rows(lapply(fits_wiwr_brt, FUN = function(x) {
+#   bind_rows(lapply(x, FUN = function(y) {y$test_predictions}))
+# }))
+# 
+# ggplot(data = wiwr_ptct_testpreds_brt, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   xlab("mean predicted individuals per count") +
+#   ylab("mean observed individuals per count") + 
+#   ggtitle("Winter Wren\nPoint counts (10 min); 1000 BRTs")
 
 # ## WIWRPointCounts over time- observed vs predicted values
 # wiwr_ptct_preds_brt <- left_join(wiwr_ptct_preds_brt, sum_wiwr, by = "day_of_yr")
@@ -426,6 +446,8 @@ ggplot(data = wiwr_ptct_testpreds_brt, aes(x = OOB_preds, y = meandet)) +
 ## scatterplot of number of WIWR per day (ARU consecutive 10 min) over time, 
 ## with fitted average model (BRT) as a line
 # get standardized predictions for predictions to test data from all 1000 models
+fits_aruwiwr_brt <- readRDS("fits_aruwiwr_brt.rds")
+
 wiwr_aru10c_preds_brt <- bind_rows(lapply(fits_aruwiwr_brt, FUN = function(x) {
   bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
 }))
@@ -435,73 +457,76 @@ warning("Add standard error to this at some point.  14 April WG.")
 wiwr_aru10c_preds_brt <- group_by(wiwr_aru10c_preds_brt, day_of_yr) %>%
   summarise(mean_pred = mean(predictions))
 
-ggplot(data = wiwr_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+g4p6 <- ggplot(data = wiwr_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   geom_line() + 
   geom_point(data = sum_aruwiwr, aes(x = day_of_yr, y = meandet)) + 
   ggtitle("Winter Wren\nARU - consecutive 10 min; BRT") + 
-  xlab("Julian day of year") + 
-  ylab("Mean number of 30-second intervals\nwith a vocalization") + 
+  ylab("Mean number\nof 30-second intervals\nwith a vocalization") + 
+  xlab("") + 
+  scale_x_continuous(breaks = c(91, 105, 121, 135), 
+                     labels = c("April 1", "April 15", "May 1", "May 15")) + 
   theme_bw()
 
-## WIWRARU10c over time- observed vs predicted values- one set of five-
-## fold CV models
-# put test predictions from all five folds into one df
-p136_df <- bind_rows(lapply(fits_aruwiwr_brt$`136`, 
-                            FUN = function(x) {x$test_predictions}))
+# ## WIWRARU10c over time- observed vs predicted values- one set of five-
+# ## fold CV models
+# # put test predictions from all five folds into one df
+# p136_df <- bind_rows(lapply(fits_aruwiwr_brt$`136`, 
+#                             FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p136_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted 30-sec intervals\nwith a vocalization") +
+#   ylab("mean observed 30-sec intervals\nwith a vocalization") +
+#   ggtitle("model group 136")
+# 
+# p2_df <- bind_rows(lapply(fits_aruwiwr_brt$`2`, 
+#                            FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p2_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted 30-sec intervals\nwith a vocalization") +
+#   ylab("mean observed 30-sec intervals\nwith a vocalization")+
+#   ggtitle("model group 2")
+# 
+# p27_df <- bind_rows(lapply(fits_aruwiwr_brt$`27`, 
+#                           FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p27_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted 30-sec intervals\nwith a vocalization") +
+#   ylab("mean observed 30-sec intervals\nwith a vocalization")+
+#   ggtitle("model group 27")
+# 
+# p198_df <- bind_rows(lapply(fits_aruwiwr_brt$`198`, 
+#                             FUN = function(x) {x$test_predictions}))
+# 
+# ggplot(data = p198_df, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   theme_bw() +
+#   xlab("mean predicted 30-sec intervals\nwith a vocalization") +
+#   ylab("mean observed 30-sec intervals\nwith a vocalization") +
+#   ggtitle("model group 198")
+# 
+# # get predictions to independent test data from all 1000 models
+# wiwr_aru10c_testpreds_brt <- bind_rows(lapply(fits_aruwiwr_brt, FUN = function(x) {
+#   bind_rows(lapply(x, FUN = function(y) {y$test_predictions}))
+# }))
+# 
+# ggplot(data = wiwr_aru10c_testpreds_brt, aes(x = OOB_preds, y = meandet)) + 
+#   geom_point() +
+#   geom_abline(intercept = 0, slope = 1) +
+#   xlab("mean predicted 30-sec intervals\nwith a vocalization") +
+#   ylab("mean observed 30-sec intervals\nwith a vocalization") + 
+#   ggtitle("Winter Wren\nARU- 10 consecutive min; 1000 BRTs")
 
-ggplot(data = p136_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted 30-sec intervals\nwith a vocalization") +
-  ylab("mean observed 30-sec intervals\nwith a vocalization") +
-  ggtitle("model group 136")
-
-p2_df <- bind_rows(lapply(fits_aruwiwr_brt$`2`, 
-                           FUN = function(x) {x$test_predictions}))
-
-ggplot(data = p2_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted 30-sec intervals\nwith a vocalization") +
-  ylab("mean observed 30-sec intervals\nwith a vocalization")+
-  ggtitle("model group 2")
-
-p27_df <- bind_rows(lapply(fits_aruwiwr_brt$`27`, 
-                          FUN = function(x) {x$test_predictions}))
-
-ggplot(data = p27_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted 30-sec intervals\nwith a vocalization") +
-  ylab("mean observed 30-sec intervals\nwith a vocalization")+
-  ggtitle("model group 27")
-
-p198_df <- bind_rows(lapply(fits_aruwiwr_brt$`198`, 
-                            FUN = function(x) {x$test_predictions}))
-
-ggplot(data = p198_df, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  theme_bw() +
-  xlab("mean predicted 30-sec intervals\nwith a vocalization") +
-  ylab("mean observed 30-sec intervals\nwith a vocalization") +
-  ggtitle("model group 198")
-
-# get predictions to independent test data from all 1000 models
-wiwr_aru10c_testpreds_brt <- bind_rows(lapply(fits_aruwiwr_brt, FUN = function(x) {
-  bind_rows(lapply(x, FUN = function(y) {y$test_predictions}))
-}))
-
-ggplot(data = wiwr_aru10c_testpreds_brt, aes(x = OOB_preds, y = meandet)) + 
-  geom_point() +
-  geom_abline(intercept = 0, slope = 1) +
-  xlab("mean predicted 30-sec intervals\nwith a vocalization") +
-  ylab("mean observed 30-sec intervals\nwith a vocalization") + 
-  ggtitle("Winter Wren\nARU- 10 consecutive min; 1000 BRTs")
-
+rm(fits_aruwiwr_brt)
 
 # ## WIWRARU10c BRT- observed vs predicted values
 # wiwr_aru10c_preds_brt <- left_join(wiwr_aru10c_preds_brt, sum_wiwr, 
@@ -516,6 +541,20 @@ ggplot(data = wiwr_aru10c_testpreds_brt, aes(x = OOB_preds, y = meandet)) +
 #   ylab("mean predicted vocalizations\nper 30 second interval") +
 #   ggtitle("WIWR ARU- 10 consecutive min\nBRT predicted vs. observed") +
 #   ylim(c(0, 2))
+
+## abundance data and BRT models for 2 species for all 4 survey methods
+multiplot(g4p5, g4p1, g4p6, g4p2, g4p7, g4p3,  g4p8, g4p4, 
+          layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 4, byrow = TRUE))
+
+multiplot(g4p5, g4p6, g4p7, g4p8, g4p1, g4p2, g4p3, g4p4, 
+          layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 2, byrow = TRUE))
+
+
+## correlation plots for predicted and observed abundance metrics
+
+
+
+
 
 
 ################################################################################
