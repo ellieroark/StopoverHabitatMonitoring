@@ -26,18 +26,36 @@ library(tidyverse)
 library(Hmisc)
 library(lme4)
 
+
+stop("beginning of plots script. e")
+
 t_size <- 10
 #setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
 
 ### clean up environment
-rm(allaru_s, spdet_arudup, arudiag, drop_counts, i, lm_on, mmdiag, plotson,
-   poisdiag, regdiag)
-
+rm(arugcki, arugcki.day.gam, arugcki.day.gam2, aruwiwr, aruwiwr.day.gam, 
+   aruwiwr.day.gam2)
+##TODO add more to this list once all plots are created and I can remove 
+##extraneous objects  
 
 ### SUMMARY PLOTS FOR ABUNDANCE MODELS------------------------------------------
+
+## correlation plots for predicted and observed abundance metrics
+
+
+
+
+## plot of correlation between aru gcki observations (mean # of 30 sec intervals
+## per unit per day with a vocalization) and in person gcki observations 
+## (mean number of individuals per point count per day)
+
+
+
+
+
 ## scatterplot of number of GCKI per day (point counts) over time, with fitted 
 ## average model (BRT) as a line
-#fits_gcki_brt <- readRDS("fits_gcki_brt.rds")
+fits_gcki_brt <- readRDS("fits_gcki_brt.rds")
 
 # get standardized predictions for predictions to test data from all 1000 models
 gcki_ptct_preds_brt <- bind_rows(lapply(fits_gcki_brt, FUN = function(x) {
@@ -146,7 +164,7 @@ rm(fits_gcki_brt)
 ## scatterplot of number of GCKI per day (ARU consecutive 10 min) over time, 
 ## with fitted average model (BRT) as a line
 # get standardized predictions for predictions to test data from all 1000 models
-#fits_arugcki_brt <- readRDS("fits_arugcki_brt.rds")
+fits_arugcki_brt <- readRDS("fits_arugcki_brt.rds")
 
 gcki_aru10c_preds_brt <- bind_rows(lapply(fits_arugcki_brt, FUN = function(x) {
   bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
@@ -241,7 +259,51 @@ ggplot(data = gcki_aru10c_testpreds_brt, aes(x = OOB_preds, y = meandet)) +
 #   ggtitle("GCKI ARU- 10 consecutive min\nBRT predicted vs. observed") +
 #   ylim(c(0, 1))
  
+## scatterplot of number of GCKI per day (ARU random 10 min) over time, 
+## with fitted average model (BRT) as a line
+# get standardized predictions for predictions to test data from all 1000 models
+fits_arugcki10r_brt <- readRDS("fits_arugcki10r_brt.rds")
 
+# get standardized predictions for predictions to test data from all 1000 models
+gcki_aru10r_preds_brt <- bind_rows(lapply(fits_arugcki10r_brt, FUN = function(x) {
+  bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
+}))
+
+# get average prediction for each day from the 200 iterations of the 5-fold CV
+warning("Add standard error to this at some point.  14 April WG.")
+gcki_aru10r_preds_brt <- group_by(gcki_aru10r_preds_brt, day_of_yr) %>%
+  summarise(mean_pred = mean(predictions))
+
+ggplot(data = gcki_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  geom_line() + 
+  geom_point(data = sum_arugcki10r, aes(x = day_of_yr, y = meandet)) + 
+  ggtitle("Golden-crowned Kinglet\nARU (10 random min); BRT") + 
+  xlab("Julian day of year") + 
+  ylab("Mean number of vocalizations\nper 30-sec interval") + 
+  theme_bw()
+
+## scatterplot of number of GCKI per day (ARU random 22 min) over time, 
+## with fitted average model (BRT) as a line
+# get standardized predictions for predictions to test data from all 1000 models
+fits_arugcki22r_brt <- readRDS("fits_arugcki22r_brt.rds")
+
+# get standardized predictions for predictions to test data from all 1000 models
+gcki_aru22r_preds_brt <- bind_rows(lapply(fits_arugcki22r_brt, FUN = function(x) {
+  bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
+}))
+
+# get average prediction for each day from the 200 iterations of the 5-fold CV
+warning("Add standard error to this at some point.  14 April WG.")
+gcki_aru22r_preds_brt <- group_by(gcki_aru22r_preds_brt, day_of_yr) %>%
+  summarise(mean_pred = mean(predictions))
+
+ggplot(data = gcki_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  geom_line() + 
+  geom_point(data = sum_arugcki22r, aes(x = day_of_yr, y = meandet)) + 
+  ggtitle("Golden-crowned Kinglet\nARU (22 random min); BRT") + 
+  xlab("Julian day of year") + 
+  ylab("Mean number of vocalizations\nper 30-sec interval") + 
+  theme_bw()
 
 
 ## scatterplot of number of WIWR per day (Point Counts 10 min) over time, 
@@ -262,6 +324,28 @@ ggplot(data = wiwr_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
   ggtitle("Winter Wren\nPoint counts (10 min); BRT") + 
   xlab("Julian day of year") + 
   ylab("Mean number of individuals per point count") + 
+  theme_bw()
+
+## scatterplot of number of WIWR per day (ARU 10 rand min) over time, 
+## with fitted average model (BRT) as a line
+# get standardized predictions for predictions to test data from all 1000 models
+fits_aruwiwr10r_brt <- readRDS("fits_aruwiwr10r_brt.rds")
+
+wiwr_aru10r_preds_brt <- bind_rows(lapply(fits_aruwiwr10r_brt, FUN = function(x) {
+  bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
+}))
+
+# get average prediction for each day from the 200 iterations of the 5-fold CV
+warning("Add standard error to this at some point.  14 April WG.")
+wiwr_aru10r_preds_brt <- group_by(wiwr_aru10r_preds_brt, day_of_yr) %>%
+  summarise(mean_pred = mean(predictions))
+
+ggplot(data = wiwr_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  geom_line() + 
+  geom_point(data = sum_aruwiwr10r, aes(x = day_of_yr, y = meandet)) + 
+  ggtitle("Winter Wren\nARU (10 random min); BRT") + 
+  xlab("Julian day of year") + 
+  ylab("Mean number of vocalizations\nper 30-second interval") + 
   theme_bw()
 
 
