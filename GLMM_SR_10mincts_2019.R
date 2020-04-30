@@ -256,7 +256,7 @@ pois_spdetmod <- glm(sp_detected ~ 1 + count_type + wind + rain + noise +
                      data = spdet_all, family = "poisson")
 
 summary(pois_spdetmod)
-plot(pois_spdetmod, ask = FALSE)
+#plot(pois_spdetmod, ask = FALSE)
 
 ## test significance of whole model agains null model (that count type doesn't
 ## matter)
