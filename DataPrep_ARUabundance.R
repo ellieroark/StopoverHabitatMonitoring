@@ -20,9 +20,15 @@ library(Hmisc)
 library(tidyverse)
 library(lubridate)
 
+#read in 10 consecutive min ARU data
 widearu <- read_csv(file = "./2019data/ARUPointCounts_WIDE_PtAbbaye2019.csv")
 longaru <- read_csv(file = "./2019data/ARUPointCounts_PtAbbaye2019.csv")
 filenames <- read_csv(file = "./2019data/anonymized_file_key.csv")
+
+#read in 22 rand min data
+arurand <- read_csv(file = "./2019data/ARU20randmin_final.csv")
+filenames22r <- read_csv(file = "./2019data/filename_key_20randmin.csv", 
+                      col_types = cols(.default = "?", folder = "c"))
 
 #### 10 minute ARU count data prep (GCKI)---------------------------------------
 #subset longaru to gcki
@@ -151,7 +157,7 @@ arugcki <- arugcki[arugcki$anon_filename %nin% drop_anon, ]
 rm(dup_no_match, gcki_arudup, match, no_match, w.arudup, arudup, dr, drop_anon, 
    nm, pair, t.arudup)
 
-### get rid of duplicated ARU counts--------------------------------------------
+### end get rid of duplicated ARU counts----------------------------------------
 
 ### add predictor variables needed for analysis---------------------------------
 #create a point_id column for arugcki from the point id indicated in original_name
@@ -189,6 +195,139 @@ sum_arugcki <- left_join(sum_arugcki, windday, by = "day_of_yr")
 
 #### end 10 min ARU count data prep (GCKI)--------------------------------------
 
+
+##### random min ARU data prep (10 min and 22 min) (GCKI)-----------------------
+#subset arurand to gcki observations
+arugcki22 <- arurand[which(arurand$species_code == "GCKI"), ]
+
+#get unique ptctids for counts on which there were no GCKIs
+nogcki <- arurand[which(arurand$filename %nin% arugcki22$filename), ]
+
+#create a count column for the nogcki dfs
+nogcki$count <- 0
+
+#only keep filenames and count for nogcki counts
+keep <- c("filename", "count")
+nogcki <- nogcki[ , (names(nogcki) %in% keep)]
+
+# get only a single row for each minute with no GCKI
+nogcki <- dplyr::distinct(nogcki)
+
+## add up number of 30 sec periods in which a GCKI was detected
+#get rid of comments column
+arugcki22$comments <- NULL
+arugcki22[is.na(arugcki22)] <- "0"
+arugcki22[3:4] <- as.integer(arugcki22[3:4] != 0)
+arugcki22 <- arugcki22 %>%
+  mutate(count = rowSums(.[3:4]))
+#subset to only count and anon_filename cols
+arugcki22 <- arugcki22[ , (names(arugcki22) %in% keep)]
+
+#prep for join: make sure col names are the same for both dfs
+arugcki22 <- rename(arugcki22, anon_name = "filename")
+nogcki <- rename(nogcki, anon_name = "filename")
+
+#join gcki and no gcki min observations
+arugcki22 <- rbind(arugcki22, nogcki)
+rm(nogcki)
+
+#get rid of columns we don't need in filenames
+filenames22r <- subset(filenames22r, select = c(selec, sound.files, 
+                                                anon_name, date))
+
+#de-anonymize
+arugcki22 <- left_join(arugcki22, filenames22r, by = "anon_name")
+
+### add point id, count type, aru id, weather, aru_sample columns
+#create dataframe with key for the anonymized recorder names
+rec <- c("rec1", "rec2", "rec3", "rec4")
+aru_id <- c("swift02", "swift01", "AM", "swift03")
+recs <- data.frame(aru_id, rec)
+
+#create an aru_id col for allaru
+arugcki22$rec <- gsub("day.{2,3}_?", "", arugcki22$anon_name)
+arugcki22$rec <- gsub("_.*_.*", "", arugcki22$rec)
+
+#de-anonymize aru_id
+arugcki22 <- left_join(arugcki22, recs, by = "rec")
+
+#remove "rec" column-- aru_id is all that's needed
+arugcki22$rec <- NULL
+
+# fetch the point id for a particular date and aru from the allaru df
+# locs <- data.frame(allaru$point_id, allaru$date, allaru$aru_id)
+# locs <- rename(locs, point_id = "allaru.point_id", date = "allaru.date", 
+#                aru_id = "allaru.aru_id")
+
+#create an aruday column that says both the date and the aru
+# locs$aruday <- paste(as.character(locs$date), as.character(locs$aru_id), 
+#                      sep = "_")
+arugcki22$aruday <- paste(as.character(arugcki22$date), 
+                          as.character(arugcki22$aru_id), 
+                        sep = "_")
+
+# #get rid of unnecessary columns and rows in locs
+# locs$date <- NULL
+# locs$aru_id <- NULL
+# locs <- unique(locs)
+# 
+# #add point id to arurand by joining locs and arurand by aruday
+# arurand <- left_join(arurand, locs, by = "aruday")
+
+## add wind to arugcki22. 
+# make day of year col for arugcki22
+arugcki22$day_of_yr <- yday(arugcki22$date)
+# join windday and arugcki22 by day of yr
+arugcki22 <- left_join(arugcki22, windday, by = "day_of_yr")
+
+#### get 10 random minutes and 22 random minutes for each unit on each day
+#### from all random min data.
+
+## get unique values of selec for each aruday
+min <- arugcki22 %>% group_by(aruday) %>% distinct(selec)
+#table(min$aruday)
+
+##randomly sample 10 rand min from each aruday and 22 rand min from each aruday
+# get 10 random min for each aruday from "min" df 
+s10r <- sample_n(min, 10, replace = FALSE)
+
+# get 22 random min for each aruday from "min" df
+s22r <- sample_n(min, 22, replace = FALSE)
+
+# get dataframe with all species observations from the 22 randomly selected mins
+# for each aruday
+arugcki22r <- semi_join(arugcki22, s22r, by = c("selec", "aruday"))
+
+# get dataframe with all species observations from the 10 randomly selected mins
+# for each aruday
+arugcki10r <- semi_join(arugcki22, s10r, by = c("selec", "aruday"))
+
+### add up individuals detected per 22 and 10  random minutes-------------------
+
+sum_arugcki22r <- arugcki22r %>%
+  group_by(aruday, day_of_yr) %>%
+  summarize(count = sum(count)) %>%
+  group_by(day_of_yr) %>%
+  summarize(meandet = mean(count), count = sum(count))
+
+sum_arugcki10r <- arugcki10r %>%
+  group_by(aruday, day_of_yr) %>%
+  summarize(count = sum(count)) %>%
+  group_by(day_of_yr) %>%
+  summarize(meandet = mean(count), count = sum(count))
+
+
+#create count type col
+sum_arugcki10r$count_type <- "aru_10r"
+sum_arugcki22r$count_type <- "aru_22r"
+
+# join windday to sum_arugcki dfs by day of yr
+sum_arugcki22r <- left_join(sum_arugcki22r, windday, by = "day_of_yr")
+sum_arugcki10r <- left_join(sum_arugcki10r, windday, by = "day_of_yr")
+
+### end mean # individuals per count ---------------------------------------
+
+##### end 10 and 22 rand min data prep (GCKI)-----------------------------------
 
 
 
@@ -343,6 +482,112 @@ sum_aruwiwr <- left_join(sum_aruwiwr, windday, by = "day_of_yr")
 
 #### end 10 min ARU count data prep (WIWR)--------------------------------------
 
+##### random min ARU data prep (10 min and 22 min) (WIWR)-----------------------
+#subset arurand to wiwr observations
+aruwiwr22 <- arurand[which(arurand$species_code == "WIWR"), ]
+
+#get unique ptctids for counts on which there were no GCKIs
+nowiwr <- arurand[which(arurand$filename %nin% aruwiwr22$filename), ]
+
+#create a count column for the nogcki dfs
+nowiwr$count <- 0
+
+#only keep filenames and count for nowiwr counts
+nowiwr <- nowiwr[ , (names(nowiwr) %in% keep)]
+
+# get only a single row for each minute with no WIWR
+nowiwr <- dplyr::distinct(nowiwr)
+
+## add up number of 30 sec periods in which a WIWR was detected
+#get rid of comments column
+aruwiwr22$comments <- NULL
+aruwiwr22[is.na(aruwiwr22)] <- "0"
+aruwiwr22[3:4] <- as.integer(aruwiwr22[3:4] != 0)
+aruwiwr22 <- aruwiwr22 %>%
+  mutate(count = rowSums(.[3:4]))
+#subset to only count and anon_filename cols
+aruwiwr22 <- aruwiwr22[ , (names(aruwiwr22) %in% keep)]
+
+#prep for join: make sure col names are the same for both dfs
+aruwiwr22 <- rename(aruwiwr22, anon_name = "filename")
+nowiwr <- rename(nowiwr, anon_name = "filename")
+
+#join wiwr and no wiwr min observations
+aruwiwr22 <- rbind(aruwiwr22, nowiwr)
+rm(nowiwr)
+
+#de-anonymize
+aruwiwr22 <- left_join(aruwiwr22, filenames22r, by = "anon_name")
+
+#create an aru_id col for allaru
+aruwiwr22$rec <- gsub("day.{2,3}_?", "", aruwiwr22$anon_name)
+aruwiwr22$rec <- gsub("_.*_.*", "", aruwiwr22$rec)
+
+#de-anonymize aru_id
+aruwiwr22 <- left_join(aruwiwr22, recs, by = "rec")
+
+#remove "rec" column-- aru_id is all that's needed
+aruwiwr22$rec <- NULL
+
+#create an aruday column that says both the date and the aru
+aruwiwr22$aruday <- paste(as.character(aruwiwr22$date), 
+                          as.character(aruwiwr22$aru_id), 
+                          sep = "_")
+
+## add wind to aruwiwr22. 
+# make day of year col for aruwiwr22
+aruwiwr22$day_of_yr <- yday(aruwiwr22$date)
+# join windday and arugcki22 by day of yr
+aruwiwr22 <- left_join(aruwiwr22, windday, by = "day_of_yr")
+
+#### get 10 random minutes and 22 random minutes for each unit on each day
+#### from all random min data.
+
+##randomly sample 10 rand min from each aruday and 22 rand min from each aruday
+# get 10 random min for each aruday from "min" df 
+s10r_2 <- sample_n(min, 10, replace = FALSE)
+
+# get 22 random min for each aruday from "min" df
+s22r_2 <- sample_n(min, 22, replace = FALSE)
+
+# get dataframe with all species observations from the 22 randomly selected mins
+# for each aruday
+aruwiwr22r <- semi_join(aruwiwr22, s22r_2, by = c("selec", "aruday"))
+
+# get dataframe with all species observations from the 10 randomly selected mins
+# for each aruday
+aruwiwr10r <- semi_join(aruwiwr22, s10r_2, by = c("selec", "aruday"))
+
+### add up individuals detected per 22 and 10  random minutes-------------------
+
+sum_aruwiwr22r <- aruwiwr22r %>%
+  group_by(aruday, day_of_yr) %>%
+  summarize(count = sum(count)) %>%
+  group_by(day_of_yr) %>%
+  summarize(meandet = mean(count), count = sum(count))
+
+sum_aruwiwr10r <- aruwiwr10r %>%
+  group_by(aruday, day_of_yr) %>%
+  summarize(count = sum(count)) %>%
+  group_by(day_of_yr) %>%
+  summarize(meandet = mean(count), count = sum(count))
+
+
+#create count type col
+sum_aruwiwr10r$count_type <- "aru_10r"
+sum_aruwiwr22r$count_type <- "aru_22r"
+
+# join windday to sum_arugcki dfs by day of yr
+sum_aruwiwr22r <- left_join(sum_aruwiwr22r, windday, by = "day_of_yr")
+sum_aruwiwr10r <- left_join(sum_aruwiwr10r, windday, by = "day_of_yr")
+
+### end mean # individuals per count ---------------------------------------
+
+##### end 10 and 22 rand min data prep (GCKI)-----------------------------------
+
+
 # clean up workspace
-rm(weathervar, windday, keepl, keepw)
+rm(arugcki10r, arugcki22r, arugcki22, arurand, aruwiwr10r, aruwiwr22, aruwiwr22r, 
+   filenames22r, min, recs, s10r, s10r_2, s22r, s22r_2, weathervar, windday, 
+   aru_id, keep, keepl, keepw, rec)
 
