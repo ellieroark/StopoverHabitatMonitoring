@@ -17,7 +17,6 @@
 ## TODO: * 
 ################################
 
-stop("yay! this is the beginning of the GAM script! e")
 ## GAM with GCKI per day (ptct)-------------------------------------------------
 k <- -1 # k should be large enough that EDF is a good bit less than k-1.  
 
@@ -31,9 +30,10 @@ fit_gam <- function(test_fold, sp_data, newdata) {
   test_pred <- sp_data[sp_data$fold == test_fold, ]
   test_pred$OOB_preds <- predict(f_m, newdata = test_pred, 
                                  type = "response")
+  test_pred$error <- test_pred$OOB_preds - test_pred$meandet
   test_pred$OOB_logpreds <- predict(f_m, newdata = test_pred, 
                                      type = "link")
-  test_pred$error <- test_pred$OOB_logpreds - log(test_pred$meandet)
+  #test_pred$logerror <- test_pred$OOB_logpreds - log(test_pred$meandet)
   
   # Get standardized predictions to new data
   stand_pred <- newdata[newdata$fold == test_fold, ]
@@ -45,22 +45,22 @@ fit_gam <- function(test_fold, sp_data, newdata) {
   list(mod = f_m, test_predictions = test_pred, standardized_preds = stand_pred)
 }
 
-## test GAM fitting with all data and cubic regression spline smooth
-# for interaction discussion, see Section 5.6.3 and p 344 of Wood
-#  + ti(wind, day_of_yr_c, k = k)
-gcki.day.gam <- gam(meandet ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k, 
-                                                   bs = "cr"), 
-                    data = sum_gcki, 
-                    family = "nb", select = TRUE)
-
-## test GAM fitting with all data and thin plate spline smooth
-gcki.day.gam2 <- gam(meandet ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, , k= k, 
-                                                        bs = "tp"), 
-            data = sum_gcki, 
-            family = "nb", select = TRUE)
-
-
-
+# ## test GAM fitting with all data and cubic regression spline smooth
+# # for interaction discussion, see Section 5.6.3 and p 344 of Wood
+# #  + ti(wind, day_of_yr_c, k = k)
+# gcki.day.gam <- gam(meandet ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k,
+#                                                    bs = "cr"),
+#                     data = sum_gcki,
+#                     family = "nb", select = TRUE)
+# 
+# ## test GAM fitting with all data and thin plate spline smooth
+# gcki.day.gam2 <- gam(meandet ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, k= k,
+#                                                         bs = "tp"),
+#             data = sum_gcki,
+#             family = "nb", select = TRUE)
+# 
+# 
+# 
 
 # make a list to hold fitted models and predictions from models with many 
 # replicate folds splits
@@ -101,86 +101,52 @@ for (i in 1:200) {
   bird_dat <- left_join(sum_gcki, days, by = c("day_of_yr" = "day"))
   
   # fit brt to data in CV folds
-  brt_test_folds <- unique(bird_dat$fold)
-  names(brt_test_folds) <- as.character(brt_test_folds) 
+  gam_test_folds <- unique(bird_dat$fold)
+  names(gam_test_folds) <- as.character(gam_test_folds) 
   
-  brt_test_folds <- lapply(brt_test_folds, fit_gam, sp_data = bird_dat, 
+  gam_test_folds <- lapply(gam_test_folds, fit_gam, sp_data = bird_dat, 
                            newdata = pgcki_day)
   
   # put predictions for these 5 folds into the big list for all splits
-  fits_gcki_gam[[i]] <- brt_test_folds
+  fits_gcki_gam[[i]] <- gam_test_folds
 }
 names(fits_gcki_gam) <- 1:length(fits_gcki_gam)
+rmse_gcki_gam <- sapply(fits_gcki_gam, FUN = function(x) {
+  sapply(x, FUN = function(z) {
+    sqrt(mean(z$test_predictions$error^2))
+  })
+})
+saveRDS(fits_gcki_gam, "fits_gcki_gam.rds")
+rm(fits_gcki_gam)
 
-
-
-
-
-
-# GAM fit using thin plate splines as smoother
-gam2_test_folds <- unique(sum_gcki$fold)
-names(gam2_test_folds) <- as.character(gam2_test_folds)
-
-fit_gam2 <- function(test_fold2, sp_data2) {
-  train_dat2 <- sp_data2[sp_data2$fold != test_fold2, ]
-  f_m2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp"), 
-             data = sp_data2, 
-             family = "nb", select = TRUE)
-  test_pred2 <- sp_data2[sp_data2$fold == test_fold2, ]
-  test_pred2$OOB_preds <- predict(f_m2, newdata = test_pred2, 
-                                 type = "response")
-  list(mod = f_m2, test_predictions2 = test_pred2)
-}
-
-gam2_test_folds <- lapply(gam2_test_folds, fit_gam2, sp_data2 = sum_gcki)
-
+# # GAM fit using thin plate splines as smoother
+# gam2_test_folds <- unique(sum_gcki$fold)
+# names(gam2_test_folds) <- as.character(gam2_test_folds)
+# 
+# fit_gam2 <- function(test_fold2, sp_data2) {
+#   train_dat2 <- sp_data2[sp_data2$fold != test_fold2, ]
+#   f_m2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp"), 
+#              data = sp_data2, 
+#              family = "nb", select = TRUE)
+#   test_pred2 <- sp_data2[sp_data2$fold == test_fold2, ]
+#   test_pred2$OOB_preds <- predict(f_m2, newdata = test_pred2, 
+#                                  type = "response")
+#   test_pred2$error <- test_pred2$OOB_preds - test_pred2$meandet
+#   # Get standardized predictions to new data
+#   stand_pred2 <- newdata[newdata$fold == test_fold2, ]
+#   stand_pred2$predictions <- predict(f_m2, newdata = stand_pred2, 
+#                                     type = "response")
+#   
+#   # return predictions to the observed data from the test fold, 
+#   # and predictions to new data (with standardized covariates)
+#   list(mod = f_m2, test_predictions = test_pred2, 
+#        standardized_preds = stand_pred2)
+# }
+# 
+# gam2_test_folds <- lapply(gam2_test_folds, fit_gam2, sp_data2 = sum_gcki)
+# 
 
 ## end GAM with GCKI per day----------------------------------------------------
-
-## evaluate GAM (GCKI per day model)--------------------------------------------
-gcki.day.gam
-gam.check(gcki.day.gam)
-plot(gcki.day.gam, pages = 1, all.terms = T)
-
-gcki.day.gam2
-gam.check(gcki.day.gam2)
-plot(gcki.day.gam2, pages = 1, all.terms = T)
-
-# get predictions to test data-- GAM with specified k
-gcki_gam_predictions <- bind_rows(lapply(gam_test_folds, 
-                                         FUN = function(x) x$test_predictions))
-gcki_gam_predictions$error = gcki_gam_predictions$OOB_preds - 
-  gcki_gam_predictions$count
-
-# calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
-# McGill 2013)
-gcki_gam_r2 <- cor(gcki_gam_predictions$day_of_yr, 
-                   gcki_gam_predictions$OOB_preds, 
-                   method = "pearson")^2
-# calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
-gcki_gam_R2 <- 1 - (sum(gcki_gam_predictions$error^2) / 
-                      (sum((gcki_gam_predictions$count - 
-                              mean(gcki_gam_predictions$count))^2)))
-
-
-
-# get predictions to test data-- GAM with thin plate spline- cross validated
-gcki_gam2_predictions <- bind_rows(lapply(gam2_test_folds, 
-                                         FUN = function(x) x$test_predictions2))
-gcki_gam2_predictions$error = gcki_gam2_predictions$OOB_preds - 
-  gcki_gam2_predictions$count
-
-# calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
-# McGill 2013)
-gcki_gam2_r2 <- cor(gcki_gam2_predictions$day_of_yr, 
-                   gcki_gam2_predictions$OOB_preds, 
-                   method = "pearson")^2
-# calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
-gcki_gam2_R2 <- 1 - (sum(gcki_gam2_predictions$error^2) / 
-                      (sum((gcki_gam2_predictions$count - 
-                              mean(gcki_gam2_predictions$count))^2)))
-## end evaluate GAM (GCKI per day model-- ptct)----------------------------------------
-
 
 ## GAM with GCKI per day (ARU)-------------------------------------------------
 k = -1
@@ -219,120 +185,96 @@ for (i in 1:200) {
   bird_dat <- left_join(sum_arugcki, days, by = c("day_of_yr" = "day"))
   
   # fit brt to data in CV folds
-  brt_test_folds <- unique(bird_dat$fold)
-  names(brt_test_folds) <- as.character(brt_test_folds) 
+  gam_test_folds <- unique(bird_dat$fold)
+  names(gam_test_folds) <- as.character(gam_test_folds) 
   
-  brt_test_folds <- lapply(brt_test_folds, fit_gam, sp_data = bird_dat, 
+  gam_test_folds <- lapply(gam_test_folds, fit_gam, sp_data = bird_dat, 
                            newdata = pgcki_day)
   
   # put predictions for these 5 folds into the big list for all splits
   fits_arugcki_gam[[i]] <- brt_test_folds
 }
 names(fits_arugcki_gam) <- 1:length(fits_arugcki_gam)
+rmse_arugcki_gam <- sapply(fits_arugcki_gam, FUN = function(x) {
+  sapply(x, FUN = function(z) {
+    sqrt(mean(z$test_predictions$error^2))
+  })
+})
+saveRDS(fits_arugcki_gam, "fits_arugcki_gam.rds")
+rm(fits_arugcki_gam)
 
 
-## test GAM fitting with all data
-# for interaction discussion, see Section 5.6.3 and p 344 of Wood
-#  + ti(wind, day_of_yr_c, k = k)
-arugcki.day.gam <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k), 
-                    data = sum_arugcki, 
+# ## test GAM fitting with all data
+# # for interaction discussion, see Section 5.6.3 and p 344 of Wood
+# #  + ti(wind, day_of_yr_c, k = k)
+arugcki.day.gam <- gam(count ~ 1 + s(wind, bs = "cr", k = k) + 
+                         s(day_of_yr_c, bs = "cr", k = k),
+                    data = sum_arugcki,
                     family = "nb", select = TRUE)
 
 ## test GAM fitting with all data and thin plate spline smooth
-arugcki.day.gam2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp"), 
-                     data = sum_arugcki, 
+arugcki.day.gam2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp"),
+                     data = sum_arugcki,
                      family = "nb", select = TRUE)
-
-# fit gam to data in CV folds
-arugam_test_folds <- unique(sum_arugcki$fold)
-names(arugam_test_folds) <- as.character(arugam_test_folds)
-
-# GAM fit by wg using k (see above) knots for smoothing
-fit_gam <- function(test_fold, sp_data) {
-  train_dat <- sp_data[sp_data$fold != test_fold, ]
-  f_m <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k), 
-             data = sp_data, 
-             family = "nb", select = TRUE)
-  test_pred <- sp_data[sp_data$fold == test_fold, ]
-  test_pred$OOB_preds <- predict(f_m, newdata = test_pred, 
-                                 type = "response")
-  list(mod = f_m, test_predictions = test_pred)
-}
-
-arugam_test_folds <- lapply(arugam_test_folds, fit_gam, sp_data = sum_arugcki)
-
-
-# GAM fit using thin plate splines as smoother
-arugam2_test_folds <- unique(sum_arugcki$fold)
-names(arugam2_test_folds) <- as.character(arugam2_test_folds)
-
-fit_gam2 <- function(test_fold2, sp_data2) {
-  train_dat2 <- sp_data2[sp_data2$fold != test_fold2, ]
-  f_m2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp"), 
-              data = sp_data2, 
-              family = "nb", select = TRUE)
-  test_pred2 <- sp_data2[sp_data2$fold == test_fold2, ]
-  test_pred2$OOB_preds <- predict(f_m2, newdata = test_pred2, 
-                                  type = "response")
-  list(mod = f_m2, test_predictions2 = test_pred2)
-}
-
-arugam2_test_folds <- lapply(arugam2_test_folds, fit_gam2, 
-                             sp_data2 = sum_arugcki)
-
-
-## end GAM with GCKI per day (ARU)----------------------------------------------
+# 
+# # fit gam to data in CV folds
+# arugam_test_folds <- unique(sum_arugcki$fold)
+# names(arugam_test_folds) <- as.character(arugam_test_folds)
+# 
+# # GAM fit by wg using k (see above) knots for smoothing
+# fit_gam <- function(test_fold, sp_data) {
+#   train_dat <- sp_data[sp_data$fold != test_fold, ]
+#   f_m <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k), 
+#              data = sp_data, 
+#              family = "nb", select = TRUE)
+#   test_pred <- sp_data[sp_data$fold == test_fold, ]
+#   test_pred$OOB_preds <- predict(f_m, newdata = test_pred, 
+#                                  type = "response")
+#   list(mod = f_m, test_predictions = test_pred)
+# }
+# 
+# arugam_test_folds <- lapply(arugam_test_folds, fit_gam, sp_data = sum_arugcki)
+# 
+# 
+# # GAM fit using thin plate splines as smoother
+# arugam2_test_folds <- unique(sum_arugcki$fold)
+# names(arugam2_test_folds) <- as.character(arugam2_test_folds)
+# 
+# fit_gam2 <- function(test_fold2, sp_data2) {
+#   train_dat2 <- sp_data2[sp_data2$fold != test_fold2, ]
+#   f_m2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp"), 
+#               data = sp_data2, 
+#               family = "nb", select = TRUE)
+#   test_pred2 <- sp_data2[sp_data2$fold == test_fold2, ]
+#   test_pred2$OOB_preds <- predict(f_m2, newdata = test_pred2, 
+#                                   type = "response")
+#   list(mod = f_m2, test_predictions2 = test_pred2)
+# }
+# 
+# arugam2_test_folds <- lapply(arugam2_test_folds, fit_gam2, 
+#                              sp_data2 = sum_arugcki)
+# 
+# 
+# ## end GAM with GCKI per day (ARU)----------------------------------------------
 
 ## evaluate GAM (GCKI per day model)- ARU---------------------------------------
 arugcki.day.gam
 gam.check(arugcki.day.gam)
-plot(gcki.day.gam, pages = 1, all.terms = T)
+plot(arugcki.day.gam, pages = 1, all.terms = T)
 
 arugcki.day.gam2
 gam.check(arugcki.day.gam2)
 plot(arugcki.day.gam2, pages = 1, all.terms = T)
 ## TODO: something funky happening here....
 
-# get predictions to test data-- GAM with specified k
-arugcki_gam_predictions <- bind_rows(lapply(arugam_test_folds, 
-                                         FUN = function(x) x$test_predictions))
-arugcki_gam_predictions$error = arugcki_gam_predictions$OOB_preds - 
-  arugcki_gam_predictions$count
-
-# calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
-# McGill 2013)
-arugcki_gam_r2 <- cor(arugcki_gam_predictions$day_of_yr, 
-                   arugcki_gam_predictions$OOB_preds, 
-                   method = "pearson")^2
-# calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
-arugcki_gam_R2 <- 1 - (sum(arugcki_gam_predictions$error^2) / 
-                      (sum((arugcki_gam_predictions$count - 
-                              mean(arugcki_gam_predictions$count))^2)))
-
-
-
-# get predictions to test data-- GAM with thin plate spline- cross validated
-arugcki_gam2_predictions <- bind_rows(lapply(arugam2_test_folds, 
-                                          FUN = function(x) x$test_predictions2))
-arugcki_gam2_predictions$error = arugcki_gam2_predictions$OOB_preds - 
-  arugcki_gam2_predictions$count
-
-# calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
-# McGill 2013)
-arugcki_gam2_r2 <- cor(arugcki_gam2_predictions$day_of_yr, 
-                    arugcki_gam2_predictions$OOB_preds, 
-                    method = "pearson")^2
-# calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
-arugcki_gam2_R2 <- 1 - (sum(arugcki_gam2_predictions$error^2) / 
-                       (sum((arugcki_gam2_predictions$count - 
-                               mean(arugcki_gam2_predictions$count))^2)))
 ## end evaluate GAM (GCKI per day model)- ARU-----------------------------------
+
 
 ################################################################################
 ################################################################################
 
 ## GAM with WIWR per day (ptct)-------------------------------------------------
-k <- 12 # k should be large enough that EDF is a good bit less than k-1.  
+k <- -1 # k should be large enough that EDF is a good bit less than k-1.  
 
 ## test GAM fitting with all data
 # for interaction discussion, see Section 5.6.3 and p 344 of Wood
@@ -342,7 +284,7 @@ wiwr.day.gam <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k),
                     family = "poisson", select = TRUE)
 
 ## test GAM fitting with all data and thin plate spline smooth
-wiwr.day.gam2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp"), 
+wiwr.day.gam2 <- gam(count ~ 1 + s(wind, bs = "cr") + s(day_of_yr_c, bs = "cr"), 
                      data = sum_wiwr, 
                      family = "poisson", select = TRUE)
 
@@ -391,70 +333,25 @@ for (i in 1:200) {
   fits_wiwr_gam[[i]] <- brt_test_folds
 }
 names(fits_wiwr_gam) <- 1:length(fits_wiwr_gam)
-
-
-# GAM fit using thin plate splines as smoother
-gam2_test_folds <- unique(sum_wiwr$fold)
-names(gam2_test_folds) <- as.character(gam2_test_folds)
-
-fit_wgam2 <- function(test_fold2, sp_data2) {
-  wtrain_dat2 <- sp_data2[sp_data2$fold != test_fold2, ]
-  f_mw2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp"), 
-              data = sp_data2, 
-              family = "nb", select = TRUE)
-  wtest_pred2 <- sp_data2[sp_data2$fold == test_fold2, ]
-  wtest_pred2$OOB_preds <- predict(f_mw2, newdata = wtest_pred2, 
-                                  type = "response")
-  list(mod = f_mw2, test_predictions2 = wtest_pred2)
-}
-
-gam2_test_folds <- lapply(gam2_test_folds, fit_wgam2, sp_data2 = sum_wiwr)
-
+rmse_wiwr_gam <- sapply(fits_wiwr_gam, FUN = function(x) {
+  sapply(x, FUN = function(z) {
+    sqrt(mean(z$test_predictions$error^2))
+  })
+})
+saveRDS(fits_wiwr_gam, "fits_wiwr_gam.rds")
+rm(fits_wiwr_gam)
 
 ## end GAM with WIWR per day----------------------------------------------------
 
 ## evaluate GAM (WIWR per day model)--------------------------------------------
-wiwr.day.gam
-gam.check(wiwr.day.gam)
-plot(wiwr.day.gam, pages = 1, all.terms = T)
+# wiwr.day.gam
+# gam.check(wiwr.day.gam)
+# plot(wiwr.day.gam, pages = 1, all.terms = T)
+# 
+# wiwr.day.gam2
+# gam.check(wiwr.day.gam2)
+# plot(wiwr.day.gam2, pages = 1, all.terms = T)
 
-wiwr.day.gam2
-gam.check(wiwr.day.gam2)
-plot(wiwr.day.gam2, pages = 1, all.terms = T)
-
-# get predictions to test data-- GAM with specified k
-wiwr_gam_predictions <- bind_rows(lapply(gam_test_folds, 
-                                         FUN = function(x) x$test_predictions))
-wiwr_gam_predictions$error = wiwr_gam_predictions$OOB_preds - 
-  wiwr_gam_predictions$count
-
-# calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
-# McGill 2013)
-wiwr_gam_r2 <- cor(wiwr_gam_predictions$day_of_yr, 
-                   wiwr_gam_predictions$OOB_preds, 
-                   method = "pearson")^2
-# calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
-wiwr_gam_R2 <- 1 - (sum(wiwr_gam_predictions$error^2) / 
-                      (sum((wiwr_gam_predictions$count - 
-                              mean(wiwr_gam_predictions$count))^2)))
-
-
-
-# get predictions to test data-- GAM with thin plate spline- cross validated
-wiwr_gam2_predictions <- bind_rows(lapply(gam2_test_folds, 
-                                          FUN = function(x) x$test_predictions2))
-wiwr_gam2_predictions$error = wiwr_gam2_predictions$OOB_preds - 
-  wiwr_gam2_predictions$count
-
-# calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
-# McGill 2013)
-wiwr_gam2_r2 <- cor(wiwr_gam2_predictions$day_of_yr, 
-                    wiwr_gam2_predictions$OOB_preds, 
-                    method = "pearson")^2
-# calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
-wiwr_gam2_R2 <- 1 - (sum(wiwr_gam2_predictions$error^2) / 
-                       (sum((wiwr_gam2_predictions$count - 
-                               mean(wiwr_gam2_predictions$count))^2)))
 ## end evaluate GAM (WIWR per day model-- ptct)---------------------------------
 
 
@@ -504,6 +401,13 @@ for (i in 1:200) {
   fits_aruwiwr_gam[[i]] <- brt_test_folds
 }
 names(fits_aruwiwr_gam) <- 1:length(fits_aruwiwr_gam)
+rmse_aruwiwr_gam <- sapply(fits_aruwiwr_gam, FUN = function(x) {
+  sapply(x, FUN = function(z) {
+    sqrt(mean(z$test_predictions$error^2))
+  })
+})
+saveRDS(fits_aruwiwr_gam, "fits_aruwiwr_gam.rds")
+rm(fits_aruwiwr_gam)
 
 
 
@@ -519,45 +423,6 @@ aruwiwr.day.gam2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp
                         data = sum_aruwiwr, 
                         family = "nb", select = TRUE)
 
-# fit gam to data in CV folds
-warugam_test_folds <- unique(sum_aruwiwr$fold)
-names(warugam_test_folds) <- as.character(warugam_test_folds)
-
-# GAM fit by wg using k (see above) knots for smoothing
-fit_gamwa <- function(test_fold, sp_data) {
-  watrain_dat <- sp_data[sp_data$fold != test_fold, ]
-  f_mwa <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k), 
-             data = sp_data, 
-             family = "nb", select = TRUE)
-  watest_pred <- sp_data[sp_data$fold == test_fold, ]
-  watest_pred$OOB_preds <- predict(f_mwa, newdata = watest_pred, 
-                                 type = "response")
-  list(mod = f_mwa, test_predictions = watest_pred)
-}
-
-warugam_test_folds <- lapply(warugam_test_folds, fit_gamwa, 
-                             sp_data = sum_aruwiwr)
-
-
-# GAM fit using thin plate splines as smoother
-warugam2_test_folds <- unique(sum_aruwiwr$fold)
-names(warugam2_test_folds) <- as.character(warugam2_test_folds)
-
-fit_gamwa2 <- function(test_fold2, sp_data2) {
-  train_datwa2 <- sp_data2[sp_data2$fold != test_fold2, ]
-  f_mwa2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp"), 
-              data = sp_data2, 
-              family = "nb", select = TRUE)
-  watest_pred2 <- sp_data2[sp_data2$fold == test_fold2, ]
-  watest_pred2$OOB_preds <- predict(f_mwa2, newdata = watest_pred2, 
-                                  type = "response")
-  list(mod = f_mwa2, watest_predictions2 = watest_pred2)
-}
-
-warugam2_test_folds <- lapply(warugam2_test_folds, fit_gamwa2, 
-                             sp_data2 = sum_aruwiwr)
-
-
 ## end GAM with WIWR per day (ARU)----------------------------------------------
 
 ## evaluate GAM (WIWR per day model)- ARU---------------------------------------
@@ -566,43 +431,10 @@ gam.check(aruwiwr.day.gam)
 plot(aruwiwr.day.gam, pages = 1, all.terms = T)
 
 aruwiwr.day.gam2
-gam.check(arugcki.day.gam2)
+gam.check(aruwiwr.day.gam2)
 plot(aruwiwr.day.gam2, pages = 1, all.terms = T)
-## TODO: something funky happening here....
-
-# get predictions to test data-- GAM with specified k
-aruwiwr_gam_predictions <- bind_rows(lapply(warugam_test_folds, 
-                                            FUN = function(x) x$test_predictions))
-aruwiwr_gam_predictions$error = aruwiwr_gam_predictions$OOB_preds - 
-  aruwiwr_gam_predictions$count
-
-# calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
-# McGill 2013)
-aruwiwr_gam_r2 <- cor(aruwiwr_gam_predictions$day_of_yr, 
-                      aruwiwr_gam_predictions$OOB_preds, 
-                      method = "pearson")^2
-# calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
-aruwiwr_gam_R2 <- 1 - (sum(aruwiwr_gam_predictions$error^2) / 
-                         (sum((aruwiwr_gam_predictions$count - 
-                                 mean(aruwiwr_gam_predictions$count))^2)))
 
 
-
-# get predictions to test data-- GAM with thin plate spline- cross validated
-aruwiwr_gam2_predictions <- bind_rows(lapply(warugam2_test_folds, 
-                                             FUN = function(x) x$watest_predictions2))
-aruwiwr_gam2_predictions$error = aruwiwr_gam2_predictions$OOB_preds - 
-  aruwiwr_gam2_predictions$count
-
-# calculate r^2 (square of Pearson correlation coefficient, see Bahn & 
-# McGill 2013)
-aruwiwr_gam2_r2 <- cor(aruwiwr_gam2_predictions$day_of_yr, 
-                       aruwiwr_gam2_predictions$OOB_preds, 
-                       method = "pearson")^2
-# calculate R^2 (coefficient of determination, see Bahn & McGill 2013)
-aruwiwr_gam2_R2 <- 1 - (sum(aruwiwr_gam2_predictions$error^2) / 
-                          (sum((aruwiwr_gam2_predictions$count - 
-                                  mean(aruwiwr_gam2_predictions$count))^2)))
 ## end evaluate GAM (WIWR per day model)- ARU-----------------------------------
 
 
@@ -617,36 +449,36 @@ aruwiwr_gam2_R2 <- 1 - (sum(aruwiwr_gam2_predictions$error^2) /
 
 
 ## join brt and gam predictions and errors -------------------------------------
-gcki_gam_predictions$method = "pt_gam1"
-gcki_brt_predictions$method = "pt_brt"
-gcki_gam2_predictions$method = "pt_gam2"
-arugcki_brt_predictions$method = "aru_brt"
-arugcki_gam_predictions$method = "aru_gam1"
-arugcki_gam2_predictions$method = "aru_gam2"
-
-gcki_predictions <- bind_rows(gcki_gam_predictions, gcki_brt_predictions, 
-                              gcki_gam2_predictions, arugcki_brt_predictions, 
-                              arugcki_gam_predictions, arugcki_gam2_predictions)
-gcki_predictions <- pivot_longer(gcki_predictions, 
-                                 cols = c(error, OOB_preds), 
-                                 names_to = "metric")
-
-ggplot(data = gcki_predictions[gcki_predictions$metric == "error", ], 
-       aes(x = day_of_yr, y = value, color = method)) + 
-  geom_point() + 
-  ggtitle("Prediction error")
-
-ggplot(data = gcki_predictions[gcki_predictions$metric == "OOB_preds", ], 
-       aes(x = day_of_yr, y = value, color = method)) + 
-  geom_point()  + 
-  geom_smooth() + 
-  geom_point(aes(x = day_of_yr, y = count), color = "black") + 
-  ggtitle("Predictions")
-
-plot(gcki_gam_predictions$OOB_preds ~ gcki_brt_predictions$OOB_preds)
-plot(gcki_gam2_predictions$OOB_preds ~ gcki_gam_predictions$OOB_preds)
-plot(gcki_gam_predictions$error ~ gcki_brt_predictions$error)
-plot(gcki_gam_predictions$error ~ gcki_gam2_predictions$error)
-plot(gcki_brt_predictions$OOB_preds ~ arugcki_brt_predictions$OOB_preds)
-plot(gcki_gam_predictions$OOB_preds ~ arugcki_gam_predictions$OOB_preds)
+# gcki_gam_predictions$method = "pt_gam1"
+# gcki_brt_predictions$method = "pt_brt"
+# gcki_gam2_predictions$method = "pt_gam2"
+# arugcki_brt_predictions$method = "aru_brt"
+# arugcki_gam_predictions$method = "aru_gam1"
+# arugcki_gam2_predictions$method = "aru_gam2"
+# 
+# gcki_predictions <- bind_rows(gcki_gam_predictions, gcki_brt_predictions, 
+#                               gcki_gam2_predictions, arugcki_brt_predictions, 
+#                               arugcki_gam_predictions, arugcki_gam2_predictions)
+# gcki_predictions <- pivot_longer(gcki_predictions, 
+#                                  cols = c(error, OOB_preds), 
+#                                  names_to = "metric")
+# 
+# ggplot(data = gcki_predictions[gcki_predictions$metric == "error", ], 
+#        aes(x = day_of_yr, y = value, color = method)) + 
+#   geom_point() + 
+#   ggtitle("Prediction error")
+# 
+# ggplot(data = gcki_predictions[gcki_predictions$metric == "OOB_preds", ], 
+#        aes(x = day_of_yr, y = value, color = method)) + 
+#   geom_point()  + 
+#   geom_smooth() + 
+#   geom_point(aes(x = day_of_yr, y = count), color = "black") + 
+#   ggtitle("Predictions")
+# 
+# plot(gcki_gam_predictions$OOB_preds ~ gcki_brt_predictions$OOB_preds)
+# plot(gcki_gam2_predictions$OOB_preds ~ gcki_gam_predictions$OOB_preds)
+# plot(gcki_gam_predictions$error ~ gcki_brt_predictions$error)
+# plot(gcki_gam_predictions$error ~ gcki_gam2_predictions$error)
+# plot(gcki_brt_predictions$OOB_preds ~ arugcki_brt_predictions$OOB_preds)
+# plot(gcki_gam_predictions$OOB_preds ~ arugcki_gam_predictions$OOB_preds)
 ## end brt and gam predictions plot --------------------------------------------
