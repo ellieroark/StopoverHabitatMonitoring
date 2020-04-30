@@ -551,12 +551,47 @@ multiplot(g4p5, g4p6, g4p7, g4p8, g4p1, g4p2, g4p3, g4p4,
 
 
 ## correlation plots for predicted and observed abundance metrics
+# make single df for WIWR w/predicted and observed values from all survey methods
+abund_wiwr_pred <- list(point_count = wiwr_ptct_preds_brt, 
+                        aru10c = wiwr_aru10c_preds_brt, 
+                        aru10r = wiwr_aru10r_preds_brt, 
+                        aru22r = wiwr_aru22r_preds_brt)
+abund_wiwr_pred <- mapply(FUN = function(x, m) {x$method <- m; x}, 
+                          abund_wiwr_pred, names(abund_wiwr_pred), 
+                          SIMPLIFY = F, USE.NAMES = T)
+abund_wiwr_pred <- bind_rows(abund_wiwr_pred)
+abund_wiwr_pred_wide <- pivot_wider(abund_wiwr_pred, names_from = method, 
+                               values_from = mean_pred)
+abund_wiwr_pred_wide$type <- "predicted"
 
+# make df of observed values
+abund_wiwr_obs <- list(point_count = sum_wiwr, 
+                       aru10c = sum_aruwiwr, 
+                       aru10r = sum_aruwiwr10r, 
+                       aru22r = sum_aruwiwr22r)
+abund_wiwr_obs <- mapply(FUN = function(x, m) {x$method <- m; x}, 
+                          abund_wiwr_obs, names(abund_wiwr_obs), 
+                          SIMPLIFY = F, USE.NAMES = T)
+abund_wiwr_obs <- bind_rows(abund_wiwr_obs)
+abund_wiwr_obs_wide <- dplyr::select(abund_wiwr_obs, day_of_yr, meandet, method) %>% 
+  pivot_wider(names_from = method, values_from = meandet)
+abund_wiwr_obs_wide$type <- "observed"
 
+# combine predicted and observed abundance values
+abund_wiwr_wide <- bind_rows(abund_wiwr_pred_wide, abund_wiwr_obs_wide)
 
+abund_pairs <- ggpairs(data = abund_wiwr_wide, columns = c(2:5), ggplot2::aes(colour = type), 
+                       diag = list(continuous = "blankDiag"))
 
-
-
+for(i in 1:abund_pairs$nrow) {
+  for(j in 1:abund_pairs$ncol){
+    abund_pairs[i,j] <- abund_pairs[i,j] + 
+      scale_fill_manual(values=c("blue", "orange")) +
+      scale_color_manual(values=c("blue", "orange")) + 
+      theme_bw()
+  }
+}
+abund_pairs
 ################################################################################
 ##GAM abundance summary plots
 ## scatterplot of number of GCKI per day (point counts) over time, with fitted 
