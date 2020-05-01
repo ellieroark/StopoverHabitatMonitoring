@@ -42,7 +42,7 @@ fit_gam <- function(test_fold, sp_data, newdata) {
   
   # return predictions to the observed data from the test fold, 
   # and predictions to new data (with standardized covariates)
-  list(mod = f_m, test_predictions = test_pred, standardized_preds = stand_pred)
+  list(test_predictions = test_pred, standardized_preds = stand_pred)
 }
 
 # ## test GAM fitting with all data and cubic regression spline smooth
