@@ -21,7 +21,7 @@ library(tidyverse)
 library(Hmisc)
 library(lme4)
 
-t_size <- 10
+t_size <- 9
 #setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
 
 ### clean up environment
@@ -49,9 +49,12 @@ gcki_ptct_preds_brt <- group_by(gcki_ptct_preds_brt, day_of_yr) %>%
 g4p1 <- ggplot(data = gcki_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   geom_line() + 
   geom_point(data = sum_gcki, aes(x = day_of_yr, y = meandet)) + 
-  ggtitle("Golden-crowned Kinglet\nPoint counts (10 min); BRT") + 
-  xlab("Julian day of year") + 
-  ylab("Mean number of individuals per point count") + 
+  #ggtitle("Golden-crowned Kinglet\nPoint counts (10 consecutive min)") +
+  ggtitle("(e)") + 
+  xlab("") + 
+  scale_x_continuous(breaks = c(91, 105, 121, 135), 
+                     labels = c("April 1", "April 15", "May 1", "May 15")) +
+  ylab("Golden-crowned Kinglet\nAbundance index") + 
   theme_bw()
 
 rm(fits_gcki_brt)
@@ -74,9 +77,12 @@ gcki_aru10c_preds_brt <- group_by(gcki_aru10c_preds_brt, day_of_yr) %>%
 g4p2 <- ggplot(data = gcki_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   geom_line() + 
   geom_point(data = sum_arugcki, aes(x = day_of_yr, y = meandet)) + 
-  ggtitle("Golden-crowned Kinglet\nARU - consecutive 10 min BRT") + 
-  xlab("Julian day of year") + 
-  ylab("Mean number of 30-second intervals\nwith a vocalization") + 
+  #ggtitle("Golden-crowned Kinglet\nARU- 10 consecutive min") +
+  ggtitle("(f)") + 
+  xlab("") +
+  scale_x_continuous(breaks = c(91, 105, 121, 135), 
+                     labels = c("April 1", "April 15", "May 1", "May 15")) +
+  ylab("Abundance index") + 
   theme_bw()
 
 rm(fits_arugcki_brt)
@@ -99,9 +105,12 @@ gcki_aru10r_preds_brt <- group_by(gcki_aru10r_preds_brt, day_of_yr) %>%
 g4p3 <- ggplot(data = gcki_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   geom_line() + 
   geom_point(data = sum_arugcki10r, aes(x = day_of_yr, y = meandet)) + 
-  ggtitle("Golden-crowned Kinglet\nARU (10 random min); BRT") + 
-  xlab("Julian day of year") + 
-  ylab("Mean number of vocalizations\nper 30-sec interval") + 
+  #ggtitle("Golden-crowned Kinglet\nARU- 10 random min") +
+  ggtitle("(g)") + 
+  xlab("") +
+  scale_x_continuous(breaks = c(91, 105, 121, 135), 
+                     labels = c("April 1", "April 15", "May 1", "May 15")) +
+  ylab("Abundance index") + 
   theme_bw()
 
 rm(fits_arugcki10r_brt)
@@ -124,9 +133,12 @@ gcki_aru22r_preds_brt <- group_by(gcki_aru22r_preds_brt, day_of_yr) %>%
 g4p4 <- ggplot(data = gcki_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   geom_line() + 
   geom_point(data = sum_arugcki22r, aes(x = day_of_yr, y = meandet)) + 
-  ggtitle("Golden-crowned Kinglet\nARU (22 random min); BRT") + 
-  xlab("Julian day of year") + 
-  ylab("Mean number of vocalizations\nper 30-sec interval") + 
+  #ggtitle("Golden-crowned Kinglet\nARU- 22 random min") +
+  ggtitle("(h)") + 
+  xlab("") +
+  scale_x_continuous(breaks = c(91, 105, 121, 135), 
+                     labels = c("April 1", "April 15", "May 1", "May 15")) +
+  ylab("Abundance index") + 
   theme_bw()
 
 rm(fits_arugcki22r_brt)
@@ -150,9 +162,11 @@ g4p5 <- ggplot(data = wiwr_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
   geom_line() + 
   geom_point(data = sum_wiwr, aes(x = day_of_yr, y = meandet)) + 
   # ggtitle("Winter Wren\nPoint counts (10 min); BRT") + 
-  ggtitle("Point Counts\n(a)") + 
-  xlab("") + 
-  ylab("Mean number\nof individuals\nper point count") + 
+  ggtitle("Point Counts\n10 consecutive minutes\n(a)") + 
+  xlab("") +
+  scale_x_continuous(breaks = c(91, 105, 121, 135), 
+                     labels = c("April 1", "April 15", "May 1", "May 15")) +
+  ylab("Winter Wren\nAbundance index") + 
   theme_bw()
 
 rm(fits_wiwr_brt)
@@ -175,8 +189,9 @@ wiwr_aru10c_preds_brt <- group_by(wiwr_aru10c_preds_brt, day_of_yr) %>%
 g4p6 <- ggplot(data = wiwr_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   geom_line() + 
   geom_point(data = sum_aruwiwr, aes(x = day_of_yr, y = meandet)) + 
-  ggtitle("Winter Wren\nARU - consecutive 10 min; BRT") + 
-  ylab("Mean number\nof 30-second intervals\nwith a vocalization") + 
+  #ggtitle("Winter Wren\nARU - consecutive 10 min; BRT") + 
+  ggtitle("ARU Counts\n10 consecutive minutes\n(b)") +
+  ylab("Abundance index") + 
   xlab("") + 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) + 
@@ -201,9 +216,12 @@ wiwr_aru10r_preds_brt <- group_by(wiwr_aru10r_preds_brt, day_of_yr) %>%
 g4p7 <- ggplot(data = wiwr_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   geom_line() + 
   geom_point(data = sum_aruwiwr10r, aes(x = day_of_yr, y = meandet)) + 
-  ggtitle("Winter Wren\nARU (10 random min); BRT") + 
-  xlab("Julian day of year") + 
-  ylab("Mean number of vocalizations\nper 30-second interval") + 
+  #ggtitle("Winter Wren\nARU (10 random min); BRT") + 
+  ggtitle("ARU Counts\n10 random minutes\n(c)") +
+  xlab("") +
+  scale_x_continuous(breaks = c(91, 105, 121, 135), 
+                     labels = c("April 1", "April 15", "May 1", "May 15")) + 
+  ylab("Abundance index") + 
   theme_bw()
 
 rm(fits_aruwiwr10r_brt)
@@ -225,17 +243,20 @@ wiwr_aru22r_preds_brt <- group_by(wiwr_aru22r_preds_brt, day_of_yr) %>%
 g4p8 <- ggplot(data = wiwr_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   geom_line() + 
   geom_point(data = sum_aruwiwr22r, aes(x = day_of_yr, y = meandet)) + 
-  ggtitle("Winter Wren\nARU (22 random min); BRT") + 
-  xlab("Julian day of year") + 
-  ylab("Mean number of vocalizations\nper 30-second interval") + 
+  ggtitle("ARU Counts\n22 random minutes\n(d)") +
+  #ggtitle("Winter Wren\nARU (22 random min); BRT") + 
+  xlab("") + 
+  scale_x_continuous(breaks = c(91, 105, 121, 135), 
+                     labels = c("April 1", "April 15", "May 1", "May 15")) + 
+  ylab("Abundance index") + 
   theme_bw()
 
 rm(fits_aruwiwr10r_brt)
 
 
 ## abundance data and BRT models for 2 species for all 4 survey methods
-multiplot(g4p5, g4p1, g4p6, g4p2, g4p7, g4p3,  g4p8, g4p4, 
-          layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 4, byrow = TRUE))
+#multiplot(g4p5, g4p1, g4p6, g4p2, g4p7, g4p3,  g4p8, g4p4, 
+#          layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 4, byrow = TRUE))
 
 multiplot(g4p5, g4p6, g4p7, g4p8, g4p1, g4p2, g4p3, g4p4, 
           layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 2, byrow = TRUE))
@@ -288,15 +309,9 @@ abund_pairs
 #### END ABUNDANCE SUMMARY PLOTS-----------------------------------------------
 
 
-
-
-
-
-
 #### SUMMARY PLOTS FOR SPECIES RICHNESS GLMM------------------------------------
-## plot of coefficients for GLMM (all count types)
-## example from wg:
-## # make a data frame to use in ggplot
+## table of coefficients for GLMM (max.rand.spdetmm-- includes all count types)
+## # make a data frame with all variable names for the model
 maxrand_df <- data.frame(matrix(nrow = 19, ncol = 4))
 colnames(maxrand_df) <- c("variable", "coef_estimate", "l_bound", "h_bound")
 maxrand_df$variable <- c("Count type (ARU- 10 min consecutive)", 
@@ -323,79 +338,6 @@ for(i in 1:nrow(maxrand_df)) {
   maxrand_df$l_bound[i] <- CI.maxrand[2 + i, "2.5 %"]
   maxrand_df$h_bound[i] <- CI.maxrand[2 + i, "97.5 %"]
 }
-
-# make graph
-print(ggplot(data = maxrand_df,
-             aes(x = factor(variable,
-                            levels = c("Count type (ARU- 10 min consecutive)", 
-                                       "Count type (ARU- 10 min random)", 
-                                       "Count type (ARU- 22 min random)", "Wind (2)", "Wind (3+)",
-                                       "Rain (Wet)", "Noise (1)", "Noise (>2)", "Day of year", 
-                                       "Day of year squared",
-                                       "Count type (ARU- 10 min consecutive)*Rain (Wet)", 
-                                       "Count type (ARU- 10 min random)*Rain (Wet)",
-                                       "Count type (ARU- 22 min random)*Rain (Wet)",
-                                       "Count type (ARU- 10 min consecutive)*Day of Year",
-                                       "Count type (ARU- 10 min random)*Day of Year",
-                                       "Count type (ARU- 22 min random)*Day of Year",
-                                       "Count type (ARU- 10 min consecutive)*Day of year squared",
-                                       "Count type (ARU- 10 min random)*Day of year squared",
-                                       "Count type (ARU- 22 min random)*Day of year squared"),
-                            labels = c("Count type (ARU\n10 min consecutive)", 
-                                       "Count type (ARU\n10 min random)", 
-                                       "Count type (ARU\n22 min random)", "Wind (2)", "Wind (3+)",
-                                       "Rain (Wet)", "Noise (1)", "Noise (>2)", "Day of year", 
-                                       "Day of year squared",
-                                       "Count type (ARU\n10 min consecutive)*Rain (Wet)", 
-                                       "Count type (ARU\n10 min random)*Rain (Wet)",
-                                       "Count type (ARU\n22 min random)*Rain (Wet)",
-                                       "Count type (ARU\n10 min consecutive)*Day of Year",
-                                       "Count type (ARU\n10 min random)*Day of Year",
-                                       "Count type (ARU\n22 min random)*Day of Year",
-                                       "Count type (ARU\n10 min consecutive)*Day of year squared",
-                                       "Count type (ARU\n10 min random)*Day of year squared",
-                                       "Count type (ARU\n22 min random)*Day of year squared")),
-                 y = coef_estimate)) +
-        geom_point() +
-        geom_linerange(aes(x = factor(variable,
-                                      levels = c("Count type (ARU- 10 min consecutive)", 
-                                                 "Count type (ARU- 10 min random)", 
-                                                 "Count type (ARU- 22 min random)", "Wind (2)", "Wind (3+)",
-                                                 "Rain (Wet)", "Noise (1)", "Noise (>2)", "Day of year", 
-                                                 "Day of year squared",
-                                                 "Count type (ARU- 10 min consecutive)*Rain (Wet)", 
-                                                 "Count type (ARU- 10 min random)*Rain (Wet)",
-                                                 "Count type (ARU- 22 min random)*Rain (Wet)",
-                                                 "Count type (ARU- 10 min consecutive)*Day of Year",
-                                                 "Count type (ARU- 10 min random)*Day of Year",
-                                                 "Count type (ARU- 22 min random)*Day of Year",
-                                                 "Count type (ARU- 10 min consecutive)*Day of year squared",
-                                                 "Count type (ARU- 10 min random)*Day of year squared",
-                                                 "Count type (ARU- 22 min random)*Day of year squared"),
-                                      labels = c("Count type- ARU 10 min\nconsecutive", 
-                                                 "Count type- ARU 10 min\nrandom", 
-                                                 "Count type- ARU 22 min\nrandom", "Wind (2)", "Wind (3+)",
-                                                 "Rain (Wet)", "Noise (1)", "Noise (>2)", "Day of year", 
-                                                 "Day of year squared",
-                                                 "Count type- ARU 10 min\nconsecutive *Rain (Wet)", 
-                                                 "Count type- ARU 10 min random)*Rain (Wet)",
-                                                 "Count type (ARU\n22 min random)*Rain (Wet)",
-                                                 "Count type (ARU\n10 min consecutive)*Day of Year",
-                                                 "Count type (ARU\n10 min random)*Day of Year",
-                                                 "Count type (ARU\n22 min random)*Day of Year",
-                                                 "Count type (ARU\n10 min consecutive)*Day of year squared",
-                                                 "Count type (ARU\n10 min random)*Day of year squared",
-                                                 "Count type (ARU\n22 min random)*Day of year squared")),
-                           ymin = l_bound,
-                           ymax = h_bound)) +
-        xlab("Predictor Variable") +
-        ylab("Coefficient estimate") +
-        theme_bw() +
-        ylim(-1, 1) +
-        theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)))
-
-
-
 
 ##### ##species detected over time, stratified by count type, with plotted GLMM
 ## prediction line, from max.rand.spdetmm model! formula: 
@@ -593,7 +535,8 @@ spdet_time <- ggplot(pred.4ct,
                                 labels = c("Point count\n", 
                                            "ARU - 10 min\nconsecutive\n", 
                                            "ARU - 10 min\nrandom\n", 
-                                           "ARU - 22 min\nrandom\n")))) +
+                                           "ARU - 22 min\nrandom\n"))), 
+             size = t_size/10) +
   scale_colour_viridis_d(name = "Survey Method", option = "magma", 
                          begin = 0, end = 0.75) + 
   scale_y_continuous(breaks = c(0, 4, 8, 12, 16)) + 

@@ -16,7 +16,61 @@
 ## TODO: * 
 ################################
 
-#### Boosted Regression Tree summary plots----------------------------------------
+#### Species Richness plots-----------------------------------------------------
+# plot of coefficients with 95% confidence intervals for max.rand.spdetmm, a
+# GLMM for species detected over time depending on count type and weather 
+# variables
+
+# this result is in the main plots script as a table of coefficient values
+print(ggplot(data = maxrand_df,
+             aes(x = factor(variable,
+                            levels = c("Count type (ARU- 10 min consecutive)", 
+                                       "Count type (ARU- 10 min random)", 
+                                       "Count type (ARU- 22 min random)", "Wind (2)", "Wind (3+)",
+                                       "Rain (Wet)", "Noise (1)", "Noise (>2)", "Day of year", 
+                                       "Day of year squared",
+                                       "Count type (ARU- 10 min consecutive)*Rain (Wet)", 
+                                       "Count type (ARU- 10 min random)*Rain (Wet)",
+                                       "Count type (ARU- 22 min random)*Rain (Wet)",
+                                       "Count type (ARU- 10 min consecutive)*Day of Year",
+                                       "Count type (ARU- 10 min random)*Day of Year",
+                                       "Count type (ARU- 22 min random)*Day of Year",
+                                       "Count type (ARU- 10 min consecutive)*Day of year squared",
+                                       "Count type (ARU- 10 min random)*Day of year squared",
+                                       "Count type (ARU- 22 min random)*Day of year squared")),
+                 y = coef_estimate)) +
+        geom_point() +
+        geom_linerange(aes(x = factor(variable,
+                                      levels = c("Count type (ARU- 10 min consecutive)", 
+                                                 "Count type (ARU- 10 min random)", 
+                                                 "Count type (ARU- 22 min random)", "Wind (2)", "Wind (3+)",
+                                                 "Rain (Wet)", "Noise (1)", "Noise (>2)", "Day of year", 
+                                                 "Day of year squared",
+                                                 "Count type (ARU- 10 min consecutive)*Rain (Wet)", 
+                                                 "Count type (ARU- 10 min random)*Rain (Wet)",
+                                                 "Count type (ARU- 22 min random)*Rain (Wet)",
+                                                 "Count type (ARU- 10 min consecutive)*Day of Year",
+                                                 "Count type (ARU- 10 min random)*Day of Year",
+                                                 "Count type (ARU- 22 min random)*Day of Year",
+                                                 "Count type (ARU- 10 min consecutive)*Day of year squared",
+                                                 "Count type (ARU- 10 min random)*Day of year squared",
+                                                 "Count type (ARU- 22 min random)*Day of year squared")),
+                           ymin = l_bound,
+                           ymax = h_bound)) +
+        xlab("Predictor Variable") +
+        ylab("Coefficient estimate") +
+        theme_bw() +
+        ylim(-1, 1) +
+        theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1)))
+
+
+
+
+#### End species richness plots-------------------------------------------------
+
+
+
+#### Boosted Regression Tree summary plots--------------------------------------
 ## WIWR point count models------------------------------------------------------ 
 fits_wiwr_brt <- readRDS("fits_wiwr_brt.rds")
 
