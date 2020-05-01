@@ -24,7 +24,6 @@ library(gbm)
 library(data.table)
 library(mgcv)
 
-rm(list = ls())
 #set.seed(28022020) # no longer setting seed because I set it in main workflow
 # script
 
