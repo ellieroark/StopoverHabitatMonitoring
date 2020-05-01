@@ -105,4 +105,3 @@ source("./StopoverHabitatMonitoring/BRT_abundance.R")
 source("./StopoverHabitatMonitoring/plots_yellowpaper_PtAbbaye2019.R")
 
 ### End Plots-------------------------------------------------------------------
-
