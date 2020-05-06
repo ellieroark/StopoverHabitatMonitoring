@@ -20,6 +20,7 @@ library(wgutil)
 library(tidyverse)
 library(Hmisc)
 library(lme4)
+library(plotrix)
 
 t_size <- 9
 #setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
@@ -42,11 +43,12 @@ gcki_ptct_preds_brt <- bind_rows(lapply(fits_gcki_brt, FUN = function(x) {
 }))
 
 # get average prediction for each day from the 200 iterations of the 5-fold CV
-warning("Add standard error to this at some point.  14 April WG.")
 gcki_ptct_preds_brt <- group_by(gcki_ptct_preds_brt, day_of_yr) %>%
-  summarise(mean_pred = mean(predictions))
-
+  summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+            se = std.error(predictions))
 g4p1 <- ggplot(data = gcki_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  # geom_ribbon(aes(ymin = mean_pred - se,
+  #                 ymax = mean_pred + se)) +
   geom_line() + 
   geom_point(data = sum_gcki, aes(x = day_of_yr, y = meandet)) + 
   #ggtitle("Golden-crowned Kinglet\nPoint counts (10 consecutive min)") +
@@ -70,11 +72,13 @@ gcki_aru10c_preds_brt <- bind_rows(lapply(fits_arugcki_brt, FUN = function(x) {
 }))
 
 # get average prediction for each day from the 200 iterations of the 5-fold CV
-warning("Add standard error to this at some point.  14 April WG.")
 gcki_aru10c_preds_brt <- group_by(gcki_aru10c_preds_brt, day_of_yr) %>%
-  summarise(mean_pred = mean(predictions))
+  summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+            se = std.error(predictions))
 
 g4p2 <- ggplot(data = gcki_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  # geom_ribbon(aes(ymin = mean_pred - se,
+  #                 ymax = mean_pred + se)) +
   geom_line() + 
   geom_point(data = sum_arugcki, aes(x = day_of_yr, y = meandet)) + 
   #ggtitle("Golden-crowned Kinglet\nARU- 10 consecutive min") +
@@ -98,11 +102,13 @@ gcki_aru10r_preds_brt <- bind_rows(lapply(fits_arugcki10r_brt, FUN = function(x)
 }))
 
 # get average prediction for each day from the 200 iterations of the 5-fold CV
-warning("Add standard error to this at some point.  14 April WG.")
 gcki_aru10r_preds_brt <- group_by(gcki_aru10r_preds_brt, day_of_yr) %>%
-  summarise(mean_pred = mean(predictions))
+  summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+            se = std.error(predictions))
 
 g4p3 <- ggplot(data = gcki_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  # geom_ribbon(aes(ymin = mean_pred - se,
+  #                 ymax = mean_pred + se)) +
   geom_line() + 
   geom_point(data = sum_arugcki10r, aes(x = day_of_yr, y = meandet)) + 
   #ggtitle("Golden-crowned Kinglet\nARU- 10 random min") +
@@ -126,11 +132,13 @@ gcki_aru22r_preds_brt <- bind_rows(lapply(fits_arugcki22r_brt, FUN = function(x)
 }))
 
 # get average prediction for each day from the 200 iterations of the 5-fold CV
-warning("Add standard error to this at some point.  14 April WG.")
 gcki_aru22r_preds_brt <- group_by(gcki_aru22r_preds_brt, day_of_yr) %>%
-  summarise(mean_pred = mean(predictions))
+  summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+            se = std.error(predictions))
 
 g4p4 <- ggplot(data = gcki_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  # geom_ribbon(aes(ymin = mean_pred - se,
+  #                 ymax = mean_pred + se)) +
   geom_line() + 
   geom_point(data = sum_arugcki22r, aes(x = day_of_yr, y = meandet)) + 
   #ggtitle("Golden-crowned Kinglet\nARU- 22 random min") +
@@ -154,11 +162,13 @@ wiwr_ptct_preds_brt <- bind_rows(lapply(fits_wiwr_brt, FUN = function(x) {
 }))
 
 # get average prediction for each day from the 200 iterations of the 5-fold CV
-warning("Add standard error to this at some point.  14 April WG.")
 wiwr_ptct_preds_brt <- group_by(wiwr_ptct_preds_brt, day_of_yr) %>%
-  summarise(mean_pred = mean(predictions))
+  summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+            se = std.error(predictions))
 
 g4p5 <- ggplot(data = wiwr_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  # geom_ribbon(aes(ymin = mean_pred - se,
+  #                 ymax = mean_pred + se)) +
   geom_line() + 
   geom_point(data = sum_wiwr, aes(x = day_of_yr, y = meandet)) + 
   # ggtitle("Winter Wren\nPoint counts (10 min); BRT") + 
@@ -182,11 +192,13 @@ wiwr_aru10c_preds_brt <- bind_rows(lapply(fits_aruwiwr_brt, FUN = function(x) {
 }))
 
 # get average prediction for each day from the 200 iterations of the 5-fold CV
-warning("Add standard error to this at some point.  14 April WG.")
 wiwr_aru10c_preds_brt <- group_by(wiwr_aru10c_preds_brt, day_of_yr) %>%
-  summarise(mean_pred = mean(predictions))
+  summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+            se = std.error(predictions))
 
 g4p6 <- ggplot(data = wiwr_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  # geom_ribbon(aes(ymin = mean_pred - se,
+  #                 ymax = mean_pred + se)) +
   geom_line() + 
   geom_point(data = sum_aruwiwr, aes(x = day_of_yr, y = meandet)) + 
   #ggtitle("Winter Wren\nARU - consecutive 10 min; BRT") + 
@@ -209,11 +221,13 @@ wiwr_aru10r_preds_brt <- bind_rows(lapply(fits_aruwiwr10r_brt, FUN = function(x)
 }))
 
 # get average prediction for each day from the 200 iterations of the 5-fold CV
-warning("Add standard error to this at some point.  14 April WG.")
 wiwr_aru10r_preds_brt <- group_by(wiwr_aru10r_preds_brt, day_of_yr) %>%
-  summarise(mean_pred = mean(predictions))
+  summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+            se = std.error(predictions))
 
 g4p7 <- ggplot(data = wiwr_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+  # geom_ribbon(aes(ymin = mean_pred - se,
+  #                 ymax = mean_pred + se)) +
   geom_line() + 
   geom_point(data = sum_aruwiwr10r, aes(x = day_of_yr, y = meandet)) + 
   #ggtitle("Winter Wren\nARU (10 random min); BRT") + 
@@ -236,11 +250,13 @@ wiwr_aru22r_preds_brt <- bind_rows(lapply(fits_aruwiwr22r_brt, FUN = function(x)
 }))
 
 # get average prediction for each day from the 200 iterations of the 5-fold CV
-warning("Add standard error to this at some point.  14 April WG.")
 wiwr_aru22r_preds_brt <- group_by(wiwr_aru22r_preds_brt, day_of_yr) %>%
-  summarise(mean_pred = mean(predictions))
+  summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+            se = std.error(predictions))
 
-g4p8 <- ggplot(data = wiwr_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+g4p8 <- ggplot(data = wiwr_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
+ # geom_ribbon(aes(ymin = mean_pred - se,
+ #                ymax = mean_pred + se)) +
   geom_line() + 
   geom_point(data = sum_aruwiwr22r, aes(x = day_of_yr, y = meandet)) + 
   ggtitle("ARU Counts\n22 random minutes\n(d)") +
@@ -249,17 +265,19 @@ g4p8 <- ggplot(data = wiwr_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) + 
   ylab("Abundance index") + 
-  theme_bw()
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
 
-rm(fits_aruwiwr10r_brt)
+rm(fits_aruwiwr22r_brt)
 
 
 ## abundance data and BRT models for 2 species for all 4 survey methods
 #multiplot(g4p5, g4p1, g4p6, g4p2, g4p7, g4p3,  g4p8, g4p4, 
 #          layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 4, byrow = TRUE))
 
-multiplot(g4p5, g4p6, g4p7, g4p8, g4p1, g4p2, g4p3, g4p4, 
-          layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 2, byrow = TRUE))
+# multiplot(g4p5, g4p6, g4p7, g4p8, g4p1, g4p2, g4p3, g4p4, 
+#           layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 2, 
+#                           byrow = TRUE))
 
 
 ## correlation plots for predicted and observed abundance metrics
@@ -292,14 +310,16 @@ abund_wiwr_obs_wide$type <- "observed"
 # combine predicted and observed abundance values
 abund_wiwr_wide <- bind_rows(abund_wiwr_pred_wide, abund_wiwr_obs_wide)
 
-abund_pairs <- ggpairs(data = abund_wiwr_wide, columns = c(2:5), ggplot2::aes(colour = type), 
+abund_pairs <- ggpairs(data = abund_wiwr_wide, columns = c(2:5), 
+                       ggplot2::aes(colour = type), 
+                       upper = list(continuous = wrap('cor', method = "spearman")),
                        diag = list(continuous = "blankDiag"))
 
 for(i in 1:abund_pairs$nrow) {
   for(j in 1:abund_pairs$ncol){
-    abund_pairs[i,j] <- abund_pairs[i,j] + 
+    abund_pairs[i,j] <- abund_pairs[i,j] +
       scale_fill_manual(values=c("blue", "orange")) +
-      scale_color_manual(values=c("blue", "orange")) + 
+      scale_color_manual(values=c("blue", "orange")) +
       theme_bw()
   }
 }
@@ -556,13 +576,22 @@ ggsave(spdet_time, filename = "./saved_objects/spdet_time.jpg",
        width = 10, height = 6, 
        units = "cm", device = "jpeg")
 
+ggsave(abund_pairs, filename = "./saved_objects/abund_pairs.jpg", 
+       width = 6, height = 6, 
+       units = "cm", device = "jpeg")
+
+ggsave("./saved_objects/brt_summary.jpg", 
+       plot = multiplot(g4p5, g4p6, g4p7, g4p8, g4p1, g4p2, g4p3, g4p4, 
+                        layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 2, 
+                                        byrow = TRUE)), 
+       width = 10, height = 10, 
+       units = "cm", device = "jpeg")
+
 ### write out tables as .csvs---------------------------------------------------
 # write out table of mixed model results for species richness model with four
 # count types. 
 maxrand_df[,-1] <- round(maxrand_df[,-1], digits = 4)
 write_csv(maxrand_df, path = "./saved_objects/mixedmodel_results_speciesrichness.csv")
-
-
 
 ### print numbers needed for manuscript-----------------------------------------
 
