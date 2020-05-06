@@ -243,7 +243,7 @@ spdetmod <- glm(sp_detected ~ 1 + count_type + wind + rain + noise +
                 family = "gaussian")
 
 summary(spdetmod)
-plot(spdetmod, ask = FALSE)
+#plot(spdetmod, ask = FALSE)
 
 ## this gaussian regression does NOT meet constant variance assumption because 
 ## residuals show a distinctive shape. so instead we try:  
@@ -351,7 +351,7 @@ if (regdiag){
        xlab = "standardized residuals")
   boxplot(resids, main = "standardized residuals for sp_det model with no poly 
         term", ylab = "standardize residuals")
-  plot(spdetmod_noPoly)
+  #plot(spdetmod_noPoly)
   
   
   ## end test model significance -------------------------------------------------
