@@ -19,7 +19,7 @@ library(tidyverse)
 library(lme4)
 library(car)
 
-plotson <- TRUE
+plotson <- FALSE
 
 
 #change wind from dbl to factor with 3 levels (0-1, 2, 3+)
@@ -183,7 +183,7 @@ norm.4ct <- glm(sp_detected ~ 1 + count_type + wind + rain + noise +
                 family = "gaussian")
 
 summary(norm.4ct)
-plot(spdetmod, ask = FALSE)
+#plot(spdetmod, ask = FALSE)
 ## normal distribution looks not great (as expected). Residuals show distinctive
 ## shape. SO we try Poisson
 pois.4ct <- glm(sp_detected ~ 1 + count_type + wind + rain + noise +
@@ -192,7 +192,7 @@ pois.4ct <- glm(sp_detected ~ 1 + count_type + wind + rain + noise +
                      data = spdet_4ct, family = "poisson")
 
 summary(pois.4ct)
-plot(pois.4ct, ask = FALSE)
+#plot(pois.4ct, ask = FALSE)
 
 ## check poisson assumptions
 # check unconditional mean and variance for sp_detected (response variable)
