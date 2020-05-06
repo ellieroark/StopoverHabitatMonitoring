@@ -22,6 +22,7 @@
 nt = 2000
 
 plotson <- FALSE
+fitbrt <- FALSE
 
 if(plotson){
 # Exploratory plots -----------------------------------------------------------
@@ -336,7 +337,7 @@ hist(sum_aruwiwr22r$meandet)
 
 ## Boosted Regression Tree for GCKI per DAY (point counts)----------------------
 # define function to fit boosted regression tree
-fit_brt <- function(test_fold, sp_data, newdata) {
+fit_brt <- function(test_fold, sp_data, newdata, nt) {
   train_dat <- sp_data[sp_data$fold != test_fold, ]
   f_m <- gbm(meandet ~ 1 + wind + day_of_yr_c, 
              distribution = "laplace", 
@@ -345,7 +346,8 @@ fit_brt <- function(test_fold, sp_data, newdata) {
              n.trees = nt, 
              n.minobsinnode = 1, 
              shrinkage = 0.001, 
-             bag.fraction = 0.8)
+             bag.fraction = 0.8, 
+             keep.data = FALSE, verbose = F, n.cores = 1)
   test_pred <- sp_data[sp_data$fold == test_fold, ]
   test_pred$OOB_preds <- predict(f_m, newdata = test_pred, 
                                  n.trees = nt, type = "response")
@@ -356,13 +358,13 @@ fit_brt <- function(test_fold, sp_data, newdata) {
   stand_pred$predictions <- predict(f_m, newdata = stand_pred, 
                                  n.trees = nt, type = "response")
   #stand_pred$error <- stand_pred$predictions - stand_pred$meandet
-  
+  rm(f_m)
   # return fitted model, predictions to the observed data from the test fold, 
   # and predictions to new data (with standardized covariates)
   list(test_predictions = test_pred, standardized_preds = stand_pred) #mod = f_m, 
 }
 
-
+if(fitbrt){
 # make a list to hold fitted models and predictions from models with many 
 # replicate folds splits
 # At the end of the following for loop, fits_gcki_brt should have results from 
@@ -405,10 +407,11 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = pgcki_day)
+                           newdata = pgcki_day, nt = nt)
   
   # put predictions for these 5 folds into the big list for all splits
   fits_gcki_brt[[i]] <- brt_test_folds
+  rm(brt_test_folds)
 }
 names(fits_gcki_brt) <- 1:length(fits_gcki_brt)
 rmse_gcki_brt <- sapply(fits_gcki_brt, FUN = function(x) {
@@ -418,7 +421,7 @@ rmse_gcki_brt <- sapply(fits_gcki_brt, FUN = function(x) {
 })
 saveRDS(fits_gcki_brt, "fits_gcki_brt.rds")
 rm(fits_gcki_brt)
-
+}
 
 
 ## alternate BRT with interaction depth of 2 instead of 1 
@@ -539,6 +542,7 @@ rm(fits_gcki_brt)
 
 ## end GLM for GCKI per day (ARU)-----------------------------------------------
 
+if(fitbrt){
 ## Boosted Regression Tree for GCKI per DAY (ARU10c)----------------------------
 # make a list to hold fitted models and predictions from models with many 
 # replicate folds splits
@@ -583,10 +587,11 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = parugcki_day)
+                           newdata = parugcki_day, nt = nt)
   
   # put predictions for these 5 folds into the big list for all splits
   fits_arugcki_brt[[i]] <- brt_test_folds
+  rm(brt_test_folds)
 }
 names(fits_arugcki_brt) <- 1:length(fits_arugcki_brt)
 rmse_arugcki_brt <- sapply(fits_arugcki_brt, FUN = function(x) {
@@ -597,12 +602,14 @@ rmse_arugcki_brt <- sapply(fits_arugcki_brt, FUN = function(x) {
 
 saveRDS(fits_arugcki_brt, "fits_arugcki_brt.rds")
 rm(fits_arugcki_brt)
+
 ## end BRT for GCKI per DAY model (ARU)-----------------------------------------
 
 
 ## BRT for GCKI per day (ARU-10 random min)-------------------------------------
 fits_arugcki10r_brt <- list()
 for (i in 1:200) {
+  gc()
   # assign days to 3-day blocks
   days <- data.frame(day = min(sum_arugcki10r$day_of_yr):
                        max(sum_arugcki10r$day_of_yr), 
@@ -639,10 +646,11 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = pgcki_day)
+                           newdata = pgcki_day, nt = nt)
   
   # put predictions for these 5 folds into the big list for all splits
   fits_arugcki10r_brt[[i]] <- brt_test_folds
+  rm(brt_test_folds)
 }
 names(fits_arugcki10r_brt) <- 1:length(fits_arugcki10r_brt)
 rmse_arugcki10r_brt <- sapply(fits_arugcki10r_brt, FUN = function(x) {
@@ -657,6 +665,7 @@ rm(fits_arugcki10r_brt)
 ## BRT for GCKI per day- ARU 22 random min--------------------------------------
 fits_arugcki22r_brt <- list()
 for (i in 1:200) {
+  gc()
   # assign days to 3-day blocks
   days <- data.frame(day = min(sum_arugcki22r$day_of_yr):
                        max(sum_arugcki22r$day_of_yr), 
@@ -693,10 +702,11 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = pgcki_day)
+                           newdata = pgcki_day, nt = nt)
   
   # put predictions for these 5 folds into the big list for all splits
   fits_arugcki22r_brt[[i]] <- brt_test_folds
+  rm(brt_test_folds)
 }
 names(fits_arugcki22r_brt) <- 1:length(fits_arugcki22r_brt)
 rmse_arugcki22r_brt <- sapply(fits_arugcki22r_brt, FUN = function(x) {
@@ -707,7 +717,7 @@ rmse_arugcki22r_brt <- sapply(fits_arugcki22r_brt, FUN = function(x) {
 saveRDS(fits_arugcki22r_brt, "fits_arugcki22r_brt.rds")
 rm(fits_arugcki22r_brt)
 ## end BRT for GCKI per day- ARU 22 random min----------------------------------
-
+}
 
 ###############################################################################
 ## WIWR models ################################################################
@@ -844,7 +854,7 @@ rm(fits_arugcki22r_brt)
 # 
 # ## end GLM for GCKI per day-----------------------------------------------------
 
-
+if(fitbrt){
 ## Boosted Regression Tree for WIWR per DAY (ptct)-------------------------------
 # make a list to hold fitted models and predictions from models with many 
 # replicate folds splits
@@ -889,10 +899,12 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = pwiwr_day)
+                           newdata = pwiwr_day, nt = nt)
   
   # put predictions for these 5 folds into the big list for all splits
   fits_wiwr_brt[[i]] <- brt_test_folds
+  rm(brt_test_folds)
+  gc()
 }
 names(fits_wiwr_brt) <- 1:length(fits_wiwr_brt)
 
@@ -950,10 +962,11 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = paruwiwr_day)
+                           newdata = paruwiwr_day, nt = nt)
   
   # put predictions for these 5 folds into the big list for all splits
   fits_aruwiwr_brt[[i]] <- brt_test_folds
+  rm(brt_test_folds)
 }
 names(fits_aruwiwr_brt) <- 1:length(fits_aruwiwr_brt)
 
@@ -1006,7 +1019,7 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = pwiwr_day)
+                           newdata = pwiwr_day, nt = nt)
   
   # put predictions for these 5 folds into the big list for all splits
   fits_aruwiwr10r_brt[[i]] <- brt_test_folds
@@ -1019,7 +1032,7 @@ rmse_aruwiwr10r_brt <- sapply(fits_aruwiwr10r_brt, FUN = function(x) {
 })
 saveRDS(fits_aruwiwr10r_brt, "fits_aruwiwr10r_brt.rds")
 rm(fits_aruwiwr10r_brt)
-## end BRT for wiwr per day- ARU 22 random min----------------------------------
+## end BRT for wiwr per day- ARU 10 random min----------------------------------
 
 ## BRT for WIWR per day- ARU 22 random min--------------------------------------
 fits_aruwiwr22r_brt <- list()
@@ -1060,10 +1073,11 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = pwiwr_day)
+                           newdata = pwiwr_day, nt = nt)
   
   # put predictions for these 5 folds into the big list for all splits
   fits_aruwiwr22r_brt[[i]] <- brt_test_folds
+  rm(brt_test_folds)
 }
 names(fits_aruwiwr22r_brt) <- 1:length(fits_aruwiwr22r_brt)
 rmse_aruwiwr22r_brt <- sapply(fits_aruwiwr22r_brt, FUN = function(x) {
@@ -1073,5 +1087,6 @@ rmse_aruwiwr22r_brt <- sapply(fits_aruwiwr22r_brt, FUN = function(x) {
 })
 saveRDS(fits_aruwiwr22r_brt, "fits_aruwiwr22r_brt.rds")
 rm(fits_aruwiwr22r_brt)
+}
 ## end BRT for wiwr per day- ARU 22 random min----------------------------------
 
