@@ -4,7 +4,7 @@
 ## 
 ## author: Ellie Roark
 ## created: 31 October 2019
-## last modified: 31 October 2019
+## last modified: 11 May 2020
 ## 
 ## inputs: *ARUDuplicateReview2019- script that randomly selects which of the 
 ##            duplicate ARU recordings to use, and sources:
@@ -32,17 +32,31 @@ library(tidyverse)
 alpha_codes <- read_csv(file = "./2018data/BirdAlphaCodes.csv")
 
 #clean up environment
-rm(allaru_s, dup_no_match, match, no_match, spdet_aru, 
-   spdet_arudup, spdet_ptct, w.allaru, w.arudup, 
-   arudup, drop_anon, i, dr, nm, pair, t.arudup)
 
 #get list of species detected by aru counts
-#first add common name to aru counts
-aru_names <- left_join(
+#first add common name to aru counts-- ARU 10 consec counts
+aru_names_10c <- left_join(
   allaru, 
   alpha_codes[, which(colnames(alpha_codes) %in% c("SPEC", "COMMONNAME"))], 
   by = c("species_code" = "SPEC"))
-colnames(aru_names)[colnames(aru_names)=="COMMONNAME"] <- "species_common_name"
+colnames(aru_names_10c)[colnames(aru_names_10c)=="COMMONNAME"] <- "species_common_name"
+
+#first add common name to aru counts-- ARU random counts
+aru_names_rand <- left_join(
+  arurand, 
+  alpha_codes[, which(colnames(alpha_codes) %in% c("SPEC", "COMMONNAME"))], 
+  by = c("species_code" = "SPEC"))
+colnames(aru_names_rand)[colnames(aru_names_rand)=="COMMONNAME"] <- "species_common_name"
+
+#select only species common names for all ARU count types and bind rows
+aru_names_10c <- select(aru_names_10c, "species_common_name", "aru_id", 
+                        "species_code")
+aru_names_rand <- select(aru_names_rand, "species_common_name", "aru_id", 
+                        "species_code")
+aru_names <- bind_rows(aru_names_10c, aru_names_rand)
+
+## remove rows with "no birds" counts
+aru_names <- aru_names[which(aru_names$species_code != "no birds"), ]
 
 
 #add in "sp" taxa to species common name
@@ -62,17 +76,26 @@ for (i in 1:nrow(aru_names)){
   else if(aru_names$species_code[i] == "woodpecker sp."){
     aru_names$species_common_name[i] <- "woodpecker sp."
   }
+  else if(aru_names$species_code[i] == "setophaga sp."){
+    aru_names$species_common_name[i] <- "setophaga sp."
+  }
 }
 
-#change common name of RCKI in ptct data so it matches aru data
+#change common name of RCKI and SWTH in ptct data so it matches aru data
 for (i in 1:nrow(ptct)){
   if (ptct$species_code[i] == "RCKI"){
     ptct$species_common_name[i] <- "Ruby-crowned Kinglet"
+  }
+  if (ptct$species_code[i] == "SWTH"){
+    ptct$species_common_name[i] <- "Swainson's Thrush"
   }
 }
 
 #get list of species detected by arus
 arudet <- unique(aru_names$species_common_name)
+
+#subset aru_names to only unique species 
+aru_names <- distinct(aru_names)
 
 #get list of species detected by point counts
 ptdet <- unique(ptct$species_common_name)
@@ -97,7 +120,7 @@ for(i in 1:nrow(sp_detection_method)) {
   sp_detection_method$det_S[i] <- length(grep("S", sdf$det_code))
   sp_detection_method$det_D[i] <- length(grep("D", sdf$det_code))
 }
-# was this species detected by ARU in 10 min point counts?
+# was this species ever detected by ARU?
 sp_detection_method$aru_det <- sp_detection_method$species_common_name %in% arudet
 
 #change TRUE/FALSE aru det to yes/no
@@ -110,11 +133,6 @@ sp_detection_method <- left_join(sp_detection_method,
   by = c("species_common_name" = "COMMONNAME"))
 colnames(sp_detection_method)[colnames(sp_detection_method)=="SCINAME"] <- "scientific_name"
 
-# add in Swainson's Thrush manually, because of problem with apostrophe
-sp_detection_method[which(
-  sp_detection_method$species_common_name == "Swainson’s Thrush"), 
-  "scientific_name"] <- "Catharus ustulatus"
-
 non_species <- sp_detection_method[sp_detection_method$scientific_name %nin% 
                                      alpha_codes$SCINAME, ]
 keep_sp <- sp_detection_method$scientific_name[
@@ -125,5 +143,5 @@ sp_detection_method <- sp_detection_method[sp_detection_method$SCINAME %in%
                                              keep_sp, ]
 sp_detection_method <- bind_rows(sp_detection_method, non_species)
 
-write.csv(sp_detection_method, file = "./saved_objects/2019plots/SpeciesDetByMethod_PtAbbaye2019.csv")
+write.csv(sp_detection_method, file = "./SpeciesDetByMethod_PtAbbaye2019.csv")
   
