@@ -22,7 +22,7 @@ library(Hmisc)
 library(lme4)
 library(plotrix)
 
-t_size <- 9
+t_size <- 7
 #setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
 
 ### clean up environment
@@ -57,7 +57,9 @@ g4p1 <- ggplot(data = gcki_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
   ylab("Golden-crowned Kinglet\nAbundance index") + 
-  theme_bw()
+  theme_bw() + 
+  theme(text = element_text(size = t_size)) + 
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
 
 rm(fits_gcki_brt)
 
@@ -87,7 +89,9 @@ g4p2 <- ggplot(data = gcki_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
   ylab("Abundance index") + 
-  theme_bw()
+  theme_bw() + 
+  theme(text = element_text(size = t_size)) + 
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
 
 rm(fits_arugcki_brt)
 
@@ -117,7 +121,9 @@ g4p3 <- ggplot(data = gcki_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
   ylab("Abundance index") + 
-  theme_bw()
+  theme_bw() + 
+  theme(text = element_text(size = t_size)) + 
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
 
 rm(fits_arugcki10r_brt)
 
@@ -147,7 +153,9 @@ g4p4 <- ggplot(data = gcki_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
   ylab("Abundance index") + 
-  theme_bw()
+  theme_bw() + 
+  theme(text = element_text(size = t_size)) + 
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
 
 rm(fits_arugcki22r_brt)
 
@@ -177,7 +185,9 @@ g4p5 <- ggplot(data = wiwr_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
   ylab("Winter Wren\nAbundance index") + 
-  theme_bw()
+  theme_bw() + 
+  theme(text = element_text(size = t_size)) + 
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
 
 rm(fits_wiwr_brt)
 
@@ -207,7 +217,9 @@ g4p6 <- ggplot(data = wiwr_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   xlab("") + 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) + 
-  theme_bw()
+  theme_bw() +
+  theme(text = element_text(size = t_size)) + 
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
 
 rm(fits_aruwiwr_brt)
 
@@ -236,7 +248,9 @@ g4p7 <- ggplot(data = wiwr_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) + 
   ylab("Abundance index") + 
-  theme_bw()
+  theme_bw() +
+  theme(text = element_text(size = t_size)) + 
+  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
 
 rm(fits_aruwiwr10r_brt)
 
@@ -266,6 +280,7 @@ g4p8 <- ggplot(data = wiwr_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
                      labels = c("April 1", "April 15", "May 1", "May 15")) + 
   ylab("Abundance index") + 
   theme_bw() +
+  theme(text = element_text(size = t_size)) + 
   theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
 
 rm(fits_aruwiwr22r_brt)
@@ -275,9 +290,9 @@ rm(fits_aruwiwr22r_brt)
 #multiplot(g4p5, g4p1, g4p6, g4p2, g4p7, g4p3,  g4p8, g4p4, 
 #          layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 4, byrow = TRUE))
 
-# multiplot(g4p5, g4p6, g4p7, g4p8, g4p1, g4p2, g4p3, g4p4, 
-#           layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 2, 
-#                           byrow = TRUE))
+multiplot(g4p5, g4p6, g4p7, g4p8, g4p1, g4p2, g4p3, g4p4,
+          layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 2,
+                          byrow = TRUE))
 
 
 ## correlation plots for predicted and observed abundance metrics
@@ -290,6 +305,7 @@ abund_wiwr_pred <- mapply(FUN = function(x, m) {x$method <- m; x},
                           abund_wiwr_pred, names(abund_wiwr_pred), 
                           SIMPLIFY = F, USE.NAMES = T)
 abund_wiwr_pred <- bind_rows(abund_wiwr_pred)
+abund_wiwr_pred <- subset(abund_wiwr_pred, subset = TRUE,  select=-c(sdev, se))
 abund_wiwr_pred_wide <- pivot_wider(abund_wiwr_pred, names_from = method, 
                                values_from = mean_pred)
 abund_wiwr_pred_wide$type <- "predicted"
@@ -313,14 +329,18 @@ abund_wiwr_wide <- bind_rows(abund_wiwr_pred_wide, abund_wiwr_obs_wide)
 abund_pairs <- ggpairs(data = abund_wiwr_wide, columns = c(2:5), 
                        ggplot2::aes(colour = type), 
                        upper = list(continuous = wrap('cor', method = "spearman")),
-                       diag = list(continuous = "blankDiag"))
+                       diag = list(continuous = "blankDiag"), 
+                       axisLabels = "show", 
+                       columnLabels = c("Point Count", "ARU- 10 consecutive", 
+                                        "ARU- 10 random", "ARU- 22 random"))
 
 for(i in 1:abund_pairs$nrow) {
   for(j in 1:abund_pairs$ncol){
     abund_pairs[i,j] <- abund_pairs[i,j] +
       scale_fill_manual(values=c("blue", "orange")) +
       scale_color_manual(values=c("blue", "orange")) +
-      theme_bw()
+      theme_bw() + 
+      theme(text = element_text(size = 9))
   }
 }
 abund_pairs
@@ -577,14 +597,14 @@ ggsave(spdet_time, filename = "./saved_objects/spdet_time.jpg",
        units = "cm", device = "jpeg")
 
 ggsave(abund_pairs, filename = "./saved_objects/abund_pairs.jpg", 
-       width = 6, height = 6, 
+       width = 25, height = 20, 
        units = "cm", device = "jpeg")
 
 ggsave("./saved_objects/brt_summary.jpg", 
        plot = multiplot(g4p5, g4p6, g4p7, g4p8, g4p1, g4p2, g4p3, g4p4, 
                         layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 2, 
                                         byrow = TRUE)), 
-       width = 10, height = 10, 
+       width = 18, height = 12, 
        units = "cm", device = "jpeg")
 
 ### write out tables as .csvs---------------------------------------------------
