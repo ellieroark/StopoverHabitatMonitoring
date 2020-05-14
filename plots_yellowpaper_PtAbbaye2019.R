@@ -21,13 +21,14 @@ library(tidyverse)
 library(Hmisc)
 library(lme4)
 library(plotrix)
+library(patchwork)
 
-t_size <- 7
+t_size <- 12
 #setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
 
 ### clean up environment
-rm(arugcki, arugcki.day.gam, arugcki.day.gam2, aruwiwr, aruwiwr.day.gam, 
-   aruwiwr.day.gam2)
+# rm(arugcki, arugcki.day.gam, arugcki.day.gam2, aruwiwr, aruwiwr.day.gam, 
+#    aruwiwr.day.gam2)
 ##TODO add more to this list once all plots are created and I can remove 
 ##extraneous objects  
 
@@ -52,11 +53,10 @@ g4p1 <- ggplot(data = gcki_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
   geom_line() + 
   geom_point(data = sum_gcki, aes(x = day_of_yr, y = meandet)) + 
   #ggtitle("Golden-crowned Kinglet\nPoint counts (10 consecutive min)") +
-  ggtitle("(e)") + 
   xlab("") + 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
-  ylab("Golden-crowned Kinglet\nAbundance index") + 
+  ylab(expression(A[p])) + 
   theme_bw() + 
   theme(text = element_text(size = t_size)) + 
   theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
@@ -84,11 +84,10 @@ g4p2 <- ggplot(data = gcki_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   geom_line() + 
   geom_point(data = sum_arugcki, aes(x = day_of_yr, y = meandet)) + 
   #ggtitle("Golden-crowned Kinglet\nARU- 10 consecutive min") +
-  ggtitle("(f)") + 
   xlab("") +
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
-  ylab("Abundance index") + 
+  ylab(expression(A[10*c])) + 
   theme_bw() + 
   theme(text = element_text(size = t_size)) + 
   theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
@@ -116,11 +115,11 @@ g4p3 <- ggplot(data = gcki_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   geom_line() + 
   geom_point(data = sum_arugcki10r, aes(x = day_of_yr, y = meandet)) + 
   #ggtitle("Golden-crowned Kinglet\nARU- 10 random min") +
-  ggtitle("(g)") + 
   xlab("") +
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
-  ylab("Abundance index") + 
+  #ylab("Abundance index") + 
+  ylab(expression(A[10*r])) + 
   theme_bw() + 
   theme(text = element_text(size = t_size)) + 
   theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
@@ -148,11 +147,11 @@ g4p4 <- ggplot(data = gcki_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   geom_line() + 
   geom_point(data = sum_arugcki22r, aes(x = day_of_yr, y = meandet)) + 
   #ggtitle("Golden-crowned Kinglet\nARU- 22 random min") +
-  ggtitle("(h)") + 
   xlab("") +
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
-  ylab("Abundance index") + 
+  #ylab("Abundance index") + 
+  ylab(expression(A[22*r])) + 
   theme_bw() + 
   theme(text = element_text(size = t_size)) + 
   theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
@@ -177,14 +176,16 @@ wiwr_ptct_preds_brt <- group_by(wiwr_ptct_preds_brt, day_of_yr) %>%
 g4p5 <- ggplot(data = wiwr_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
-  geom_line() + 
-  geom_point(data = sum_wiwr, aes(x = day_of_yr, y = meandet)) + 
+  geom_line(colour = 2) + 
+  geom_point(data = sum_wiwr, aes(x = day_of_yr, y = meandet), 
+             colour = 2) + 
   # ggtitle("Winter Wren\nPoint counts (10 min); BRT") + 
-  ggtitle("Point Counts\n10 consecutive minutes\n(a)") + 
+  #ggtitle("Point Counts\n10 consecutive minutes\n(a)") + 
   xlab("") +
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
-  ylab("Winter Wren\nAbundance index") + 
+  #ylab("Winter Wren\nAbundance index") + 
+  ylab(expression(A[p])) + 
   theme_bw() + 
   theme(text = element_text(size = t_size)) + 
   theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
@@ -209,11 +210,13 @@ wiwr_aru10c_preds_brt <- group_by(wiwr_aru10c_preds_brt, day_of_yr) %>%
 g4p6 <- ggplot(data = wiwr_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
-  geom_line() + 
-  geom_point(data = sum_aruwiwr, aes(x = day_of_yr, y = meandet)) + 
+  geom_line(colour= 2) + 
+  geom_point(data = sum_aruwiwr, aes(x = day_of_yr, y = meandet), 
+             colour = 2) + 
   #ggtitle("Winter Wren\nARU - consecutive 10 min; BRT") + 
-  ggtitle("ARU Counts\n10 consecutive minutes\n(b)") +
-  ylab("Abundance index") + 
+  #ggtitle("ARU Counts\n10 consecutive minutes\n(b)") +
+  #ylab("Abundance index") + 
+  ylab(expression(A[10*c])) + 
   xlab("") + 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) + 
@@ -240,14 +243,16 @@ wiwr_aru10r_preds_brt <- group_by(wiwr_aru10r_preds_brt, day_of_yr) %>%
 g4p7 <- ggplot(data = wiwr_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
-  geom_line() + 
-  geom_point(data = sum_aruwiwr10r, aes(x = day_of_yr, y = meandet)) + 
+  geom_line(colour = 2) + 
+  geom_point(data = sum_aruwiwr10r, aes(x = day_of_yr, y = meandet), 
+             colour = 2) + 
   #ggtitle("Winter Wren\nARU (10 random min); BRT") + 
-  ggtitle("ARU Counts\n10 random minutes\n(c)") +
+  #ggtitle("ARU Counts\n10 random minutes") +
   xlab("") +
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) + 
-  ylab("Abundance index") + 
+  #ylab("Abundance index") + 
+  ylab(expression(A[10*r])) + 
   theme_bw() +
   theme(text = element_text(size = t_size)) + 
   theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
@@ -271,14 +276,16 @@ wiwr_aru22r_preds_brt <- group_by(wiwr_aru22r_preds_brt, day_of_yr) %>%
 g4p8 <- ggplot(data = wiwr_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
  # geom_ribbon(aes(ymin = mean_pred - se,
  #                ymax = mean_pred + se)) +
-  geom_line() + 
-  geom_point(data = sum_aruwiwr22r, aes(x = day_of_yr, y = meandet)) + 
-  ggtitle("ARU Counts\n22 random minutes\n(d)") +
+  geom_line(colour = 2) + 
+  geom_point(data = sum_aruwiwr22r, aes(x = day_of_yr, y = meandet), 
+             colour = 2) + 
+  #ggtitle("ARU Counts\n22 random minutes\n(d)") +
   #ggtitle("Winter Wren\nARU (22 random min); BRT") + 
   xlab("") + 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) + 
-  ylab("Abundance index") + 
+  #ylab("Abundance index") + 
+  ylab(expression(A[22*r])) + 
   theme_bw() +
   theme(text = element_text(size = t_size)) + 
   theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
@@ -287,12 +294,11 @@ rm(fits_aruwiwr22r_brt)
 
 
 ## abundance data and BRT models for 2 species for all 4 survey methods
-#multiplot(g4p5, g4p1, g4p6, g4p2, g4p7, g4p3,  g4p8, g4p4, 
-#          layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 4, byrow = TRUE))
+brt_summary <- g4p5 + g4p6 + g4p7 + g4p8 + g4p1 + g4p2 + g4p3 + g4p4 + 
+  plot_layout(ncol = 4) +
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
+  theme(plot.tag = element_text(size = 10))
 
-multiplot(g4p5, g4p6, g4p7, g4p8, g4p1, g4p2, g4p3, g4p4,
-          layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 2,
-                          byrow = TRUE))
 
 
 ## correlation plots for predicted and observed abundance metrics
@@ -326,24 +332,281 @@ abund_wiwr_obs_wide$type <- "observed"
 # combine predicted and observed abundance values
 abund_wiwr_wide <- bind_rows(abund_wiwr_pred_wide, abund_wiwr_obs_wide)
 
-abund_pairs <- ggpairs(data = abund_wiwr_wide, columns = c(2:5), 
-                       ggplot2::aes(colour = type), 
-                       upper = list(continuous = wrap('cor', method = "spearman")),
-                       diag = list(continuous = "blankDiag"), 
-                       axisLabels = "show", 
-                       columnLabels = c("Point Count", "ARU- 10 consecutive", 
-                                        "ARU- 10 random", "ARU- 22 random"))
+## make correlation plots for WIWR
+## point count + aru10c -- observed
+c1wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru10c, y = point_count)) + 
+  geom_point(colour = 2) + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[10*c])) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
 
-for(i in 1:abund_pairs$nrow) {
-  for(j in 1:abund_pairs$ncol){
-    abund_pairs[i,j] <- abund_pairs[i,j] +
-      scale_fill_manual(values=c("blue", "orange")) +
-      scale_color_manual(values=c("blue", "orange")) +
-      theme_bw() + 
-      theme(text = element_text(size = 9))
-  }
-}
-abund_pairs
+## point count + aru10r
+c2wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru10r, y = point_count)) + 
+  geom_point(colour = 2) + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[10*r])) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
+
+## point count + aru22r
+c3wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru22r, y = point_count)) + 
+  geom_point(colour = 2) + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[22*r])) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
+
+## aru10c + aru10r
+c4wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru10r, y = aru10c)) + 
+  geom_point(colour = 2) + 
+  ylab(expression(A[10*c])) + 
+  xlab(expression(A[10*r])) + 
+  theme_bw() +
+  theme(legend.position="none", text = element_text(size = 14))
+
+## aru10c + aru22r
+c5wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru22r, y = aru10c,)) + 
+  geom_point(colour = 2) + 
+  ylab(expression(A[10*c])) + 
+  xlab(expression(A[22*r])) + 
+  theme_bw() +
+  theme(text = element_text(size = 14))
+
+obscorplot_wiwr <- c1wo + c2wo + c3wo + guide_area() + c4wo + c5wo + 
+  plot_layout(guides = 'collect') + 
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
+  theme(plot.tag = element_text(size = t_size))
+
+## point count + aru10c -- predicted
+c1wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10c, y = point_count)) + 
+  geom_point(colour = 2) + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[10*c])) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
+
+## point count + aru10r
+c2wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10r, y = point_count)) + 
+  geom_point(colour = 2) + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[10*r])) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
+
+## point count + aru22r
+c3wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru22r, y = point_count)) + 
+  geom_point(colour = 2) + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[22*r])) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
+
+## aru10c + aru10r
+c4wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10r, y = aru10c)) + 
+  geom_point(colour = 2) + 
+  ylab(expression(A[10*c])) + 
+  xlab(expression(A[10*r])) + 
+  theme_bw() +
+  theme(legend.position="none", text = element_text(size = 14))
+
+## aru10c + aru22r
+c5wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru22r, y = aru10c,)) + 
+  geom_point(colour = 2) + 
+  ylab(expression(A[10*c])) + 
+  xlab(expression(A[22*r])) + 
+  theme_bw() +
+  theme(text = element_text(size = 14))
+
+predcorplot_wiwr <- c1wp + c2wp + c3wp + guide_area() + c4wp + c5wp + 
+  plot_layout(guides = 'collect') + 
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
+  theme(plot.tag = element_text(size = t_size))
+
+
+
+# make single df for GCKI w/predicted and observed values from all survey methods
+abund_gcki_pred <- list(point_count = gcki_ptct_preds_brt, 
+                        aru10c = gcki_aru10c_preds_brt, 
+                        aru10r = gcki_aru10r_preds_brt, 
+                        aru22r = gcki_aru22r_preds_brt)
+abund_gcki_pred <- mapply(FUN = function(x, m) {x$method <- m; x}, 
+                          abund_gcki_pred, names(abund_gcki_pred), 
+                          SIMPLIFY = F, USE.NAMES = T)
+abund_gcki_pred <- bind_rows(abund_gcki_pred)
+abund_gcki_pred <- subset(abund_gcki_pred, subset = TRUE,  select=-c(sdev, se))
+abund_gcki_pred_wide <- pivot_wider(abund_gcki_pred, names_from = method, 
+                                    values_from = mean_pred)
+abund_gcki_pred_wide$type <- "predicted"
+
+# make df of observed values
+abund_gcki_obs <- list(point_count = sum_gcki, 
+                       aru10c = sum_arugcki, 
+                       aru10r = sum_arugcki10r, 
+                       aru22r = sum_arugcki22r)
+abund_gcki_obs <- mapply(FUN = function(x, m) {x$method <- m; x}, 
+                         abund_gcki_obs, names(abund_gcki_obs), 
+                         SIMPLIFY = F, USE.NAMES = T)
+abund_gcki_obs <- bind_rows(abund_gcki_obs)
+abund_gcki_obs_wide <- dplyr::select(abund_gcki_obs, day_of_yr, meandet, method) %>% 
+  pivot_wider(names_from = method, values_from = meandet)
+abund_gcki_obs_wide$type <- "observed"
+
+# combine predicted and observed abundance values
+abund_gcki_wide <- bind_rows(abund_gcki_pred_wide, abund_gcki_obs_wide)
+
+# create correlation plots for abundance indices to combine into multiplot
+
+## point count + aru10c
+c1g <- ggplot(data = abund_gcki_wide, aes(x = aru10c, y = point_count)) + 
+  geom_point(shape = 1, aes(colour = type)) + 
+  # scale_shape(solid = FALSE) + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[10*c])) + 
+  scale_colour_viridis_d(option = "inferno", begin = 0.2, end = 0.75) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
+
+## point count + aru10r
+c2g <- ggplot(data = abund_gcki_wide, aes(x = aru10r, y = point_count)) + 
+  geom_point(shape = 1, aes(colour = type)) + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[10*r])) + 
+  scale_colour_viridis_d(option = "inferno", begin = 0.2, end = 0.75) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
+
+## point count + aru22r
+c3g <- ggplot(data = abund_gcki_wide, aes(x = aru22r, y = point_count)) + 
+  geom_point(shape = 1, aes(colour = type)) + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[22*r])) + 
+  scale_colour_viridis_d(option = "inferno", begin = 0.2, end = 0.75) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
+
+## aru10c + aru10r
+c4g <- ggplot(data = abund_gcki_wide, aes(x = aru10r, y = aru10c)) + 
+  geom_point(shape = 1, aes(colour = type)) + 
+  ylab(expression(A[10*c])) + 
+  xlab(expression(A[10*r])) + 
+  scale_colour_viridis_d(option = "inferno", begin = 0.2, end = 0.75) + 
+  theme_bw() +
+  theme(legend.position="none", text = element_text(size = 14))
+
+## aru10c + aru22r
+c5g <- ggplot(data = abund_gcki_wide, aes(x = aru22r, y = aru10c,)) + 
+  geom_point(shape = 1, aes(colour = type)) + 
+  ylab(expression(A[10*c])) + 
+  xlab(expression(A[22*r])) + 
+  scale_colour_viridis_d(name = "Data type", option = "inferno", 
+                         begin = 0.2, end = 0.75) + 
+  theme_bw() +
+  theme(text = element_text(size = 14))
+
+corplot_gcki <- c1g + c2g + c3g + guide_area() + c4g + c5g + 
+  plot_layout(guides = 'collect') + 
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
+  theme(plot.tag = element_text(size = t_size))
+
+## make GCKI correlation plots as above, but separately for observed and 
+## predicted values
+
+## point count + aru10c -- observed
+c1go <- ggplot(data = abund_gcki_obs_wide, aes(x = aru10c, y = point_count)) + 
+  geom_point() + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[10*c])) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
+
+## point count + aru10r
+c2go <- ggplot(data = abund_gcki_obs_wide, aes(x = aru10r, y = point_count)) + 
+  geom_point() + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[10*r])) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
+
+## point count + aru22r
+c3go <- ggplot(data = abund_gcki_obs_wide, aes(x = aru22r, y = point_count)) + 
+  geom_point() + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[22*r])) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
+
+## aru10c + aru10r
+c4go <- ggplot(data = abund_gcki_obs_wide, aes(x = aru10r, y = aru10c)) + 
+  geom_point() + 
+  ylab(expression(A[10*c])) + 
+  xlab(expression(A[10*r])) + 
+  theme_bw() +
+  theme(legend.position="none", text = element_text(size = 14))
+
+## aru10c + aru22r
+c5go <- ggplot(data = abund_gcki_obs_wide, aes(x = aru22r, y = aru10c,)) + 
+  geom_point() + 
+  ylab(expression(A[10*c])) + 
+  xlab(expression(A[22*r])) + 
+  theme_bw() +
+  theme(text = element_text(size = 14))
+
+obscorplot_gcki <- c1go + c2go + c3go + guide_area() + c4go + c5go + 
+  plot_layout(guides = 'collect') + 
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
+  theme(plot.tag = element_text(size = t_size))
+
+## point count + aru10c -- predicted
+c1gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10c, y = point_count)) + 
+  geom_point() + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[10*c])) + 
+  scale_x_continuous(breaks = c(0.00, 0.06, 0.12)) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
+
+## point count + aru10r
+c2gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10r, y = point_count)) + 
+  geom_point() + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[10*r])) + 
+  scale_x_continuous(breaks = c(0.00, 0.35, 0.7)) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
+
+## point count + aru22r
+c3gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru22r, y = point_count)) + 
+  geom_point() + 
+  ylab(expression(A[p])) + 
+  xlab(expression(A[22*r])) + 
+  scale_x_continuous(breaks = c(0.00, 0.5, 1)) + 
+  theme_bw() + 
+  theme(legend.position="none", text = element_text(size = 14))
+
+## aru10c + aru10r
+c4gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10r, y = aru10c)) + 
+  geom_point() + 
+  ylab(expression(A[10*c])) + 
+  xlab(expression(A[10*r])) + 
+  scale_x_continuous(breaks = c(0.00, 0.35, 0.7)) + 
+  theme_bw() +
+  theme(legend.position="none", text = element_text(size = 14))
+
+## aru10c + aru22r
+c5gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru22r, y = aru10c,)) + 
+  geom_point() + 
+  ylab(expression(A[10*c])) + 
+  xlab(expression(A[22*r])) + 
+  scale_x_continuous(breaks = c(0.00, 0.5, 1)) + 
+  theme_bw() +
+  theme(text = element_text(size = 14))
+
+predcorplot_gcki <- c1gp + c2gp + c3gp + guide_area() + c4gp + c5gp + 
+  plot_layout(guides = 'collect') + 
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
+  theme(plot.tag = element_text(size = t_size))
+   
 
 
 #### END ABUNDANCE SUMMARY PLOTS-----------------------------------------------
@@ -596,15 +859,24 @@ ggsave(spdet_time, filename = "./saved_objects/spdet_time.jpg",
        width = 10, height = 6, 
        units = "cm", device = "jpeg")
 
-ggsave(abund_pairs, filename = "./saved_objects/abund_pairs.jpg", 
-       width = 25, height = 20, 
+ggsave(obscorplot_gcki, filename = "./saved_objects/obscorplot_gcki.jpg", 
+       width = 18, height = 12, 
        units = "cm", device = "jpeg")
 
-ggsave("./saved_objects/brt_summary.jpg", 
-       plot = multiplot(g4p5, g4p6, g4p7, g4p8, g4p1, g4p2, g4p3, g4p4, 
-                        layout = matrix(c(1, 2, 3, 4, 5, 6, 7, 8), nrow = 2, 
-                                        byrow = TRUE)), 
+ggsave(predcorplot_gcki, filename = "./saved_objects/predcorplot_gcki.jpg", 
        width = 18, height = 12, 
+       units = "cm", device = "jpeg")
+
+ggsave(obscorplot_wiwr, filename = "./saved_objects/obscorplot_wiwr.jpg", 
+       width = 18, height = 12, 
+       units = "cm", device = "jpeg")
+
+ggsave(predcorplot_wiwr, filename = "./saved_objects/predcorplot_wiwr.jpg", 
+       width = 18, height = 12, 
+       units = "cm", device = "jpeg")
+
+ggsave(brt_summary, filename = "./saved_objects/brt_summary.jpg", 
+       width = 20, height = 12, 
        units = "cm", device = "jpeg")
 
 ### write out tables as .csvs---------------------------------------------------
