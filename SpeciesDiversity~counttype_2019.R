@@ -137,7 +137,9 @@ non_species <- sp_detection_method[sp_detection_method$scientific_name %nin%
                                      alpha_codes$SCINAME, ]
 keep_sp <- sp_detection_method$scientific_name[
   sp_detection_method$scientific_name %in% alpha_codes$SCINAME]
-sp_detection_method <- left_join(alpha_codes, sp_detection_method, 
+sp_detection_method <- left_join(alpha_codes[, which(colnames(alpha_codes) %in%
+                                                       c("COMMONNAME", "SCINAME"))], 
+                                 sp_detection_method, 
                                  by = c("SCINAME" = "scientific_name"))
 sp_detection_method <- sp_detection_method[sp_detection_method$SCINAME %in% 
                                              keep_sp, ]
