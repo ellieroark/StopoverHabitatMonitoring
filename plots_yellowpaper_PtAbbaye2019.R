@@ -32,7 +32,7 @@ t_size <- 12
 ##TODO add more to this list once all plots are created and I can remove 
 ##extraneous objects  
 
-### SUMMARY PLOTS FOR ABUNDANCE MODELS------------------------------------------
+### BOOSTED REGRESSION TREE SUMMARY PLOT-------------------------------------
 
 ## scatterplot of number of GCKI per day (point counts) over time, with fitted 
 ## average model (BRT) as a line
@@ -299,7 +299,10 @@ brt_summary <- g4p5 + g4p6 + g4p7 + g4p8 + g4p1 + g4p2 + g4p3 + g4p4 +
   plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = 10))
 
+### END BRT SUMMARY PLOT--------------------------------------------------------
 
+
+### ABUNDANCE CORRELATION PLOTS-------------------------------------------------
 
 ## correlation plots for predicted and observed abundance metrics
 # make single df for WIWR w/predicted and observed values from all survey methods
@@ -606,13 +609,70 @@ predcorplot_gcki <- c1gp + c2gp + c3gp + guide_area() + c4gp + c5gp +
   plot_layout(guides = 'collect') + 
   plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = t_size))
-   
+
+#### END ABUNDANCE CORRELATION PLOT---------------------------------------------
+
+### ABUNDANCE CORRELATION COEFFICIENT TABLE-------------------------------------
+gcki_obs_cor <-rcorr(as.matrix(abund_gcki_obs_wide[,2:5]), type = "spearman")
+gcki_obs_cor <- data.frame(gcki_obs_cor$r)
+gcki_obs_cor_l <- gcki_obs_cor %>% 
+  rownames_to_column(var = "count_type1") %>%
+  pivot_longer(-count_type1, names_to = "count_type2", values_to = "gcki_obs_corr")
+# gcki_obs_cor_l$count_type <- paste(gcki_obs_cor_l$count_type1, 
+#                                    gcki_obs_cor_l$count_type2, 
+#                         sep = " and ")
+# gcki_obs_cor_l$count_type1 <- NULL
+# gcki_obs_cor_l$count_type2 <- NULL
+
+gcki_pred_cor <-rcorr(as.matrix(abund_gcki_pred_wide[,2:5]), type = "spearman")
+gcki_pred_cor <- data.frame(gcki_pred_cor$r)
+gcki_pred_cor_l <- gcki_pred_cor %>% 
+  rownames_to_column(var = "count_type1") %>%
+  pivot_longer(-count_type1, names_to = "count_type2", values_to = "gcki_pred_corr")
+# gcki_pred_cor_l$count_type <- paste(gcki_pred_cor_l$count_type1, 
+#                                    gcki_pred_cor_l$count_type2, 
+#                                    sep = " and ")
+# gcki_pred_cor_l$count_type1 <- NULL
+# gcki_pred_cor_l$count_type2 <- NULL
 
 
-#### END ABUNDANCE SUMMARY PLOTS-----------------------------------------------
+wiwr_pred_cor <-rcorr(as.matrix(abund_wiwr_pred_wide[,2:5]), type = "spearman")
+wiwr_pred_cor <- data.frame(wiwr_pred_cor$r)
+wiwr_pred_cor_l <- wiwr_pred_cor %>% 
+  rownames_to_column(var = "count_type1") %>%
+  pivot_longer(-count_type1, names_to = "count_type2", values_to = "wiwr_pred_corr")
+# wiwr_pred_cor_l$count_type <- paste(wiwr_pred_cor_l$count_type1, 
+#                                     wiwr_pred_cor_l$count_type2, 
+#                                     sep = " and ")
+# wiwr_pred_cor_l$count_type1 <- NULL
+# wiwr_pred_cor_l$count_type2 <- NULL
 
 
-#### SUMMARY PLOTS FOR SPECIES RICHNESS GLMM------------------------------------
+wiwr_obs_cor <-rcorr(as.matrix(abund_wiwr_obs_wide[,2:5]), type = "spearman")
+wiwr_obs_cor <- data.frame(wiwr_obs_cor$r)
+wiwr_obs_cor_l <- wiwr_obs_cor %>% 
+  rownames_to_column(var = "count_type1") %>%
+  pivot_longer(-count_type1, names_to = "count_type2", values_to = "wiwr_obs_corr")
+# wiwr_obs_cor_l$count_type <- paste(wiwr_obs_cor_l$count_type1, 
+#                                     wiwr_obs_cor_l$count_type2, 
+#                                     sep = " and ")
+# wiwr_obs_cor_l$count_type1 <- NULL
+# wiwr_obs_cor_l$count_type2 <- NULL
+
+
+abund_corr <- left_join(gcki_obs_cor_l, gcki_pred_cor_l)
+abund_corr_w <- left_join(wiwr_obs_cor_l, wiwr_pred_cor_l)
+abund_corr <- left_join(abund_corr, abund_corr_w)
+
+# drop identity combos
+abund_corr <- abund_corr[abund_corr$count_type1 != abund_corr$count_type2, ]
+# drop duplicates (that have the count types in reverse order)
+abund_corr <- abund_corr[abund_corr$count_type2 != "point_count", ]
+abund_corr <- abund_corr[!grepl("aru22r|aru10r", abund_corr$count_type1), ]
+
+### END ABUNDANCE CORRELATION COEFFICIENT TABLE---------------------------------
+
+#### SPECIES RICHNESS GLMM COEFFICIENT TABLE------------------------------------
 ## table of coefficients for GLMM (max.rand.spdetmm-- includes all count types)
 ## # make a data frame with all variable names for the model
 maxrand_df <- data.frame(matrix(nrow = 19, ncol = 4))
@@ -641,8 +701,10 @@ for(i in 1:nrow(maxrand_df)) {
   maxrand_df$l_bound[i] <- CI.maxrand[2 + i, "2.5 %"]
   maxrand_df$h_bound[i] <- CI.maxrand[2 + i, "97.5 %"]
 }
+### END SPECIES RICHNESS GLMM COEFFICIENT TABLE---------------------------------
 
-##### ##species detected over time, stratified by count type, with plotted GLMM
+### SPECIES RICHNESS OVER TIME BY COUNT TYPE PLOT-------------------------------
+##species detected over time, stratified by count type, with plotted GLMM
 ## prediction line, from max.rand.spdetmm model! formula: 
 ## sp_detected ~ count_type + wind + rain + noise + day_of_yr_s +  
 ## rain:count_type + day_of_yr_s:count_type 
@@ -849,9 +911,7 @@ spdet_time <- ggplot(pred.4ct,
   theme(text = element_text(size = t_size))
   
 spdet_time
-
-
-#### END summary plots for species richness GLMM-------------------------------
+#### SPECIES RICHNESS OVER TIME BY COUNT TYPE-----------------------------------
 
 
 ### write out plots as jpgs ---------------------------------------------------
@@ -884,6 +944,9 @@ ggsave(brt_summary, filename = "./saved_objects/brt_summary.jpg",
 # count types. 
 maxrand_df[,-1] <- round(maxrand_df[,-1], digits = 4)
 write_csv(maxrand_df, path = "./saved_objects/mixedmodel_results_speciesrichness.csv")
+
+abund_corr[,3:6] <- round(abund_corr[,3:6], digits = 3)
+write_csv(abund_corr, path = "./saved_objects/abund_index_corr_coefficients.csv")
 
 ### print numbers needed for manuscript-----------------------------------------
 
