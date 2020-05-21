@@ -17,6 +17,10 @@
 ## TODO: * 
 ################################
 
+fitgam <- TRUE
+
+if(fitgam){
+
 ## GAM with GCKI per day (ptct)-------------------------------------------------
 k <- -1 # k should be large enough that EDF is a good bit less than k-1.  
 
@@ -117,7 +121,8 @@ rmse_gcki_gam <- sapply(fits_gcki_gam, FUN = function(x) {
   })
 })
 saveRDS(fits_gcki_gam, "fits_gcki_gam.rds")
-rm(fits_gcki_gam)
+saveRDS(rmse_gcki_gam, "rmse_gcki_gam.rds")
+rm(fits_gcki_gam, rmse_gcki_gam)
 
 # # GAM fit using thin plate splines as smoother
 # gam2_test_folds <- unique(sum_gcki$fold)
@@ -201,7 +206,8 @@ rmse_arugcki_gam <- sapply(fits_arugcki_gam, FUN = function(x) {
   })
 })
 saveRDS(fits_arugcki_gam, "fits_arugcki_gam.rds")
-rm(fits_arugcki_gam)
+saveRDS(rmse_arugcki_gam, "rmse_arugcki_gam.rds")
+rm(fits_gcki_gam, rmse_arugcki_gam)
 
 
 # ## test GAM fitting with all data
@@ -339,7 +345,8 @@ rmse_wiwr_gam <- sapply(fits_wiwr_gam, FUN = function(x) {
   })
 })
 saveRDS(fits_wiwr_gam, "fits_wiwr_gam.rds")
-rm(fits_wiwr_gam)
+saveRDS(rmse_wiwr_gam, "rmse_wiwr_gam.rds")
+rm(fits_wiwr_gam, rmse_wiwr_gam)
 
 ## end GAM with WIWR per day----------------------------------------------------
 
@@ -407,7 +414,8 @@ rmse_aruwiwr_gam <- sapply(fits_aruwiwr_gam, FUN = function(x) {
   })
 })
 saveRDS(fits_aruwiwr_gam, "fits_aruwiwr_gam.rds")
-rm(fits_aruwiwr_gam)
+saveRDS(rmse_aruwiwr_gam, "rmse_aruwiwr_gam.rds")
+rm(fits_aruwiwr_gam, rmse_aruwiwr_gam)
 
 
 
@@ -482,3 +490,4 @@ plot(aruwiwr.day.gam2, pages = 1, all.terms = T)
 # plot(gcki_brt_predictions$OOB_preds ~ arugcki_brt_predictions$OOB_preds)
 # plot(gcki_gam_predictions$OOB_preds ~ arugcki_gam_predictions$OOB_preds)
 ## end brt and gam predictions plot --------------------------------------------
+}

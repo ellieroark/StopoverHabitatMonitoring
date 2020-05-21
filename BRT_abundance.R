@@ -420,7 +420,8 @@ rmse_gcki_brt <- sapply(fits_gcki_brt, FUN = function(x) {
   })
 })
 saveRDS(fits_gcki_brt, "fits_gcki_brt.rds")
-rm(fits_gcki_brt)
+saveRDS(rmse_gcki_brt, "rmse_gcki_brt.rds")
+rm(fits_gcki_brt, rmse_gcki_brt)
 }
 
 
@@ -601,7 +602,8 @@ rmse_arugcki_brt <- sapply(fits_arugcki_brt, FUN = function(x) {
 })
 
 saveRDS(fits_arugcki_brt, "fits_arugcki_brt.rds")
-rm(fits_arugcki_brt)
+saveRDS(rmse_arugcki_brt, "rmse_arugcki_brt.rds")
+rm(fits_arugcki_brt, rmse_arugcki_brt)
 
 ## end BRT for GCKI per DAY model (ARU)-----------------------------------------
 
@@ -659,7 +661,8 @@ rmse_arugcki10r_brt <- sapply(fits_arugcki10r_brt, FUN = function(x) {
   })
 })
 saveRDS(fits_arugcki10r_brt, "fits_arugcki10r_brt.rds")
-rm(fits_arugcki10r_brt)
+saveRDS(rmse_arugcki10r_brt, "rmse_arugcki10r_brt.rds")
+rm(fits_arugcki10r_brt, rmse_arugcki10r_brt)
 ## end BRT for GCKI per day- ARU 10 random min----------------------------------
 
 ## BRT for GCKI per day- ARU 22 random min--------------------------------------
@@ -715,7 +718,8 @@ rmse_arugcki22r_brt <- sapply(fits_arugcki22r_brt, FUN = function(x) {
   })
 })
 saveRDS(fits_arugcki22r_brt, "fits_arugcki22r_brt.rds")
-rm(fits_arugcki22r_brt)
+saveRDS(rmse_arugcki22r_brt, "rmse_arugcki22r_brt.rds")
+rm(fits_arugcki22r_brt, rmse_arugcki22r_brt)
 ## end BRT for GCKI per day- ARU 22 random min----------------------------------
 }
 
@@ -914,7 +918,8 @@ rmse_wiwr_brt <- sapply(fits_wiwr_brt, FUN = function(x) {
   })
 })
 saveRDS(fits_wiwr_brt, "fits_wiwr_brt.rds")
-rm(fits_wiwr_brt)
+saveRDS(rmse_wiwr_brt, "rmse_wiwr_brt.rds")
+rm(fits_wiwr_brt, rmse_wiwr_brt)
 ## end BRT for WIWR per DAY model (ptct)----------------------------------------
 
 
@@ -977,7 +982,8 @@ rmse_aruwiwr_brt <- sapply(fits_aruwiwr_brt, FUN = function(x) {
 })
 
 saveRDS(fits_aruwiwr_brt, "fits_aruwiwr_brt.rds")
-rm(fits_aruwiwr_brt)
+saveRDS(rmse_aruwiwr_brt, "rmse_aruwiwr_brt.rds")
+rm(fits_aruwiwr_brt, rmse_aruwiwr_brt)
 ## end BRT for WIWR per DAY model (ARU- 10 consec min)--------------------------
 
 ## BRT for WIWR per day- ARU 10 random min--------------------------------------
@@ -1031,7 +1037,8 @@ rmse_aruwiwr10r_brt <- sapply(fits_aruwiwr10r_brt, FUN = function(x) {
   })
 })
 saveRDS(fits_aruwiwr10r_brt, "fits_aruwiwr10r_brt.rds")
-rm(fits_aruwiwr10r_brt)
+saveRDS(rmse_aruwiwr10r_brt, "rmse_aruwiwr10r_brt.rds")
+rm(fits_aruwiwr10r_brt, rmse_aruwiwr10r_brt)
 ## end BRT for wiwr per day- ARU 10 random min----------------------------------
 
 ## BRT for WIWR per day- ARU 22 random min--------------------------------------
@@ -1086,7 +1093,8 @@ rmse_aruwiwr22r_brt <- sapply(fits_aruwiwr22r_brt, FUN = function(x) {
   })
 })
 saveRDS(fits_aruwiwr22r_brt, "fits_aruwiwr22r_brt.rds")
-rm(fits_aruwiwr22r_brt)
+saveRDS(rmse_aruwiwr22r_brt, "rmse_aruwiwr22r_brt.rds")
+rm(fits_aruwiwr22r_brt, rmse_aruwiwr22r_brt)
 }
 ## end BRT for wiwr per day- ARU 22 random min----------------------------------
 
