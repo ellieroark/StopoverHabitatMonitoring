@@ -87,7 +87,7 @@ source("./StopoverHabitatMonitoring/BRT_abundance.R")
 ## MUST FIRST RUN DataPrep_PtCtAbundance.R
 ## AND DataPrep_ARUabundance.R
 ## AND BRT_Abundance.R
-#source("./StopoverHabitatMonitoring/GAM_abundance.R")
+source("./StopoverHabitatMonitoring/GAM_abundance.R")
 
 
 ### End Abundance Analyses------------------------------------------------------
