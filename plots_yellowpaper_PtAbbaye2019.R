@@ -57,9 +57,10 @@ g4p1 <- ggplot(data = gcki_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
   ylab(expression(A[p])) + 
-  theme_bw() + 
-  theme(text = element_text(size = t_size)) + 
-  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme_bw() +
+  theme(axis.text.y = element_text(size = t_size), 
+        axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
+                                   vjust = 1))
 
 rm(fits_gcki_brt)
 
@@ -88,9 +89,10 @@ g4p2 <- ggplot(data = gcki_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
   ylab(expression(A[10*c])) + 
-  theme_bw() + 
-  theme(text = element_text(size = t_size)) + 
-  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme_bw() +
+  theme(axis.text.y = element_text(size = t_size), 
+        axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
+                                   vjust = 1))
 
 rm(fits_arugcki_brt)
 
@@ -120,9 +122,10 @@ g4p3 <- ggplot(data = gcki_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
   #ylab("Abundance index") + 
   ylab(expression(A[10*r])) + 
-  theme_bw() + 
-  theme(text = element_text(size = t_size)) + 
-  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme_bw() +
+  theme(axis.text.y = element_text(size = t_size), 
+        axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
+                                   vjust = 1))
 
 rm(fits_arugcki10r_brt)
 
@@ -152,10 +155,10 @@ g4p4 <- ggplot(data = gcki_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
   #ylab("Abundance index") + 
   ylab(expression(A[22*r])) + 
-  theme_bw() + 
-  theme(text = element_text(size = t_size)) + 
-  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
-
+  theme_bw() +
+  theme(axis.text.y = element_text(size = t_size), 
+        axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
+                                   vjust = 1))
 rm(fits_arugcki22r_brt)
 
 
@@ -176,9 +179,9 @@ wiwr_ptct_preds_brt <- group_by(wiwr_ptct_preds_brt, day_of_yr) %>%
 g4p5 <- ggplot(data = wiwr_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
-  geom_line(colour = 2) + 
+  geom_line(colour = "blue") + 
   geom_point(data = sum_wiwr, aes(x = day_of_yr, y = meandet), 
-             colour = 2) + 
+             colour = "blue") + 
   # ggtitle("Winter Wren\nPoint counts (10 min); BRT") + 
   #ggtitle("Point Counts\n10 consecutive minutes\n(a)") + 
   xlab("") +
@@ -186,9 +189,10 @@ g4p5 <- ggplot(data = wiwr_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
   #ylab("Winter Wren\nAbundance index") + 
   ylab(expression(A[p])) + 
-  theme_bw() + 
-  theme(text = element_text(size = t_size)) + 
-  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme_bw() +
+  theme(axis.text.y = element_text(size = t_size), 
+        axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
+                                   vjust = 1))
 
 rm(fits_wiwr_brt)
 
@@ -210,9 +214,9 @@ wiwr_aru10c_preds_brt <- group_by(wiwr_aru10c_preds_brt, day_of_yr) %>%
 g4p6 <- ggplot(data = wiwr_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
-  geom_line(colour= 2) + 
+  geom_line(colour= "blue") + 
   geom_point(data = sum_aruwiwr, aes(x = day_of_yr, y = meandet), 
-             colour = 2) + 
+             colour = "blue") + 
   #ggtitle("Winter Wren\nARU - consecutive 10 min; BRT") + 
   #ggtitle("ARU Counts\n10 consecutive minutes\n(b)") +
   #ylab("Abundance index") + 
@@ -221,8 +225,9 @@ g4p6 <- ggplot(data = wiwr_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) + 
   theme_bw() +
-  theme(text = element_text(size = t_size)) + 
-  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(axis.text.y = element_text(size = t_size), 
+        axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
+                                   vjust = 1))
 
 rm(fits_aruwiwr_brt)
 
@@ -243,9 +248,9 @@ wiwr_aru10r_preds_brt <- group_by(wiwr_aru10r_preds_brt, day_of_yr) %>%
 g4p7 <- ggplot(data = wiwr_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
-  geom_line(colour = 2) + 
+  geom_line(colour = "blue") + 
   geom_point(data = sum_aruwiwr10r, aes(x = day_of_yr, y = meandet), 
-             colour = 2) + 
+             colour = "blue") + 
   #ggtitle("Winter Wren\nARU (10 random min); BRT") + 
   #ggtitle("ARU Counts\n10 random minutes") +
   xlab("") +
@@ -254,8 +259,9 @@ g4p7 <- ggplot(data = wiwr_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   #ylab("Abundance index") + 
   ylab(expression(A[10*r])) + 
   theme_bw() +
-  theme(text = element_text(size = t_size)) + 
-  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(axis.text.y = element_text(size = t_size), 
+        axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
+                                   vjust = 1))
 
 rm(fits_aruwiwr10r_brt)
 
@@ -276,19 +282,20 @@ wiwr_aru22r_preds_brt <- group_by(wiwr_aru22r_preds_brt, day_of_yr) %>%
 g4p8 <- ggplot(data = wiwr_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
  # geom_ribbon(aes(ymin = mean_pred - se,
  #                ymax = mean_pred + se)) +
-  geom_line(colour = 2) + 
+  geom_line(colour = "blue") + 
   geom_point(data = sum_aruwiwr22r, aes(x = day_of_yr, y = meandet), 
-             colour = 2) + 
+             colour = "blue") + 
   #ggtitle("ARU Counts\n22 random minutes\n(d)") +
   #ggtitle("Winter Wren\nARU (22 random min); BRT") + 
   xlab("") + 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
-                     labels = c("April 1", "April 15", "May 1", "May 15")) + 
+                     labels = c("April 1\n", "April 15\n", "May 1\n", "May 15\n")) + 
   #ylab("Abundance index") + 
   ylab(expression(A[22*r])) + 
   theme_bw() +
-  theme(text = element_text(size = t_size)) + 
-  theme(axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(axis.text.y = element_text(size = t_size), 
+        axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
+                                   vjust = 1))
 
 rm(fits_aruwiwr22r_brt)
 
@@ -338,7 +345,7 @@ abund_wiwr_wide <- bind_rows(abund_wiwr_pred_wide, abund_wiwr_obs_wide)
 ## make correlation plots for WIWR
 ## point count + aru10c -- observed
 c1wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru10c, y = point_count)) + 
-  geom_point(colour = 2) + 
+  geom_point(colour = "blue") + 
   ylab(expression(A[p])) + 
   xlab(expression(A[10*c])) + 
   theme_bw() + 
@@ -346,7 +353,7 @@ c1wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru10c, y = point_count)) +
 
 ## point count + aru10r
 c2wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru10r, y = point_count)) + 
-  geom_point(colour = 2) + 
+  geom_point(colour = "blue") + 
   ylab(expression(A[p])) + 
   xlab(expression(A[10*r])) + 
   theme_bw() + 
@@ -354,7 +361,7 @@ c2wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru10r, y = point_count)) +
 
 ## point count + aru22r
 c3wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru22r, y = point_count)) + 
-  geom_point(colour = 2) + 
+  geom_point(colour = "blue") + 
   ylab(expression(A[p])) + 
   xlab(expression(A[22*r])) + 
   theme_bw() + 
@@ -362,7 +369,7 @@ c3wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru22r, y = point_count)) +
 
 ## aru10c + aru10r
 c4wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru10r, y = aru10c)) + 
-  geom_point(colour = 2) + 
+  geom_point(colour = "blue") + 
   ylab(expression(A[10*c])) + 
   xlab(expression(A[10*r])) + 
   theme_bw() +
@@ -370,7 +377,7 @@ c4wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru10r, y = aru10c)) +
 
 ## aru10c + aru22r
 c5wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru22r, y = aru10c,)) + 
-  geom_point(colour = 2) + 
+  geom_point(colour = "blue") + 
   ylab(expression(A[10*c])) + 
   xlab(expression(A[22*r])) + 
   theme_bw() +
@@ -383,7 +390,7 @@ obscorplot_wiwr <- c1wo + c2wo + c3wo + guide_area() + c4wo + c5wo +
 
 ## point count + aru10c -- predicted
 c1wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10c, y = point_count)) + 
-  geom_point(colour = 2) + 
+  geom_point(colour = "blue", shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[10*c])) + 
   theme_bw() + 
@@ -391,7 +398,7 @@ c1wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10c, y = point_count)) +
 
 ## point count + aru10r
 c2wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10r, y = point_count)) + 
-  geom_point(colour = 2) + 
+  geom_point(colour = "blue", shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[10*r])) + 
   theme_bw() + 
@@ -399,7 +406,7 @@ c2wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10r, y = point_count)) +
 
 ## point count + aru22r
 c3wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru22r, y = point_count)) + 
-  geom_point(colour = 2) + 
+  geom_point(colour = "blue", shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[22*r])) + 
   theme_bw() + 
@@ -407,7 +414,7 @@ c3wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru22r, y = point_count)) +
 
 ## aru10c + aru10r
 c4wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10r, y = aru10c)) + 
-  geom_point(colour = 2) + 
+  geom_point(colour = "blue", shape = 17) + 
   ylab(expression(A[10*c])) + 
   xlab(expression(A[10*r])) + 
   theme_bw() +
@@ -415,7 +422,7 @@ c4wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10r, y = aru10c)) +
 
 ## aru10c + aru22r
 c5wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru22r, y = aru10c,)) + 
-  geom_point(colour = 2) + 
+  geom_point(colour = "blue", shape = 17) + 
   ylab(expression(A[10*c])) + 
   xlab(expression(A[22*r])) + 
   theme_bw() +
@@ -562,7 +569,7 @@ obscorplot_gcki <- c1go + c2go + c3go + guide_area() + c4go + c5go +
 
 ## point count + aru10c -- predicted
 c1gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10c, y = point_count)) + 
-  geom_point() + 
+  geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[10*c])) + 
   scale_x_continuous(breaks = c(0.00, 0.06, 0.12)) + 
@@ -571,7 +578,7 @@ c1gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10c, y = point_count)) +
 
 ## point count + aru10r
 c2gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10r, y = point_count)) + 
-  geom_point() + 
+  geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[10*r])) + 
   scale_x_continuous(breaks = c(0.00, 0.35, 0.7)) + 
@@ -580,7 +587,7 @@ c2gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10r, y = point_count)) +
 
 ## point count + aru22r
 c3gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru22r, y = point_count)) + 
-  geom_point() + 
+  geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[22*r])) + 
   scale_x_continuous(breaks = c(0.00, 0.5, 1)) + 
@@ -589,7 +596,7 @@ c3gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru22r, y = point_count)) +
 
 ## aru10c + aru10r
 c4gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10r, y = aru10c)) + 
-  geom_point() + 
+  geom_point(shape = 17) + 
   ylab(expression(A[10*c])) + 
   xlab(expression(A[10*r])) + 
   scale_x_continuous(breaks = c(0.00, 0.35, 0.7)) + 
@@ -598,7 +605,7 @@ c4gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10r, y = aru10c)) +
 
 ## aru10c + aru22r
 c5gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru22r, y = aru10c,)) + 
-  geom_point() + 
+  geom_point(shape = 17) + 
   ylab(expression(A[10*c])) + 
   xlab(expression(A[22*r])) + 
   scale_x_continuous(breaks = c(0.00, 0.5, 1)) + 
@@ -609,6 +616,7 @@ predcorplot_gcki <- c1gp + c2gp + c3gp + guide_area() + c4gp + c5gp +
   plot_layout(guides = 'collect') + 
   plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = t_size))
+
 
 #### END ABUNDANCE CORRELATION PLOT---------------------------------------------
 
@@ -891,7 +899,7 @@ spdet_time <- ggplot(pred.4ct,
                                                    "ARU - 10 min\nrandom\n", 
                                                    "ARU - 22 min\nrandom\n")))) + 
   # geom_point(shape=1) +
-  geom_line(size = t_size/10) + 
+  geom_line(size = t_size/12) + 
   geom_point(data = spdet_4ct,
              aes(x = day_of_yr, y = sp_detected, 
                  color = factor(count_type, 
@@ -901,14 +909,16 @@ spdet_time <- ggplot(pred.4ct,
                                            "ARU - 10 min\nconsecutive\n", 
                                            "ARU - 10 min\nrandom\n", 
                                            "ARU - 22 min\nrandom\n"))), 
-             size = t_size/10) +
+             size = t_size/12) +
   scale_colour_viridis_d(name = "Survey Method", option = "magma", 
                          begin = 0, end = 0.75) + 
   scale_y_continuous(breaks = c(0, 4, 8, 12, 16)) + 
+  scale_x_continuous(breaks = c(91, 105, 121, 135), 
+                     labels = c("April 1", "April 15", "May 1", "May 15")) + 
   ylab("Number of Species") +
-  xlab("Day of Year") + 
+  xlab("") + 
   theme_bw() + 
-  theme(text = element_text(size = t_size))
+  theme(text = element_text(size = 12))
   
 spdet_time
 #### SPECIES RICHNESS OVER TIME BY COUNT TYPE-----------------------------------
@@ -916,27 +926,27 @@ spdet_time
 
 ### write out plots as jpgs ---------------------------------------------------
 ggsave(spdet_time, filename = "./saved_objects/spdet_time.jpg", 
-       width = 10, height = 6, 
+       width = 15, height = 10, 
        units = "cm", device = "jpeg")
 
 ggsave(obscorplot_gcki, filename = "./saved_objects/obscorplot_gcki.jpg", 
-       width = 18, height = 12, 
+       width = 15, height = 10, 
        units = "cm", device = "jpeg")
 
 ggsave(predcorplot_gcki, filename = "./saved_objects/predcorplot_gcki.jpg", 
-       width = 18, height = 12, 
+       width = 15, height = 10, 
        units = "cm", device = "jpeg")
 
 ggsave(obscorplot_wiwr, filename = "./saved_objects/obscorplot_wiwr.jpg", 
-       width = 18, height = 12, 
+       width = 15, height = 10, 
        units = "cm", device = "jpeg")
 
 ggsave(predcorplot_wiwr, filename = "./saved_objects/predcorplot_wiwr.jpg", 
-       width = 18, height = 12, 
+       width = 15, height = 10, 
        units = "cm", device = "jpeg")
 
 ggsave(brt_summary, filename = "./saved_objects/brt_summary.jpg", 
-       width = 20, height = 12, 
+       width = 15, height = 10, 
        units = "cm", device = "jpeg")
 
 ### write out tables as .csvs---------------------------------------------------
@@ -949,4 +959,23 @@ abund_corr[,3:6] <- round(abund_corr[,3:6], digits = 3)
 write_csv(abund_corr, path = "./saved_objects/abund_index_corr_coefficients.csv")
 
 ### print numbers needed for manuscript-----------------------------------------
+## mean RMSE for all BRTs
+rmse_gcki_brt <- readRDS("rmse_gcki_brt.rds")
+meanrmse_gcki_brt <- mean(rmse_gcki_brt)
+rmse_arugcki_brt <- readRDS("rmse_arugcki_brt.rds")
+meanrmse_arugcki_brt <- mean(rmse_arugcki_brt)
+rmse_arugcki10r_brt <- readRDS("rmse_arugcki10r_brt.rds")
+meanrmse_arugcki10r_brt <- mean(rmse_arugcki10r_brt)
+rmse_arugcki22r_brt <- readRDS("rmse_arugcki22r_brt.rds")
+meanrmse_arugcki22r_brt <- mean(rmse_arugcki22r_brt)
+
+rmse_wiwr_brt <- readRDS("rmse_wiwr_brt.rds")
+meanrmse_wiwr_brt <- mean(rmse_wiwr_brt)
+rmse_aruwiwr_brt <- readRDS("rmse_aruwiwr_brt.rds")
+meanrmse_aruwiwr_brt <- mean(rmse_aruwiwr_brt)
+rmse_aruwiwr10r_brt <- readRDS("rmse_aruwiwr10r_brt.rds")
+meanrmse_aruwiwr10r_brt <- mean(rmse_aruwiwr10r_brt)
+rmse_aruwiwr22r_brt <- readRDS("rmse_aruwiwr22r_brt.rds")
+meanrmse_aruwiwr22r_brt <- mean(rmse_aruwiwr22r_brt)
+
 
