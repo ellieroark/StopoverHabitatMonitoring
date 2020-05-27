@@ -51,7 +51,7 @@ g4p1 <- ggplot(data = gcki_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
   geom_line() + 
-  geom_point(data = sum_gcki, aes(x = day_of_yr, y = meandet)) + 
+  geom_point(data = sum_gcki, aes(x = day_of_yr, y = resp)) + 
   #ggtitle("Golden-crowned Kinglet\nPoint counts (10 consecutive min)") +
   xlab("") + 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
@@ -83,7 +83,7 @@ g4p2 <- ggplot(data = gcki_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
   geom_line() + 
-  geom_point(data = sum_arugcki, aes(x = day_of_yr, y = meandet)) + 
+  geom_point(data = sum_arugcki, aes(x = day_of_yr, y = resp)) + 
   #ggtitle("Golden-crowned Kinglet\nARU- 10 consecutive min") +
   xlab("") +
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
@@ -115,7 +115,7 @@ g4p3 <- ggplot(data = gcki_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
   geom_line() + 
-  geom_point(data = sum_arugcki10r, aes(x = day_of_yr, y = meandet)) + 
+  geom_point(data = sum_arugcki10r, aes(x = day_of_yr, y = resp)) + 
   #ggtitle("Golden-crowned Kinglet\nARU- 10 random min") +
   xlab("") +
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
@@ -148,7 +148,7 @@ g4p4 <- ggplot(data = gcki_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
   geom_line() + 
-  geom_point(data = sum_arugcki22r, aes(x = day_of_yr, y = meandet)) + 
+  geom_point(data = sum_arugcki22r, aes(x = day_of_yr, y = resp)) + 
   #ggtitle("Golden-crowned Kinglet\nARU- 22 random min") +
   xlab("") +
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
@@ -180,12 +180,12 @@ g4p5 <- ggplot(data = wiwr_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
   geom_line(colour = "blue") + 
-  geom_point(data = sum_wiwr, aes(x = day_of_yr, y = meandet), 
+  geom_point(data = sum_wiwr, aes(x = day_of_yr, y = resp), 
              colour = "blue") + 
   # ggtitle("Winter Wren\nPoint counts (10 min); BRT") + 
   #ggtitle("Point Counts\n10 consecutive minutes\n(a)") + 
   xlab("") +
-  scale_x_continuous(breaks = c(91, 105, 121, 135), 
+  scale_x_continuous(breaks = c(91, 105, 121, 135),
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
   #ylab("Winter Wren\nAbundance index") + 
   ylab(expression(A[p])) + 
@@ -215,7 +215,7 @@ g4p6 <- ggplot(data = wiwr_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
   geom_line(colour= "blue") + 
-  geom_point(data = sum_aruwiwr, aes(x = day_of_yr, y = meandet), 
+  geom_point(data = sum_aruwiwr, aes(x = day_of_yr, y = resp), 
              colour = "blue") + 
   #ggtitle("Winter Wren\nARU - consecutive 10 min; BRT") + 
   #ggtitle("ARU Counts\n10 consecutive minutes\n(b)") +
@@ -249,7 +249,7 @@ g4p7 <- ggplot(data = wiwr_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
   geom_line(colour = "blue") + 
-  geom_point(data = sum_aruwiwr10r, aes(x = day_of_yr, y = meandet), 
+  geom_point(data = sum_aruwiwr10r, aes(x = day_of_yr, y = resp), 
              colour = "blue") + 
   #ggtitle("Winter Wren\nARU (10 random min); BRT") + 
   #ggtitle("ARU Counts\n10 random minutes") +
@@ -283,13 +283,13 @@ g4p8 <- ggplot(data = wiwr_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
  # geom_ribbon(aes(ymin = mean_pred - se,
  #                ymax = mean_pred + se)) +
   geom_line(colour = "blue") + 
-  geom_point(data = sum_aruwiwr22r, aes(x = day_of_yr, y = meandet), 
+  geom_point(data = sum_aruwiwr22r, aes(x = day_of_yr, y = resp), 
              colour = "blue") + 
   #ggtitle("ARU Counts\n22 random minutes\n(d)") +
   #ggtitle("Winter Wren\nARU (22 random min); BRT") + 
   xlab("") + 
-  scale_x_continuous(breaks = c(91, 105, 121, 135), 
-                     labels = c("April 1\n", "April 15\n", "May 1\n", "May 15\n")) + 
+  # scale_x_continuous(breaks = c(91, 105, 121, 135), 
+  #                    labels = c("April 1\n", "April 15\n", "May 1\n", "May 15\n")) + 
   #ylab("Abundance index") + 
   ylab(expression(A[22*r])) + 
   theme_bw() +
@@ -335,8 +335,8 @@ abund_wiwr_obs <- mapply(FUN = function(x, m) {x$method <- m; x},
                           abund_wiwr_obs, names(abund_wiwr_obs), 
                           SIMPLIFY = F, USE.NAMES = T)
 abund_wiwr_obs <- bind_rows(abund_wiwr_obs)
-abund_wiwr_obs_wide <- dplyr::select(abund_wiwr_obs, day_of_yr, meandet, method) %>% 
-  pivot_wider(names_from = method, values_from = meandet)
+abund_wiwr_obs_wide <- dplyr::select(abund_wiwr_obs, day_of_yr, resp, method) %>% 
+  pivot_wider(names_from = method, values_from = resp)
 abund_wiwr_obs_wide$type <- "observed"
 
 # combine predicted and observed abundance values
@@ -458,8 +458,8 @@ abund_gcki_obs <- mapply(FUN = function(x, m) {x$method <- m; x},
                          abund_gcki_obs, names(abund_gcki_obs), 
                          SIMPLIFY = F, USE.NAMES = T)
 abund_gcki_obs <- bind_rows(abund_gcki_obs)
-abund_gcki_obs_wide <- dplyr::select(abund_gcki_obs, day_of_yr, meandet, method) %>% 
-  pivot_wider(names_from = method, values_from = meandet)
+abund_gcki_obs_wide <- dplyr::select(abund_gcki_obs, day_of_yr, resp, method) %>% 
+  pivot_wider(names_from = method, values_from = resp)
 abund_gcki_obs_wide$type <- "observed"
 
 # combine predicted and observed abundance values
@@ -978,4 +978,11 @@ meanrmse_aruwiwr10r_brt <- mean(rmse_aruwiwr10r_brt)
 rmse_aruwiwr22r_brt <- readRDS("rmse_aruwiwr22r_brt.rds")
 meanrmse_aruwiwr22r_brt <- mean(rmse_aruwiwr22r_brt)
 
-
+rmse_gcki_gam <- readRDS("rmse_gcki_gam.rds")
+meanrmse_gcki_gam <- mean(rmse_gcki_gam)
+rmse_arugcki_gam <- readRDS("rmse_arugcki_gam.rds")
+meanrmse_arugcki_gam <- mean(rmse_arugcki_gam)
+rmse_wiwr_gam <- readRDS("rmse_wiwr_gam.rds")
+meanrmse_wiwr_gam <- mean(rmse_wiwr_gam)
+rmse_aruwiwr_gam <- readRDS("rmse_aruwiwr_gam.rds")
+meanrmse_aruwiwr_gam <- mean(rmse_aruwiwr_gam)
