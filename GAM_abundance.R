@@ -17,7 +17,7 @@
 ## TODO: * 
 ################################
 
-fitgam <- TRUE
+fitgam <- FALSE
 
 if(fitgam){
 
@@ -197,7 +197,7 @@ for (i in 1:200) {
                            newdata = pgcki_day)
   
   # put predictions for these 5 folds into the big list for all splits
-  fits_arugcki_gam[[i]] <- brt_test_folds
+  fits_arugcki_gam[[i]] <- gam_test_folds
 }
 names(fits_arugcki_gam) <- 1:length(fits_arugcki_gam)
 rmse_arugcki_gam <- sapply(fits_arugcki_gam, FUN = function(x) {
@@ -266,11 +266,11 @@ arugcki.day.gam2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp
 ## evaluate GAM (GCKI per day model)- ARU---------------------------------------
 arugcki.day.gam
 gam.check(arugcki.day.gam)
-plot(arugcki.day.gam, pages = 1, all.terms = T)
+try(plot(arugcki.day.gam, pages = 1, all.terms = T))
 
 arugcki.day.gam2
 gam.check(arugcki.day.gam2)
-plot(arugcki.day.gam2, pages = 1, all.terms = T)
+try(plot(arugcki.day.gam2, pages = 1, all.terms = T))
 ## TODO: something funky happening here....
 
 ## end evaluate GAM (GCKI per day model)- ARU-----------------------------------
@@ -436,11 +436,11 @@ aruwiwr.day.gam2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp
 ## evaluate GAM (WIWR per day model)- ARU---------------------------------------
 aruwiwr.day.gam
 gam.check(aruwiwr.day.gam)
-plot(aruwiwr.day.gam, pages = 1, all.terms = T)
+try(plot(aruwiwr.day.gam, pages = 1, all.terms = T))
 
 aruwiwr.day.gam2
 gam.check(aruwiwr.day.gam2)
-plot(aruwiwr.day.gam2, pages = 1, all.terms = T)
+try(plot(aruwiwr.day.gam2, pages = 1, all.terms = T))
 
 
 ## end evaluate GAM (WIWR per day model)- ARU-----------------------------------
