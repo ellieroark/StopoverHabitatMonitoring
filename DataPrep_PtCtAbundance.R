@@ -284,7 +284,7 @@ ybsa <- full_join(ybsa, noybsact)
 #  add up number of individs detected per day for each 
 sum_wiwr <- wiwr %>%
         group_by(day_of_yr) %>%
-        summarize(meandet = mean(count), count = sum(count))
+        summarize(resp = mean(count), count = sum(count))
 
 # sum_ybsa <- ybsa %>%
 #         group_by(day_of_yr) %>%
@@ -300,7 +300,7 @@ sum_wiwr <- wiwr %>%
 
 sum_gcki <- gcki %>%
         group_by(day_of_yr) %>%
-        summarize(meandet = mean(count), count = sum(count))
+        summarize(resp = mean(count), count = sum(count))
 
 # add centered and squared day of year cols to windday df before joining to 
 # sum_dfs
