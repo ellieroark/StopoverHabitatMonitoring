@@ -29,8 +29,9 @@ filenames <- read_csv(file = "./2019data/anonymized_file_key.csv")
 arurand <- read_csv(file = "./2019data/ARU20randmin_final.csv")
 filenames22r <- read_csv(file = "./2019data/filename_key_20randmin.csv", 
                       col_types = cols(.default = "?", folder = "c"))
+addrand <- read_csv(file = "./2019data/ARU20randmin_additional_days106107.csv")
 
-#### 10 minute ARU count data prep (GCKI)---------------------------------------
+#### 10 consecutive minute ARU count data prep (GCKI)---------------------------
 #subset longaru to gcki
 aru_gcki <- longaru[which(longaru$species_code == "GCKI"), ]
 
@@ -179,17 +180,31 @@ weathervar <- distinct(weathervar)
 # join to arugcki df to add weather and start time variables
 arugcki <- left_join(arugcki, weathervar, by = "ptct_id")
 
+### sample a max of 3 10c cts per day.
+# temporarily drop dates 2019-04-16 and 2019-04-17 from the df since they don't 
+# have 3 samples each.
+tmp <- arugcki[which(arugcki$day_of_yr == 106 | arugcki$day_of_yr == 107), ]
+arugcki <- arugcki[which(arugcki$ptct_id %nin% tmp$ptct_id), ]
+arugcki <- arugcki %>% group_by(date)
+std3 <- sample_n(arugcki, size= 3, replace = FALSE)
+arugcki <- semi_join(arugcki, std3)
+arugcki <- bind_rows(arugcki, tmp)
+
 ### end add predictor variables for analysis------------------------------------
 
-### aggregate GCKI observations per day to get mean # of 30 sec intervals with a 
-### vocalization per recorder each day (meandet), and total # of 30 sec 
+### aggregate GCKI observations per day to get proportion of 30 sec intervals
+###  with a vocalization per day (resp), and total # of 30 sec 
 ### intervals per day (count)
 sum_arugcki <- arugcki %>%
   group_by(day_of_yr) %>%
-  summarize(meandet = mean(count), count = sum(count))
+  summarize(count = sum(count), segs = 20*n())
+sum_arugcki$resp <- sum_arugcki$count/sum_arugcki$segs
 
 ## add average windspeed for the day to sum_arugcki df
 sum_arugcki <- left_join(sum_arugcki, windday, by = "day_of_yr")
+
+
+
 
 ### end aggregate by day--------------------------------------------------------
 
@@ -197,21 +212,26 @@ sum_arugcki <- left_join(sum_arugcki, windday, by = "day_of_yr")
 
 
 ##### random min ARU data prep (10 min and 22 min) (GCKI)-----------------------
-#subset arurand to gcki observations
+#subset arurand and addrand to gcki observations
 arugcki22 <- arurand[which(arurand$species_code == "GCKI"), ]
+addgcki <- addrand[which(addrand$species_code == "GCKI"), ]
 
 #get unique ptctids for counts on which there were no GCKIs
 nogcki <- arurand[which(arurand$filename %nin% arugcki22$filename), ]
+addnogcki <- addrand[which(addrand$filename %nin% addgcki$filename), ]
 
 #create a count column for the nogcki dfs
 nogcki$count <- 0
+addnogcki$count <- 0
 
 #only keep filenames and count for nogcki counts
 keep <- c("filename", "count")
 nogcki <- nogcki[ , (names(nogcki) %in% keep)]
+addnogcki <- addnogcki[ , (names(addnogcki) %in% keep)]
 
 # get only a single row for each minute with no GCKI
 nogcki <- dplyr::distinct(nogcki)
+addnogcki <- dplyr::distinct(addnogcki)
 
 ## add up number of 30 sec periods in which a GCKI was detected
 #get rid of comments column
@@ -223,13 +243,22 @@ arugcki22 <- arugcki22 %>%
 #subset to only count and anon_filename cols
 arugcki22 <- arugcki22[ , (names(arugcki22) %in% keep)]
 
+addgcki$comments <- NULL
+addgcki[is.na(addgcki)] <- "0"
+addgcki[3:4] <- as.integer(addgcki[3:4] != 0)
+addgcki <- addgcki %>%
+  mutate(count = rowSums(.[3:4]))
+#subset to only count and anon_filename cols
+addgcki <- addgcki[ , (names(addgcki) %in% keep)]
+
 #prep for join: make sure col names are the same for both dfs
 arugcki22 <- rename(arugcki22, anon_name = "filename")
 nogcki <- rename(nogcki, anon_name = "filename")
 
 #join gcki and no gcki min observations
 arugcki22 <- rbind(arugcki22, nogcki)
-rm(nogcki)
+addgcki <- rbind(addgcki, addnogcki)
+rm(nogcki, addnogcki)
 
 #get rid of columns we don't need in filenames
 filenames22r <- subset(filenames22r, select = c(selec, sound.files, 
@@ -238,6 +267,20 @@ filenames22r <- subset(filenames22r, select = c(selec, sound.files,
 #de-anonymize
 arugcki22 <- left_join(arugcki22, filenames22r, by = "anon_name")
 
+# join addrand to arugcki22
+## make date a new column in addrand
+addgcki$date <- regmatches(addgcki$filename, regexpr("2019-04-..", 
+                                                     addgcki$filename))
+addgcki$date <- as.Date(addgcki$date)
+
+## make a "selec" column for addgcki
+addgcki$selec <- regmatches(addgcki$filename, regexpr("_[a-e][0-9]+", 
+                                                      addgcki$filename))
+addgcki$selec <- gsub("_", "", addgcki$selec)
+
+# change "anon_name" to "filename" in arugcki22
+arugcki22 <- rename(arugcki22, filename = "anon_name")
+
 ### add point id, count type, aru id, weather, aru_sample columns
 #create dataframe with key for the anonymized recorder names
 rec <- c("rec1", "rec2", "rec3", "rec4")
@@ -245,14 +288,18 @@ aru_id <- c("swift02", "swift01", "AM", "swift03")
 recs <- data.frame(aru_id, rec)
 
 #create an aru_id col for allaru
-arugcki22$rec <- gsub("day.{2,3}_?", "", arugcki22$anon_name)
-arugcki22$rec <- gsub("_.*_.*", "", arugcki22$rec)
+arugcki22$rec <- regmatches(arugcki22$filename, regexpr("rec.", 
+                                                      arugcki22$filename))
+addgcki$rec <- regmatches(addgcki$filename, regexpr("rec.", 
+                                                        addgcki$filename))
 
 #de-anonymize aru_id
 arugcki22 <- left_join(arugcki22, recs, by = "rec")
+addgcki <- left_join(addgcki, recs, by = "rec")
 
 #remove "rec" column-- aru_id is all that's needed
 arugcki22$rec <- NULL
+addgcki$rec <- NULL
 
 # fetch the point id for a particular date and aru from the allaru df
 # locs <- data.frame(allaru$point_id, allaru$date, allaru$aru_id)
@@ -265,6 +312,8 @@ arugcki22$rec <- NULL
 arugcki22$aruday <- paste(as.character(arugcki22$date), 
                           as.character(arugcki22$aru_id), 
                         sep = "_")
+addgcki$aruday <- paste(as.character(addgcki$date), 
+                        as.character(addgcki$aru_id), sep = "_")
 
 # #get rid of unnecessary columns and rows in locs
 # locs$date <- NULL
@@ -277,8 +326,10 @@ arugcki22$aruday <- paste(as.character(arugcki22$date),
 ## add wind to arugcki22. 
 # make day of year col for arugcki22
 arugcki22$day_of_yr <- yday(arugcki22$date)
+addgcki$day_of_yr <- yday(addgcki$date)
 # join windday and arugcki22 by day of yr
 arugcki22 <- left_join(arugcki22, windday, by = "day_of_yr")
+addgcki <- left_join(addgcki, windday, by = "day_of_yr")
 
 #### get 10 random minutes and 22 random minutes for each unit on each day
 #### from all random min data.
@@ -302,19 +353,50 @@ arugcki22r <- semi_join(arugcki22, s22r, by = c("selec", "aruday"))
 # for each aruday
 arugcki10r <- semi_join(arugcki22, s10r, by = c("selec", "aruday"))
 
-### add up individuals detected per 22 and 10  random minutes-------------------
+#add addgcki counts to arugcki22r df
+arugcki22r <- bind_rows(arugcki22r, addgcki)
 
+#subsample 5 min from each aruday and add to arugcki10r
+addmin <- addgcki %>% group_by(aruday) %>% distinct(selec)
+s5r <- sample_n(addmin, 5, replace = FALSE)
+addgcki5 <- semi_join(addgcki, s5r, by = c("selec", "aruday"))
+
+arugcki10r <- bind_rows(arugcki10r, addgcki5)
+
+## standardize survey effort to 66 random min per day for 22min cts and
+## 30 random min per day for 10min cts.
+arugcki10r <- arugcki10r %>% group_by(date)
+std30 <- sample_n(arugcki10r, 30, replace = FALSE)
+arugcki10r <- semi_join(arugcki10r, std30)
+
+arugcki22r <- arugcki22r %>% group_by(date)
+std66 <- sample_n(arugcki22r, 66, replace = FALSE)
+arugcki22r <- semi_join(arugcki22r, std66)
+
+### summarize proportion of 30 sec intervals with a vocalization per day--------
 sum_arugcki22r <- arugcki22r %>%
-  group_by(aruday, day_of_yr) %>%
-  summarize(count = sum(count)) %>%
   group_by(day_of_yr) %>%
-  summarize(meandet = mean(count), count = sum(count))
+  summarize(count = sum(count), segs = 2*n())
+sum_arugcki22r$resp <- sum_arugcki22r$count/sum_arugcki22r$segs
 
 sum_arugcki10r <- arugcki10r %>%
-  group_by(aruday, day_of_yr) %>%
-  summarize(count = sum(count)) %>%
   group_by(day_of_yr) %>%
-  summarize(meandet = mean(count), count = sum(count))
+  summarize(count = sum(count), segs = 2*n())
+sum_arugcki10r$resp <- sum_arugcki10r$count/sum_arugcki10r$segs
+
+## old abundance proxy method: mean number of 30 sec intervals with a voc. per 
+## aru per day. 
+# sum_arugcki22r <- arugcki22r %>%
+#   group_by(aruday, day_of_yr) %>%
+#   summarize(count = sum(count)) %>%
+#   group_by(day_of_yr) %>%
+#   summarize(meandet = mean(count), count = sum(count))
+# 
+# sum_arugcki10r <- arugcki10r %>%
+#   group_by(aruday, day_of_yr) %>%
+#   summarize(count = sum(count)) %>%
+#   group_by(day_of_yr) %>%
+#   summarize(meandet = mean(count), count = sum(count))
 
 
 #create count type col
@@ -326,6 +408,8 @@ sum_arugcki22r <- left_join(sum_arugcki22r, windday, by = "day_of_yr")
 sum_arugcki10r <- left_join(sum_arugcki10r, windday, by = "day_of_yr")
 
 ### end mean # individuals per count ---------------------------------------
+
+
 
 ##### end 10 and 22 rand min data prep (GCKI)-----------------------------------
 
@@ -473,9 +557,23 @@ aruwiwr <- left_join(aruwiwr, weathervar, by = "ptct_id")
 ### end add predictor variables for analysis------------------------------------
 
 ### aggregate wiwr observations per day-----------------------------------------
+## sample a max of 3 10c cts per day.
+# temporarily drop dates 2019-04-16 and 2019-04-17 from the df since they don't 
+# have 3 samples each.
+wtmp <- aruwiwr[which(aruwiwr$day_of_yr == 106 | aruwiwr$day_of_yr == 107), ]
+aruwiwr <- aruwiwr[which(aruwiwr$ptct_id %nin% wtmp$ptct_id), ]
+aruwiwr <- aruwiwr %>% group_by(date)
+wstd3 <- sample_n(aruwiwr, size= 3, replace = FALSE)
+aruwiwr <- semi_join(aruwiwr, wstd3)
+aruwiwr <- bind_rows(aruwiwr, wtmp)
+
+## aggregate GCKI observations per day to get proportion of 30 sec intervals
+##  with a vocalization per day (resp), and total # of 30 sec 
+## intervals per day (count)
 sum_aruwiwr <- aruwiwr %>%
   group_by(day_of_yr) %>%
-  summarize(meandet = mean(count), count = sum(count))
+  summarize(count = sum(count), segs = 20*n())
+sum_aruwiwr$resp <- sum_aruwiwr$count/sum_aruwiwr$segs
 
 ## add average windspeed for the day to sum_aruwiwr df
 sum_aruwiwr <- left_join(sum_aruwiwr, windday, by = "day_of_yr")
@@ -485,18 +583,23 @@ sum_aruwiwr <- left_join(sum_aruwiwr, windday, by = "day_of_yr")
 ##### random min ARU data prep (10 min and 22 min) (WIWR)-----------------------
 #subset arurand to wiwr observations
 aruwiwr22 <- arurand[which(arurand$species_code == "WIWR"), ]
+addwiwr <- addrand[which(addrand$species_code == "WIWR"), ]
 
 #get unique ptctids for counts on which there were no GCKIs
 nowiwr <- arurand[which(arurand$filename %nin% aruwiwr22$filename), ]
+addnowiwr <- addrand[which(addrand$filename %nin% addwiwr$filename), ]
 
 #create a count column for the nogcki dfs
 nowiwr$count <- 0
+addnowiwr$count <- 0
 
 #only keep filenames and count for nowiwr counts
 nowiwr <- nowiwr[ , (names(nowiwr) %in% keep)]
+addnowiwr <- addnowiwr[ , (names(addnowiwr) %in% keep)]
 
 # get only a single row for each minute with no WIWR
 nowiwr <- dplyr::distinct(nowiwr)
+addnowiwr <- dplyr::distinct(addnowiwr)
 
 ## add up number of 30 sec periods in which a WIWR was detected
 #get rid of comments column
@@ -508,37 +611,69 @@ aruwiwr22 <- aruwiwr22 %>%
 #subset to only count and anon_filename cols
 aruwiwr22 <- aruwiwr22[ , (names(aruwiwr22) %in% keep)]
 
+addwiwr$comments <- NULL
+addwiwr[is.na(addwiwr)] <- "0"
+addwiwr[3:4] <- as.integer(addwiwr[3:4] != 0)
+addwiwr <- addwiwr %>%
+  mutate(count = rowSums(.[3:4]))
+#subset to only count and anon_filename cols
+addwiwr <- addwiwr[ , (names(addwiwr) %in% keep)]
+
 #prep for join: make sure col names are the same for both dfs
 aruwiwr22 <- rename(aruwiwr22, anon_name = "filename")
 nowiwr <- rename(nowiwr, anon_name = "filename")
 
 #join wiwr and no wiwr min observations
 aruwiwr22 <- rbind(aruwiwr22, nowiwr)
-rm(nowiwr)
+addwiwr <- rbind(addwiwr, addnowiwr)
+rm(nowiwr, addnowiwr)
+
+## make date a new column in addrand
+addwiwr$date <- regmatches(addwiwr$filename, regexpr("2019-04-..", 
+                                                     addwiwr$filename))
+addwiwr$date <- as.Date(addwiwr$date)
+
+## make a "selec" column for addgcki
+addwiwr$selec <- regmatches(addwiwr$filename, regexpr("_[a-e][0-9]+", 
+                                                      addwiwr$filename))
+addwiwr$selec <- gsub("_", "", addwiwr$selec)
 
 #de-anonymize
 aruwiwr22 <- left_join(aruwiwr22, filenames22r, by = "anon_name")
 
+# change "anon_name" to "filename" in arugcki22
+aruwiwr22 <- rename(aruwiwr22, filename = "anon_name")
+
 #create an aru_id col for allaru
-aruwiwr22$rec <- gsub("day.{2,3}_?", "", aruwiwr22$anon_name)
+aruwiwr22$rec <- gsub("day.{2,3}_?", "", aruwiwr22$filename)
 aruwiwr22$rec <- gsub("_.*_.*", "", aruwiwr22$rec)
+
+addwiwr$rec <- regmatches(addwiwr$filename, regexpr("rec.", 
+                                                    addwiwr$filename))
 
 #de-anonymize aru_id
 aruwiwr22 <- left_join(aruwiwr22, recs, by = "rec")
+addwiwr <- left_join(addwiwr, recs, by = "rec")
 
 #remove "rec" column-- aru_id is all that's needed
 aruwiwr22$rec <- NULL
+addwiwr$rec <- NULL
 
 #create an aruday column that says both the date and the aru
 aruwiwr22$aruday <- paste(as.character(aruwiwr22$date), 
                           as.character(aruwiwr22$aru_id), 
                           sep = "_")
+addwiwr$aruday <- paste(as.character(addwiwr$date), 
+                        as.character(addwiwr$aru_id), sep = "_")
 
 ## add wind to aruwiwr22. 
 # make day of year col for aruwiwr22
 aruwiwr22$day_of_yr <- yday(aruwiwr22$date)
+addwiwr$day_of_yr <- yday(addwiwr$date)
+
 # join windday and arugcki22 by day of yr
 aruwiwr22 <- left_join(aruwiwr22, windday, by = "day_of_yr")
+addwiwr <- left_join(addwiwr, windday, by = "day_of_yr")
 
 #### get 10 random minutes and 22 random minutes for each unit on each day
 #### from all random min data.
@@ -554,23 +689,50 @@ s22r_2 <- sample_n(min, 22, replace = FALSE)
 # for each aruday
 aruwiwr22r <- semi_join(aruwiwr22, s22r_2, by = c("selec", "aruday"))
 
+#add addgcki counts to arugcki22r df
+aruwiwr22r <- bind_rows(aruwiwr22r, addwiwr)
+
 # get dataframe with all species observations from the 10 randomly selected mins
 # for each aruday
 aruwiwr10r <- semi_join(aruwiwr22, s10r_2, by = c("selec", "aruday"))
 
+#subsample 5 min from each aruday and add to aruwiwr10r
+addmin <- addwiwr %>% group_by(aruday) %>% distinct(selec)
+s5r <- sample_n(addmin, 5, replace = FALSE)
+addwiwr5 <- semi_join(addwiwr, s5r, by = c("selec", "aruday"))
+
+aruwiwr10r <- bind_rows(aruwiwr10r, addwiwr5)
+
+## standardize survey effort to 66 random min per day for 22min cts and
+## 30 random min per day for 10min cts.
+aruwiwr10r <- aruwiwr10r %>% group_by(date)
+std30 <- sample_n(aruwiwr10r, 30, replace = FALSE)
+aruwiwr10r <- semi_join(aruwiwr10r, std30)
+
+aruwiwr22r <- aruwiwr22r %>% group_by(date)
+std66 <- sample_n(aruwiwr22r, 66, replace = FALSE)
+aruwiwr22r <- semi_join(aruwiwr22r, std66)
+
+
 ### add up individuals detected per 22 and 10  random minutes-------------------
 
 sum_aruwiwr22r <- aruwiwr22r %>%
-  group_by(aruday, day_of_yr) %>%
-  summarize(count = sum(count)) %>%
   group_by(day_of_yr) %>%
-  summarize(meandet = mean(count), count = sum(count))
+  summarize(count = sum(count), segs = 2*n())
+sum_aruwiwr22r$resp <- sum_aruwiwr22r$count/sum_aruwiwr22r$segs
 
 sum_aruwiwr10r <- aruwiwr10r %>%
-  group_by(aruday, day_of_yr) %>%
-  summarize(count = sum(count)) %>%
   group_by(day_of_yr) %>%
-  summarize(meandet = mean(count), count = sum(count))
+  summarize(count = sum(count), segs = 2*n())
+sum_aruwiwr10r$resp <- sum_aruwiwr10r$count/sum_aruwiwr10r$segs
+
+# old abundance proxy: mean number of 30-sec intervals with a vocalization per
+# aru per day. DEFUNCT AS OF 25 MAY 2020
+# sum_aruwiwr10r <- aruwiwr10r %>%
+#   group_by(aruday, day_of_yr) %>%
+#   summarize(count = sum(count)) %>%
+#   group_by(day_of_yr) %>%
+#   summarize(meandet = mean(count), count = sum(count))
 
 
 #create count type col
@@ -587,7 +749,8 @@ sum_aruwiwr10r <- left_join(sum_aruwiwr10r, windday, by = "day_of_yr")
 
 
 # clean up workspace
-rm(arugcki10r, arugcki22r, arugcki22, arurand, aruwiwr10r, aruwiwr22, aruwiwr22r, 
-   filenames22r, min, recs, s10r, s10r_2, s22r, s22r_2, weathervar, windday, 
-   aru_id, keep, keepl, keepw, rec)
+rm(addgcki, addgcki5, addmin, addrand, addwiwr, addwiwr5, arugcki10r, 
+   arugcki22r, arugcki22, arurand, aruwiwr10r, aruwiwr22, aruwiwr22r, 
+   filenames22r, min, recs,s5r, s10r, s10r_2, s22r, s22r_2, std30, std66, 
+   weathervar, windday, aru_id, keep, keepl, keepw, rec)
 
