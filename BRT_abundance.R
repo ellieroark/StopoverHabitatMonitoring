@@ -39,53 +39,53 @@ plot(gcki$day_of_yr, gcki$count,
 
 
 
-plot(sum_gcki$day_of_yr, sum_gcki$meandet,
+plot(sum_gcki$day_of_yr, sum_gcki$resp,
      main = "avg. gcki per count per day over time")
-ggplot(data = sum_gcki, aes(x = day_of_yr, y = meandet)) +
+ggplot(data = sum_gcki, aes(x = day_of_yr, y = resp)) +
   geom_point() +
   geom_smooth()
 
-ggplot(data = sum_arugcki, aes(x = day_of_yr, y = meandet)) +
+ggplot(data = sum_arugcki, aes(x = day_of_yr, y = resp)) +
   geom_point() +
   geom_smooth()
 
-ggplot(data = sum_arugcki10r, aes(x = day_of_yr, y = meandet)) +
+ggplot(data = sum_arugcki10r, aes(x = day_of_yr, y = resp)) +
   geom_point() +
   geom_smooth()
 
-ggplot(data = sum_arugcki22r, aes(x = day_of_yr, y = meandet)) +
+ggplot(data = sum_arugcki22r, aes(x = day_of_yr, y = resp)) +
   geom_point() +
   geom_smooth()
 
 
 
-plot(sum_wiwr$day_of_yr, sum_wiwr$meandet,
+plot(sum_wiwr$day_of_yr, sum_wiwr$resp,
      main = "avg. wiwr per count per day over time")
-ggplot(data = sum_wiwr, aes(x = day_of_yr, y = meandet)) +
+ggplot(data = sum_wiwr, aes(x = day_of_yr, y = resp)) +
   geom_point() +
   geom_smooth()
 
-ggplot(data = sum_aruwiwr, aes(x = day_of_yr, y = meandet)) +
+ggplot(data = sum_aruwiwr, aes(x = day_of_yr, y = resp)) +
   geom_point() +
   geom_smooth()
 
-ggplot(data = sum_aruwiwr10r, aes(x = day_of_yr, y = meandet)) +
+ggplot(data = sum_aruwiwr10r, aes(x = day_of_yr, y = resp)) +
   geom_point() +
   geom_smooth()
 
-ggplot(data = sum_aruwiwr22r, aes(x = day_of_yr, y = meandet)) +
+ggplot(data = sum_aruwiwr22r, aes(x = day_of_yr, y = resp)) +
   geom_point() +
   geom_smooth()
 
-hist(sum_gcki$meandet)
-hist(sum_arugcki$meandet)
-hist(sum_arugcki10r$meandet)
-hist(sum_arugcki22r$meandet)
+hist(sum_gcki$resp)
+hist(sum_arugcki$resp)
+hist(sum_arugcki10r$resp)
+hist(sum_arugcki22r$resp)
 
-hist(sum_wiwr$meandet)
-hist(sum_aruwiwr$meandet)
-hist(sum_aruwiwr10r$meandet)
-hist(sum_aruwiwr22r$meandet)
+hist(sum_wiwr$resp)
+hist(sum_aruwiwr$resp)
+hist(sum_aruwiwr10r$resp)
+hist(sum_aruwiwr22r$resp)
 
 
 
@@ -195,7 +195,7 @@ hist(sum_aruwiwr22r$meandet)
 # 
 # # GLM for avg # of GCKI per count per day--------------------------------------
 # # model of avg GCKI ** per sampling unit ** over time
-# gcki.day <- glm(meandet ~ 1 + wind + day_of_yr_c + day_sq,
+# gcki.day <- glm(resp ~ 1 + wind + day_of_yr_c + day_sq,
 #                 data = sum_gcki,
 #                 family = "poisson")
 # 
@@ -219,7 +219,7 @@ hist(sum_aruwiwr22r$meandet)
 #                 "residuals")
 # 
 # 
-# gdaymeandet <-  table(sum_gcki$meandet)
+# gdayresp <-  table(sum_gcki$resp)
 # barplot(gdaymeandet, main = "distribution of avg # of gcki per count per day", 
 #         xlab = "mean detected per count",
 #         ylab = "frequency")
@@ -337,27 +337,33 @@ hist(sum_aruwiwr22r$meandet)
 
 ## Boosted Regression Tree for GCKI per DAY (point counts)----------------------
 # define function to fit boosted regression tree
-fit_brt <- function(test_fold, sp_data, newdata, nt) {
-  train_dat <- sp_data[sp_data$fold != test_fold, ]
-  f_m <- gbm(meandet ~ 1 + wind + day_of_yr_c, 
+fit_brt <- function(test_fold, sp_data, newdata, nt, resp_name) {
+  # ARGS: resp_name - character string giving the name of the column to be used
+  #           as the response variable
+  # get only data not in test fold
+  train_dat <- data.frame(sp_data[sp_data$fold != test_fold, ])
+  # rename response column to standard name for this function
+  colnames(train_dat)[colnames(train_dat) == resp_name] <- "resp" 
+  f_m <- gbm(resp ~ 1 + wind + day_of_yr_c, 
              distribution = "laplace", 
-             data = train_dat, 
+             data = train_dat,
              interaction.depth = 1, 
              n.trees = nt, 
              n.minobsinnode = 1, 
              shrinkage = 0.001, 
              bag.fraction = 0.8, 
              keep.data = FALSE, verbose = F, n.cores = 1)
-  test_pred <- sp_data[sp_data$fold == test_fold, ]
+  test_pred <- data.frame(sp_data[sp_data$fold == test_fold, ])
   test_pred$OOB_preds <- predict(f_m, newdata = test_pred, 
                                  n.trees = nt, type = "response")
-  test_pred$error <- test_pred$OOB_preds - test_pred$meandet
+  test_pred$error <- test_pred$OOB_preds - test_pred[, colnames(test_pred) == 
+                                                       resp_name]
   
   # Get standardized predictions to new data
   stand_pred <- newdata[newdata$fold == test_fold, ]
   stand_pred$predictions <- predict(f_m, newdata = stand_pred, 
                                  n.trees = nt, type = "response")
-  #stand_pred$error <- stand_pred$predictions - stand_pred$meandet
+  #stand_pred$error <- stand_pred$predictions - stand_pred$resp
   rm(f_m)
   # return fitted model, predictions to the observed data from the test fold, 
   # and predictions to new data (with standardized covariates)
@@ -407,7 +413,7 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = pgcki_day, nt = nt)
+                           newdata = pgcki_day, nt = nt, resp_name = "resp")
   
   # put predictions for these 5 folds into the big list for all splits
   fits_gcki_brt[[i]] <- brt_test_folds
@@ -588,7 +594,8 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = parugcki_day, nt = nt)
+                           newdata = parugcki_day, nt = nt, 
+                           resp_name = "resp")
   
   # put predictions for these 5 folds into the big list for all splits
   fits_arugcki_brt[[i]] <- brt_test_folds
@@ -648,7 +655,7 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = pgcki_day, nt = nt)
+                           newdata = pgcki_day, nt = nt, resp_name = "resp")
   
   # put predictions for these 5 folds into the big list for all splits
   fits_arugcki10r_brt[[i]] <- brt_test_folds
@@ -705,7 +712,7 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = pgcki_day, nt = nt)
+                           newdata = pgcki_day, nt = nt, resp_name = "resp")
   
   # put predictions for these 5 folds into the big list for all splits
   fits_arugcki22r_brt[[i]] <- brt_test_folds
@@ -903,7 +910,7 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = pwiwr_day, nt = nt)
+                           newdata = pwiwr_day, nt = nt, resp_name = "resp")
   
   # put predictions for these 5 folds into the big list for all splits
   fits_wiwr_brt[[i]] <- brt_test_folds
@@ -967,7 +974,8 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = paruwiwr_day, nt = nt)
+                           newdata = paruwiwr_day, nt = nt, 
+                           resp_name = "resp")
   
   # put predictions for these 5 folds into the big list for all splits
   fits_aruwiwr_brt[[i]] <- brt_test_folds
@@ -1025,7 +1033,7 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = pwiwr_day, nt = nt)
+                           newdata = pwiwr_day, nt = nt, resp_name = "resp")
   
   # put predictions for these 5 folds into the big list for all splits
   fits_aruwiwr10r_brt[[i]] <- brt_test_folds
@@ -1080,7 +1088,7 @@ for (i in 1:200) {
   names(brt_test_folds) <- as.character(brt_test_folds) 
   
   brt_test_folds <- lapply(brt_test_folds, fit_brt, sp_data = bird_dat, 
-                           newdata = pwiwr_day, nt = nt)
+                           newdata = pwiwr_day, nt = nt, resp_name = "resp")
   
   # put predictions for these 5 folds into the big list for all splits
   fits_aruwiwr22r_brt[[i]] <- brt_test_folds
