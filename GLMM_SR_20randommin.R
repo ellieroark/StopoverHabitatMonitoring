@@ -293,6 +293,53 @@ spdet_time_4ct <- ggplot(spdet_4ct, aes(x=day_of_yr, y=sp_detected,
               se=TRUE)     # Add confidence interval shading
 spdet_time_4ct
 
+## test overall model significance
+## create null model (full model without count type or count type interactions)
+nullrand.spdetmm <- glmer(sp_detected ~ wind + rain + noise +
+                            day_of_yr_s + day_sq_s + (1|day_of_yr_s), 
+                          data = spdet_4ct,
+                          family = poisson) 
+
+anova(nullrand.spdetmm, max.rand.spdetmm, test= "Chisq")
+
+## test overall significance of wind
+nowind.rand.spdetmm <- glmer(sp_detected ~ count_type + rain + noise +
+                        day_of_yr_s + day_sq_s + rain:count_type +
+                        day_of_yr_s:count_type + day_sq_s:count_type +
+                        (1|day_of_yr_s), 
+                      data = spdet_4ct,
+                      family = poisson)
+anova(nowind.rand.spdetmm, max.rand.spdetmm, test= "Chisq")
+
+## test overall significance of noise
+nonoise.rand.spdetmm <- glmer(sp_detected ~ count_type + wind + rain +
+                               day_of_yr_s + day_sq_s + rain:count_type +
+                               day_of_yr_s:count_type + day_sq_s:count_type +
+                               (1|day_of_yr_s), 
+                             data = spdet_4ct,
+                             family = poisson)
+ss <- getME(nonoise.rand.spdetmm,c("theta","fixef"))
+max.nonoise.rand.spdetmm <- update(nonoise.rand.spdetmm,start=ss,control=glmerControl(
+  optCtrl=list(maxfun=2e4)))
+anova(nonoise.rand.spdetmm, max.rand.spdetmm, test= "Chisq")
+
+## test overall significance of day of year: count type interaction 
+nodoyct.rand.spdetmm <- glmer(sp_detected ~ count_type + wind + rain + noise +
+                        day_of_yr_s + day_sq_s + rain:count_type +
+                        (1|day_of_yr_s), 
+                      data = spdet_4ct,
+                      family = poisson)
+anova(nodoyct.rand.spdetmm, max.rand.spdetmm, test= "Chisq")
+
+## test overall sig of rain:count type 
+norainct.rand.spdetmm <- glmer(sp_detected ~ count_type + wind + rain + noise +
+                                 day_of_yr_s + day_sq_s + day_of_yr_s:count_type + 
+                                 day_sq_s:count_type +
+                                 (1|day_of_yr_s), 
+                               data = spdet_4ct,
+                               family = poisson)
+anova(norainct.rand.spdetmm, max.rand.spdetmm, test= "Chisq")
+
 
 ## clean up workspace 
 rm(allaru, allobs_box, alpha_codes, aprcount_type_box, aru_id_box, aru_names, 
