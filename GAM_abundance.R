@@ -4,7 +4,7 @@
 ## 
 ## author: Ellie Roark, Willson Gaul
 ## created: 6 Mar 2020
-## last modified: 14 Apr 2020
+## last modified: 28 May 2020
 ## 
 ## inputs: *MUST FIRST RUN: DataPrep_PtCtAbundance.R- script reads in original
 ##          point count data and prepares dataframes with the number of observed 
@@ -28,16 +28,16 @@ k <- -1 # k should be large enough that EDF is a good bit less than k-1.
 # uses cubic regression spline as smoothing basis
 fit_gam <- function(test_fold, sp_data, newdata) {
   train_dat <- sp_data[sp_data$fold != test_fold, ]
-  f_m <- gam(meandet ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k, bs = "cr"), 
+  f_m <- gam(resp ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k, bs = "cr"), 
              data = train_dat, 
              family = "nb", select = TRUE)
   test_pred <- sp_data[sp_data$fold == test_fold, ]
   test_pred$OOB_preds <- predict(f_m, newdata = test_pred, 
                                  type = "response")
-  test_pred$error <- test_pred$OOB_preds - test_pred$meandet
+  test_pred$error <- test_pred$OOB_preds - test_pred$resp
   test_pred$OOB_logpreds <- predict(f_m, newdata = test_pred, 
                                      type = "link")
-  #test_pred$logerror <- test_pred$OOB_logpreds - log(test_pred$meandet)
+  #test_pred$logerror <- test_pred$OOB_logpreds - log(test_pred$resp)
   
   # Get standardized predictions to new data
   stand_pred <- newdata[newdata$fold == test_fold, ]
@@ -52,13 +52,13 @@ fit_gam <- function(test_fold, sp_data, newdata) {
 # ## test GAM fitting with all data and cubic regression spline smooth
 # # for interaction discussion, see Section 5.6.3 and p 344 of Wood
 # #  + ti(wind, day_of_yr_c, k = k)
-# gcki.day.gam <- gam(meandet ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k,
+# gcki.day.gam <- gam(resp ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k,
 #                                                    bs = "cr"),
 #                     data = sum_gcki,
 #                     family = "nb", select = TRUE)
 # 
 # ## test GAM fitting with all data and thin plate spline smooth
-# gcki.day.gam2 <- gam(meandet ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, k= k,
+# gcki.day.gam2 <- gam(resp ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, k= k,
 #                                                         bs = "tp"),
 #             data = sum_gcki,
 #             family = "nb", select = TRUE)
@@ -136,7 +136,7 @@ rm(fits_gcki_gam, rmse_gcki_gam)
 #   test_pred2 <- sp_data2[sp_data2$fold == test_fold2, ]
 #   test_pred2$OOB_preds <- predict(f_m2, newdata = test_pred2, 
 #                                  type = "response")
-#   test_pred2$error <- test_pred2$OOB_preds - test_pred2$meandet
+#   test_pred2$error <- test_pred2$OOB_preds - test_pred2$resp
 #   # Get standardized predictions to new data
 #   stand_pred2 <- newdata[newdata$fold == test_fold2, ]
 #   stand_pred2$predictions <- predict(f_m2, newdata = stand_pred2, 
