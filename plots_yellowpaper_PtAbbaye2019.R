@@ -542,7 +542,9 @@ c1wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10c, y = point_count)) +
   geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[30*C])) + 
-  #scale_x_continuous(breaks = c(0.01, 0.05)) + 
+  scale_x_continuous(breaks = round(seq(min(abund_wiwr_pred_wide$aru10c), 
+                                        max(abund_wiwr_pred_wide$aru10c), 
+                                        by = 0.005), 3)) + 
   theme_bw() + 
   theme(legend.position="none", text = element_text(size = 14), 
         axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
@@ -552,6 +554,9 @@ c2wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10r, y = point_count)) +
   geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[30*R])) + 
+  scale_x_continuous(breaks = round(seq(min(abund_wiwr_pred_wide$aru10r), 
+                                        max(abund_wiwr_pred_wide$aru10r), 
+                                        by = 0.025), 2)) + 
   theme_bw() + 
   theme(legend.position="none", text = element_text(size = 14), 
         axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
@@ -561,7 +566,9 @@ c3wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru22r, y = point_count)) +
   geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[66*R])) + 
-  #scale_x_continuous(breaks = c(0.04, 0.12)) + 
+  scale_x_continuous(breaks = round(seq(min(abund_wiwr_pred_wide$aru22r), 
+                                        max(abund_wiwr_pred_wide$aru22r), 
+                                        by = 0.05), 2)) + 
   theme_bw() + 
   theme(legend.position="none", text = element_text(size = 14), 
         axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
@@ -738,7 +745,9 @@ c1gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10c, y = point_count)) +
   geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[30*C])) + 
-  scale_x_continuous(breaks = c(0.002, 0.006)) + 
+  scale_x_continuous(breaks = round(seq(min(abund_gcki_pred_wide$aru10c),
+                                        max(abund_gcki_pred_wide$aru10c),
+                                        by = 0.0005), 3)) +
   theme_bw() + 
   theme(legend.position="none", text = element_text(size = 14), 
         axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
@@ -748,7 +757,9 @@ c2gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10r, y = point_count)) +
   geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[30*R])) + 
-  scale_x_continuous(breaks = c(0.01, 0.02)) + 
+  scale_x_continuous(breaks = round(seq(min(abund_gcki_pred_wide$aru10r), 
+                                        max(abund_gcki_pred_wide$aru10r), 
+                                        by = 0.0025), 3)) + 
   theme_bw() + 
   theme(legend.position="none", text = element_text(size = 14), 
         axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
@@ -758,7 +769,9 @@ c3gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru22r, y = point_count)) +
   geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[66*R])) + 
-  scale_x_continuous(breaks = c(0.01, 0.02)) + 
+  scale_x_continuous(breaks = round(seq(min(abund_gcki_pred_wide$aru22r), 
+                                        max(abund_gcki_pred_wide$aru22r), 
+                                        by = 0.005), 3)) + 
   theme_bw() + 
   theme(legend.position="none", text = element_text(size = 14), 
         axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
@@ -768,7 +781,9 @@ c4gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10r, y = aru10c)) +
   geom_point(shape = 17) + 
   ylab(expression(A[30*C])) + 
   xlab(expression(A[30*R])) + 
-  scale_x_continuous(breaks = c(0.01, 0.02)) + 
+  scale_x_continuous(breaks = round(seq(min(abund_gcki_pred_wide$aru10r), 
+                                  max(abund_gcki_pred_wide$aru10r), 
+                                  by = 0.0025), 3)) + 
   theme_bw() +
   theme(legend.position="none", text = element_text(size = 14), 
         axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
@@ -778,7 +793,9 @@ c5gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru22r, y = aru10c,)) +
   geom_point(shape = 17) + 
   ylab(expression(A[30*C])) + 
   xlab(expression(A[66*R])) + 
-  scale_x_continuous(breaks = c(0.01, 0.02)) + 
+  scale_x_continuous(breaks = round(seq(min(abund_gcki_pred_wide$aru22r), 
+                                        max(abund_gcki_pred_wide$aru22r), 
+                                        by = 0.005), 3)) + 
   theme_bw() +
   theme(text = element_text(size = 14), 
         axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
