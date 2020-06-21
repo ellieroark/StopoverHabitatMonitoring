@@ -17,7 +17,7 @@
 ## TODO: * 
 ################################
 
-fitgam <- FALSE
+fitgam <- TRUE
 
 if(fitgam){
 
@@ -28,7 +28,7 @@ k <- -1 # k should be large enough that EDF is a good bit less than k-1.
 # uses cubic regression spline as smoothing basis
 fit_gam <- function(test_fold, sp_data, newdata) {
   train_dat <- sp_data[sp_data$fold != test_fold, ]
-  f_m <- gam(resp ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k, bs = "cr"), 
+  f_m <- gam(resp ~ 1 + s(windknots, k = k) + s(day_of_yr_c, k = k, bs = "cr"), 
              data = train_dat, 
              family = "nb", select = TRUE)
   test_pred <- sp_data[sp_data$fold == test_fold, ]
@@ -98,7 +98,7 @@ for (i in 1:200) {
   pgcki_day <- data.frame(day_of_yr = seq(min(sum_gcki$day_of_yr), 
                                              max(sum_gcki$day_of_yr), by = 1))
   pgcki_day$day_of_yr_c <- pgcki_day$day_of_yr-mean(pgcki_day$day_of_yr)
-  pgcki_day$wind <- mean(sum_gcki$wind)
+  pgcki_day$windknots <- mean(sum_gcki$windknots)
   pgcki_day <- left_join(pgcki_day, days, by = c("day_of_yr" = "day"))
   
   # join CV fold info onto bird data
@@ -183,7 +183,7 @@ for (i in 1:200) {
   pgcki_day <- data.frame(day_of_yr = seq(min(sum_gcki$day_of_yr), 
                                           max(sum_gcki$day_of_yr), by = 1))
   pgcki_day$day_of_yr_c <- pgcki_day$day_of_yr-mean(pgcki_day$day_of_yr)
-  pgcki_day$wind <- mean(sum_gcki$wind)
+  pgcki_day$windknots <- mean(sum_gcki$windknots)
   pgcki_day <- left_join(pgcki_day, days, by = c("day_of_yr" = "day"))
   
   # join CV fold info onto bird data
@@ -213,13 +213,13 @@ rm(fits_gcki_gam, rmse_arugcki_gam)
 # ## test GAM fitting with all data
 # # for interaction discussion, see Section 5.6.3 and p 344 of Wood
 # #  + ti(wind, day_of_yr_c, k = k)
-arugcki.day.gam <- gam(count ~ 1 + s(wind, bs = "cr", k = k) + 
+arugcki.day.gam <- gam(count ~ 1 + s(windknots, bs = "cr", k = k) + 
                          s(day_of_yr_c, bs = "cr", k = k),
                     data = sum_arugcki,
                     family = "nb", select = TRUE)
 
 ## test GAM fitting with all data and thin plate spline smooth
-arugcki.day.gam2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp"),
+arugcki.day.gam2 <- gam(count ~ 1 + s(windknots, bs = "tp") + s(day_of_yr_c, bs = "tp"),
                      data = sum_arugcki,
                      family = "nb", select = TRUE)
 # 
@@ -285,12 +285,12 @@ k <- -1 # k should be large enough that EDF is a good bit less than k-1.
 ## test GAM fitting with all data
 # for interaction discussion, see Section 5.6.3 and p 344 of Wood
 #  + ti(wind, day_of_yr_c, k = k)
-wiwr.day.gam <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k), 
+wiwr.day.gam <- gam(count ~ 1 + s(windknots, k = k) + s(day_of_yr_c, k = k), 
                     data = sum_wiwr, 
                     family = "poisson", select = TRUE)
 
-## test GAM fitting with all data and thin plate spline smooth
-wiwr.day.gam2 <- gam(count ~ 1 + s(wind, bs = "cr") + s(day_of_yr_c, bs = "cr"), 
+## test GAM fitting with all data and cubic regression spline smooth
+wiwr.day.gam2 <- gam(count ~ 1 + s(windknots, bs = "cr") + s(day_of_yr_c, bs = "cr"), 
                      data = sum_wiwr, 
                      family = "poisson", select = TRUE)
 
@@ -322,7 +322,7 @@ for (i in 1:200) {
   pwiwr_day <- data.frame(day_of_yr = seq(min(sum_wiwr$day_of_yr), 
                                           max(sum_wiwr$day_of_yr), by = 1))
   pwiwr_day$day_of_yr_c <- pwiwr_day$day_of_yr-mean(pwiwr_day$day_of_yr)
-  pwiwr_day$wind <- mean(sum_wiwr$wind)
+  pwiwr_day$windknots <- mean(sum_wiwr$windknots)
   pwiwr_day <- left_join(pwiwr_day, days, by = c("day_of_yr" = "day"))
   
   # join CV fold info onto bird data
@@ -391,7 +391,7 @@ for (i in 1:200) {
   pwiwr_day <- data.frame(day_of_yr = seq(min(sum_wiwr$day_of_yr), 
                                           max(sum_wiwr$day_of_yr), by = 1))
   pwiwr_day$day_of_yr_c <- pwiwr_day$day_of_yr-mean(pwiwr_day$day_of_yr)
-  pwiwr_day$wind <- mean(sum_wiwr$wind)
+  pwiwr_day$windknots <- mean(sum_wiwr$windknots)
   pwiwr_day <- left_join(pwiwr_day, days, by = c("day_of_yr" = "day"))
   
   # join CV fold info onto bird data
@@ -421,13 +421,13 @@ rm(fits_aruwiwr_gam, rmse_aruwiwr_gam)
 
 ## test GAM fitting with all data
 # for interaction discussion, see Section 5.6.3 and p 344 of Wood
-#  + ti(wind, day_of_yr_c, k = k)
-aruwiwr.day.gam <- gam(count ~ 1 + s(wind, k = k) + s(day_of_yr_c, k = k), 
+#  + ti(windknots, day_of_yr_c, k = k)
+aruwiwr.day.gam <- gam(count ~ 1 + s(windknots, k = k) + s(day_of_yr_c, k = k), 
                        data = sum_aruwiwr, 
                        family = "nb", select = TRUE)
 
 ## test GAM fitting with all data and thin plate spline smooth
-aruwiwr.day.gam2 <- gam(count ~ 1 + s(wind, bs = "tp") + s(day_of_yr_c, bs = "tp"), 
+aruwiwr.day.gam2 <- gam(count ~ 1 + s(windknots, bs = "tp") + s(day_of_yr_c, bs = "tp"), 
                         data = sum_aruwiwr, 
                         family = "nb", select = TRUE)
 
