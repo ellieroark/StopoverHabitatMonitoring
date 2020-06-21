@@ -21,15 +21,15 @@ library(tidyverse)
 library(lubridate)
 
 #read in 10 consecutive min ARU data
-widearu <- read_csv(file = "./2019data/ARUPointCounts_WIDE_PtAbbaye2019.csv")
-longaru <- read_csv(file = "./2019data/ARUPointCounts_PtAbbaye2019.csv")
-filenames <- read_csv(file = "./2019data/anonymized_file_key.csv")
+widearu <- read_csv(file = "./data/ARUPointCounts_WIDE_PtAbbaye2019.csv")
+longaru <- read_csv(file = "./data/ARUPointCounts_PtAbbaye2019.csv")
+filenames <- read_csv(file = "./data/anonymized_file_key.csv")
 
 #read in 22 rand min data
-arurand <- read_csv(file = "./2019data/ARU20randmin_final.csv")
-filenames22r <- read_csv(file = "./2019data/filename_key_20randmin.csv", 
+arurand <- read_csv(file = "./data/ARU20randmin_final.csv")
+filenames22r <- read_csv(file = "./data/filename_key_20randmin.csv", 
                       col_types = cols(.default = "?", folder = "c"))
-addrand <- read_csv(file = "./2019data/ARU20randmin_additional_days106107.csv")
+addrand <- read_csv(file = "./data/ARU20randmin_additional_days106107.csv")
 
 #### 10 consecutive minute ARU count data prep (GCKI)---------------------------
 #subset longaru to gcki
