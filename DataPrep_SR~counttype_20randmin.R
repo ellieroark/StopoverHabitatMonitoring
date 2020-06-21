@@ -18,8 +18,8 @@
 
 ### read in random minute aru observations and file name key
 
-arurand <- read_csv(file = "./2019data/ARU20randmin_final.csv")
-filenames <- read_csv(file = "./2019data/filename_key_20randmin.csv", 
+arurand <- read_csv(file = "./data/ARU20randmin_final.csv")
+filenames <- read_csv(file = "./data/filename_key_20randmin.csv", 
                       col_types = cols(.default = "?", folder = "c"))
 
 ##cut columns down to just anon_filename and species_code

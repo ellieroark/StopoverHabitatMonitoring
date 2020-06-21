@@ -29,13 +29,11 @@ library(tidyverse)
 library(lubridate)
 
 
-# setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
-
-widearu <- read_csv(file = "./2019data/ARUPointCounts_WIDE_PtAbbaye2019.csv")
-longaru <- read_csv(file = "./2019data/ARUPointCounts_PtAbbaye2019.csv")
-ptct <- read_csv(file = "./2019data/Corrected_PointCounts_PtAbbaye2019.csv")
-filenames <- read_csv(file = "./2019data/anonymized_file_key.csv")
-sunrise_times <- read_csv(file = "./2019data/SunriseTimes_PtAbbaye2019.csv")
+widearu <- read_csv(file = "./data/ARUPointCounts_WIDE_PtAbbaye2019.csv")
+longaru <- read_csv(file = "./data/ARUPointCounts_PtAbbaye2019.csv")
+ptct <- read_csv(file = "./data/Corrected_PointCounts_PtAbbaye2019.csv")
+filenames <- read_csv(file = "./data/anonymized_file_key.csv")
+sunrise_times <- read_csv(file = "./data/SunriseTimes_PtAbbaye2019.csv")
 
 #coerce date col in ptct df to date format
 ptct$date <- as.Date(ptct$date, format = "%m/%d/%Y")

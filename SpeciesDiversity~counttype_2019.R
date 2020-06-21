@@ -29,7 +29,7 @@ library(tidyverse)
 ##don't forget to run data prep and ARUDuplicate script before running this script! See 
 ## StopoverHabitatMonitoring.R for details. 
 
-alpha_codes <- read_csv(file = "./2018data/BirdAlphaCodes.csv")
+alpha_codes <- read_csv(file = "./data/BirdAlphaCodes.csv")
 
 #clean up environment
 
