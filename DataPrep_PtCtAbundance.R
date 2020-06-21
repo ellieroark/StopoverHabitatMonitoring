@@ -27,8 +27,8 @@ library(mgcv)
 #set.seed(28022020) # no longer setting seed because I set it in main workflow
 # script
 
-ptct <- read_csv(file = "./2019data/Corrected_PointCounts_PtAbbaye2019.csv")
-sunrise_times <- read_csv(file = "./2019data/SunriseTimes_PtAbbaye2019.csv")
+ptct <- read_csv(file = "./data/Corrected_PointCounts_PtAbbaye2019.csv")
+sunrise_times <- read_csv(file = "./data/SunriseTimes_PtAbbaye2019.csv")
 
 ptct$count <- as.numeric(ptct$count)
 ptct$date <- as.Date(ptct$date, format = "%m/%d/%Y")
@@ -47,32 +47,37 @@ windday <- distinct(windday)
 
 #create new col that holds beaufort wind force, so that "wind" col can hold
 # windspeed in knots
-windday$beaufort <- windday$wind
+windday$windknots <- NA
 
 
-#convert beaufort wind speed ratings to the median speed (in knots) for each 
-# beaufort score and make that the value for the "wind" column
-windday[which(windday$beaufort == "0"), "wind"] <- "0"
-windday[which(windday$beaufort == "1"), "wind"] <- "2"
-windday[which(windday$beaufort == "2"), "wind"] <- "5"
-windday[which(windday$beaufort == "3"), "wind"] <- "8.5"
-windday[which(windday$beaufort == "4"), "wind"] <- "13.5"
-windday[which(windday$beaufort == "5"), "wind"] <- "19"
+#convert beaufort wind speed ratings to the median speed (in knots) for each
+# beaufort score and make that the value for the "windknots" column
+windday[which(windday$wind == "0"), "windknots"] <- "0"
+windday[which(windday$wind == "1"), "windknots"] <- "2"
+windday[which(windday$wind == "2"), "windknots"] <- "5"
+windday[which(windday$wind == "3"), "windknots"] <- "8.5"
+windday[which(windday$wind == "4"), "windknots"] <- "13.5"
+windday[which(windday$wind == "5"), "windknots"] <- "19"
 
-windday$wind <- as.numeric(windday$wind)
+windday$windknots <- as.numeric(windday$windknots)
 
-#compute the average windspeed in knots per day
+#compute the average windspeed in knots per day and the median Beaufort force
+# per day
 windday <- windday %>%
-        dplyr::select(wind, day_of_yr) %>%
+        dplyr::select(wind, windknots, day_of_yr) %>%
         group_by(day_of_yr) %>%
-        summarise(wind = mean(wind))
+        summarise(windknots = mean(windknots), wind = median(wind))
 
-#change wind from dbl to factor with 3 levels (0-1, 2, 3+) for use in all other
-# models
-ptct[which(ptct$wind <= "1"), "wind"] <- "0-1"
-ptct[which(ptct$wind >= "3"), "wind"] <- "3+"
-ptct$wind <- factor(as.character(ptct$wind), 
-                    levels = c("0-1", "2", "3+"))
+#fix median values for day of yr 110 and day of yr 120 by rounding up to the 
+#nearest beaufort force
+windday[which(windday$day_of_yr == 110), "wind"] <- 2
+windday[which(windday$day_of_yr == 120), "wind"] <- 3
+
+#change wind to numeric with 3 levels (1 (for values 0-1), 2 (for 
+# value 2), 3 (for values 3+))
+windday[which(windday$wind <= "1"), "wind"] <- "1"
+windday[which(windday$wind >= "3"), "wind"] <- "3"
+windday$wind <- as.numeric(windday$wind)
 
 #change rain into factor with two groups, wet and dry
 ptct[which(ptct$rain == "Rain/Snow"), "rain"] <- "wet"
