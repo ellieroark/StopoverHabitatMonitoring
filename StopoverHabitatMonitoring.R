@@ -14,6 +14,7 @@
 
 set.seed(1542020) #set seed: 15 Apr 2020
 
+
 ### Species Richness Analyses--------------------------------------------------
 
 # script reads in original d  ata for 10 minute point counts and 10 minute aru 
@@ -119,6 +120,6 @@ source("./plots_yellowpaper_PtAbbaye2019.R")
 ## AND BRT_Abundance.R
 ## AND GAM_Abundance.R
 ## AND plots_yellowpaper_PtAbbaye2019.R
-source("./suppmaterials_plots_yellowpaper.R")
+#source("./suppmaterials_plots_yellowpaper.R")
 
 ### End Plots-------------------------------------------------------------------

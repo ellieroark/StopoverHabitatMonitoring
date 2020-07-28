@@ -268,7 +268,7 @@ max(abs(sc_grad1))
 
 max(pmin(abs(sc_grad1),abs(derivs1$gradient)))
 # apparently the typical tolerance for this value is max 0.001, and my value is
-# below that, so that's good.(?) 
+# below that, so that's good.
 
 ## next test: restart from previous fit, bumping up max number of configurations
 ss <- getME(rand.spdetmm,c("theta","fixef"))
