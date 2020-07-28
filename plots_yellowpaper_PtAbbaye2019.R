@@ -51,7 +51,7 @@ g4p1 <- ggplot(data = gcki_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
   geom_point(data = sum_gcki, aes(x = day_of_yr, y = resp), colour = "orange") + 
-  geom_line() + 
+  geom_line(size=1) + 
   #ggtitle("Golden-crowned Kinglet\nPoint counts (10 consecutive min)") +
   xlab("") + 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
@@ -85,14 +85,14 @@ g4p2 <- ggplot(data = gcki_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   #                 ymax = mean_pred + se)) +
   geom_point(data = sum_arugcki, aes(x = day_of_yr, y = resp), 
              colour = "orange") + 
-  geom_line() + 
+  geom_line(size=1) + 
   #ggtitle("Golden-crowned Kinglet\nARU- 10 consecutive min") +
   xlab("") +
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
   scale_y_continuous(limits = c(0, 0.26), 
                      breaks = c(0.00, 0.05, 0.1, 0.15, 0.2, 0.25)) +
-  ylab(expression(A[30*c])) + 
+  ylab(expression(A[30*C])) + 
   theme_bw() +
   theme(axis.text.y = element_text(size = t_size-2), 
         axis.title.y = element_text(size= t_size +1),
@@ -121,7 +121,7 @@ g4p3 <- ggplot(data = gcki_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   #                 ymax = mean_pred + se)) +
   geom_point(data = sum_arugcki10r, aes(x = day_of_yr, y = resp), 
              colour = "orange") + 
-  geom_line() + 
+  geom_line(size=1) + 
   #ggtitle("Golden-crowned Kinglet\nARU- 10 random min") +
   xlab("") +
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
@@ -129,7 +129,7 @@ g4p3 <- ggplot(data = gcki_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   scale_y_continuous(limits = c(0, 0.26), 
                      breaks = c(0.00, 0.05, 0.1, 0.15, 0.2, 0.25)) +
   #ylab("Abundance index") + 
-  ylab(expression(A[30*r])) + 
+  ylab(expression(A[30*R])) + 
   theme_bw() +
   theme(axis.text.y = element_text(size = t_size-2), 
         axis.title.y = element_text(size= t_size +1),
@@ -158,7 +158,7 @@ g4p4 <- ggplot(data = gcki_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   #                 ymax = mean_pred + se)) +
   geom_point(data = sum_arugcki22r, aes(x = day_of_yr, y = resp), 
              colour = "orange") + 
-  geom_line() + 
+  geom_line(size=1) + 
   #ggtitle("Golden-crowned Kinglet\nARU- 22 random min") +
   xlab("") +
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
@@ -166,7 +166,7 @@ g4p4 <- ggplot(data = gcki_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   scale_y_continuous(limits = c(0, 0.26), 
                      breaks = c(0.00, 0.05, 0.1, 0.15, 0.2, 0.25)) +
   #ylab("Abundance index") + 
-  ylab(expression(A[66*r])) + 
+  ylab(expression(A[66*R])) + 
   theme_bw() +
   theme(axis.text.y = element_text(size = t_size-2), 
         axis.title.y = element_text(size= t_size +1),
@@ -192,7 +192,7 @@ wiwr_ptct_preds_brt <- group_by(wiwr_ptct_preds_brt, day_of_yr) %>%
 g4p5 <- ggplot(data = wiwr_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
   # geom_ribbon(aes(ymin = mean_pred - se,
   #                 ymax = mean_pred + se)) +
-  geom_line() + 
+  geom_line(size=1) + 
   geom_point(data = sum_wiwr, aes(x = day_of_yr, y = resp), 
              colour = "blue") + 
   # ggtitle("Winter Wren\nPoint counts (10 min); BRT") + 
@@ -230,11 +230,11 @@ g4p6 <- ggplot(data = wiwr_aru10c_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   #                 ymax = mean_pred + se)) +
   geom_point(data = sum_aruwiwr, aes(x = day_of_yr, y = resp), 
              colour = "blue") + 
-  geom_line() + 
+  geom_line(size=1) + 
   #ggtitle("Winter Wren\nARU - consecutive 10 min; BRT") + 
   #ggtitle("ARU Counts\n10 consecutive minutes\n(b)") +
   #ylab("Abundance index") + 
-  ylab(expression(A[30*c])) + 
+  ylab(expression(A[30*C])) + 
   xlab("") + 
   scale_x_continuous(breaks = c(91, 105, 121, 135), 
                      labels = c("April 1", "April 15", "May 1", "May 15")) + 
@@ -267,7 +267,7 @@ g4p7 <- ggplot(data = wiwr_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   #                 ymax = mean_pred + se)) +
   geom_point(data = sum_aruwiwr10r, aes(x = day_of_yr, y = resp), 
              colour = "blue") + 
-  geom_line() + 
+  geom_line(size=1) + 
   #ggtitle("Winter Wren\nARU (10 random min); BRT") + 
   #ggtitle("ARU Counts\n10 random minutes") +
   xlab("") +
@@ -276,7 +276,7 @@ g4p7 <- ggplot(data = wiwr_aru10r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   scale_y_continuous(limits = c(0.0, 0.4), 
                      breaks = c(0.0, 0.1, 0.2, 0.3, 0.4)) +
   #ylab("Abundance index") + 
-  ylab(expression(A[30*r])) + 
+  ylab(expression(A[30*R])) + 
   theme_bw() +
   theme(axis.text.y = element_text(size = t_size-2),
         axis.title.y = element_text(size = t_size+1),
@@ -304,7 +304,7 @@ g4p8 <- ggplot(data = wiwr_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
  #                ymax = mean_pred + se)) +
   geom_point(data = sum_aruwiwr22r, aes(x = day_of_yr, y = resp), 
              colour = "blue") + 
-  geom_line() + 
+  geom_line(size=1) + 
   #ggtitle("ARU Counts\n22 random minutes\n(d)") +
   #ggtitle("Winter Wren\nARU (22 random min); BRT") + 
   xlab("") + 
@@ -313,7 +313,7 @@ g4p8 <- ggplot(data = wiwr_aru22r_preds_brt, aes(x = day_of_yr, y = mean_pred)) 
   scale_y_continuous(limits = c(0.0, 0.4), 
                      breaks = c(0.0, 0.1, 0.2, 0.3, 0.4)) +
   #ylab("Abundance index") + 
-  ylab(expression(A[66*r])) + 
+  ylab(expression(A[66*R])) + 
   theme_bw() +
   theme(axis.text.y = element_text(size = t_size-2),
         axis.title.y = element_text(size = t_size+1), 
@@ -484,53 +484,68 @@ abund_wiwr_wide <- bind_rows(abund_wiwr_pred_wide, abund_wiwr_obs_wide)
 ## make correlation plots for WIWR
 ## point count + aru10c -- observed
 c1wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru10c, y = point_count)) + 
-  geom_point() + 
+  geom_point(colour = "blue") + 
   ylab(expression(A[p])) + 
   xlab(expression(A[30*C])) + 
-  #scale_x_continuous(breaks = c(0.1, 0.3)) + 
+  scale_x_continuous(breaks = c(0.0, 0.2)) + 
   theme_bw() + 
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
 
 ## point count + aru10r
 c2wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru10r, y = point_count)) + 
-  geom_point() + 
+  geom_point(colour = "blue") + 
   ylab(expression(A[p])) + 
   xlab(expression(A[30*R])) + 
-  #scale_x_continuous(breaks = c(0.1, 0.3)) + 
+  scale_x_continuous(breaks = c(0.1, 0.3)) + 
   theme_bw() + 
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
+
 
 ## point count + aru22r
 c3wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru22r, y = point_count)) + 
-  geom_point() + 
+  geom_point(colour = "blue") + 
   ylab(expression(A[p])) + 
   xlab(expression(A[66*R])) + 
-  #scale_x_continuous(breaks = c(0.1, 0.3)) + 
+  scale_x_continuous(breaks = c(0.1, 0.3)) + 
   theme_bw() + 
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
-
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
 ## aru10c + aru10r
 c4wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru10r, y = aru10c)) + 
-  geom_point() + 
+  geom_point(colour = "blue") + 
   ylab(expression(A[30*C])) + 
   xlab(expression(A[30*R])) + 
-  #scale_x_continuous(breaks = c(0.1, 0.3)) + 
-  theme_bw() +
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  scale_x_continuous(breaks = c(0.1, 0.3)) + 
+  theme_bw() + 
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
 
 ## aru10c + aru22r
 c5wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru22r, y = aru10c,)) + 
-  geom_point() + 
+  geom_point(colour = "blue") + 
   ylab(expression(A[30*C])) + 
   xlab(expression(A[66*R])) + 
-  #scale_x_continuous(breaks = c(0.1, 0.3)) + 
-  theme_bw() +
-  theme(text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  scale_x_continuous(breaks = c(0.1, 0.3)) + 
+  theme_bw() + 
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
 
 obscorplot_wiwr <- c1wo + c2wo + c3wo + guide_area() + c4wo + c5wo + 
   plot_layout(guides = 'collect') + 
@@ -542,55 +557,69 @@ c1wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10c, y = point_count)) +
   geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[30*C])) + 
-  scale_x_continuous(breaks = round(seq(min(abund_wiwr_pred_wide$aru10c), 
-                                        max(abund_wiwr_pred_wide$aru10c), 
-                                        by = 0.005), 3)) + 
+  scale_x_continuous(breaks = c(0.005, 0.015)) + 
+  expand_limits(x=0, y=0) +
   theme_bw() + 
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
 
 ## point count + aru10r
 c2wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10r, y = point_count)) + 
   geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[30*R])) + 
-  scale_x_continuous(breaks = round(seq(min(abund_wiwr_pred_wide$aru10r), 
-                                        max(abund_wiwr_pred_wide$aru10r), 
-                                        by = 0.025), 2)) + 
+  scale_x_continuous(breaks = c(0.02, 0.1)) + 
+  expand_limits(x=0, y=0) +
   theme_bw() + 
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
 
 ## point count + aru22r
 c3wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru22r, y = point_count)) + 
   geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[66*R])) + 
-  scale_x_continuous(breaks = round(seq(min(abund_wiwr_pred_wide$aru22r), 
-                                        max(abund_wiwr_pred_wide$aru22r), 
-                                        by = 0.05), 2)) + 
+  scale_x_continuous(breaks = c(0.02, 0.1)) + 
+  expand_limits(x=0, y=0) +
   theme_bw() + 
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
-
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
 ## aru10c + aru10r
 c4wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10r, y = aru10c)) + 
   geom_point(shape = 17) + 
   ylab(expression(A[30*C])) + 
   xlab(expression(A[30*R])) + 
+  scale_x_continuous(breaks = c(0.02, 0.1)) + 
+  expand_limits(x=0, y=0) +
   theme_bw() +
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
 
 ## aru10c + aru22r
 c5wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru22r, y = aru10c,)) + 
   geom_point(shape = 17) + 
   ylab(expression(A[30*C])) + 
   xlab(expression(A[66*R])) + 
-  #scale_x_continuous(breaks = c(0.04, 0.12)) + 
+  scale_x_continuous(breaks = c(0.02, 0.1)) + 
+  expand_limits(x=0, y=0) +
   theme_bw() +
-  theme(text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
 
 predcorplot_wiwr <- c1wp + c2wp + c3wp + guide_area() + c4wp + c5wp + 
   plot_layout(guides = 'collect') + 
@@ -688,52 +717,73 @@ abund_gcki_wide <- bind_rows(abund_gcki_pred_wide, abund_gcki_obs_wide)
 
 ## point count + aru10c -- observed
 c1go <- ggplot(data = abund_gcki_obs_wide, aes(x = aru10c, y = point_count)) + 
-  geom_point() + 
+  geom_point(colour = "orange") + 
   ylab(expression(A[p])) + 
   xlab(expression(A[30*C])) + 
+  scale_x_continuous(breaks = c(0.0, 0.2)) + 
   theme_bw() + 
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
+
 
 ## point count + aru10r
 c2go <- ggplot(data = abund_gcki_obs_wide, aes(x = aru10r, y = point_count)) + 
-  geom_point() + 
+  geom_point(colour = "orange") + 
   ylab(expression(A[p])) + 
   xlab(expression(A[30*R])) + 
-  #scale_x_continuous(breaks = c(0.05, 0.15)) + 
+  scale_x_continuous(breaks = c(0.0, 0.1)) + 
   theme_bw() + 
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
+
 
 ## point count + aru22r
 c3go <- ggplot(data = abund_gcki_obs_wide, aes(x = aru22r, y = point_count)) + 
-  geom_point() + 
+  geom_point(colour = "orange") + 
   ylab(expression(A[p])) + 
-  xlab(expression(A[66*r])) + 
-  #scale_x_continuous(breaks = c(0.03, 0.09)) + 
+  xlab(expression(A[66*R])) + 
+  scale_x_continuous(breaks = c(0.0, 0.08)) + 
   theme_bw() + 
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
+
 
 ## aru10c + aru10r
 c4go <- ggplot(data = abund_gcki_obs_wide, aes(x = aru10r, y = aru10c)) + 
-  geom_point() + 
+  geom_point(colour = "orange") + 
   ylab(expression(A[30*C])) + 
   xlab(expression(A[30*R])) + 
-  #scale_x_continuous(breaks = c(0.05, 0.15)) + 
+  scale_x_continuous(breaks = c(0.0, 0.1)) + 
   theme_bw() +
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
+
 
 ## aru10c + aru22r
 c5go <- ggplot(data = abund_gcki_obs_wide, aes(x = aru22r, y = aru10c,)) + 
-  geom_point() + 
+  geom_point(colour = "orange") + 
   ylab(expression(A[30*C])) + 
   xlab(expression(A[66*R])) + 
-  #scale_x_continuous(breaks = c(0.03, 0.09)) + 
+  scale_x_continuous(breaks = c(0.0, 0.08)) + 
   theme_bw() +
-  theme(text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
+
 
 obscorplot_gcki <- c1go + c2go + c3go + guide_area() + c4go + c5go + 
   plot_layout(guides = 'collect') + 
@@ -745,60 +795,75 @@ c1gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10c, y = point_count)) +
   geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[30*C])) + 
-  scale_x_continuous(breaks = round(seq(min(abund_gcki_pred_wide$aru10c),
-                                        max(abund_gcki_pred_wide$aru10c),
-                                        by = 0.0005), 3)) +
+  expand_limits(x=0, y=0) +
+  scale_x_continuous(breaks = c(0.0, 0.001)) +
   theme_bw() + 
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
+
 
 ## point count + aru10r
 c2gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10r, y = point_count)) + 
   geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
   xlab(expression(A[30*R])) + 
-  scale_x_continuous(breaks = round(seq(min(abund_gcki_pred_wide$aru10r), 
-                                        max(abund_gcki_pred_wide$aru10r), 
-                                        by = 0.0025), 3)) + 
+  expand_limits(x=0, y=0) +
+  scale_x_continuous(breaks = c(0.002, 0.008)) + 
   theme_bw() + 
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
+
 
 ## point count + aru22r
 c3gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru22r, y = point_count)) + 
   geom_point(shape = 17) + 
   ylab(expression(A[p])) + 
-  xlab(expression(A[66*R])) + 
-  scale_x_continuous(breaks = round(seq(min(abund_gcki_pred_wide$aru22r), 
-                                        max(abund_gcki_pred_wide$aru22r), 
-                                        by = 0.005), 3)) + 
+  xlab(expression(A[66*R])) +
+  expand_limits(x=0, y=0) +
+  scale_x_continuous(breaks = c(0.002, 0.015)) + 
   theme_bw() + 
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
+
 
 ## aru10c + aru10r
 c4gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru10r, y = aru10c)) + 
   geom_point(shape = 17) + 
   ylab(expression(A[30*C])) + 
   xlab(expression(A[30*R])) + 
-  scale_x_continuous(breaks = round(seq(min(abund_gcki_pred_wide$aru10r), 
-                                  max(abund_gcki_pred_wide$aru10r), 
-                                  by = 0.0025), 3)) + 
+  expand_limits(x=0, y=0) +
+  scale_x_continuous(breaks = c(0.002, 0.008)) + 
   theme_bw() +
-  theme(legend.position="none", text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
+
 
 ## aru10c + aru22r
 c5gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru22r, y = aru10c,)) + 
   geom_point(shape = 17) + 
   ylab(expression(A[30*C])) + 
   xlab(expression(A[66*R])) + 
-  scale_x_continuous(breaks = round(seq(min(abund_gcki_pred_wide$aru22r), 
-                                        max(abund_gcki_pred_wide$aru22r), 
-                                        by = 0.005), 3)) + 
+  expand_limits(x=0, y=0) +
+  scale_x_continuous(breaks = c(0.002, 0.015)) + 
   theme_bw() +
-  theme(text = element_text(size = 14), 
-        axis.text.x = element_text(angle = 30, hjust = 1, vjust = 1))
+  theme(legend.position="none", 
+        axis.title.x = element_text(size = t_size+1), 
+        axis.title.y = element_text(size = t_size+1), 
+        axis.text.x = element_text(size = t_size-2), 
+        axis.text.y = element_text(size = t_size-2))
+
 
 predcorplot_gcki <- c1gp + c2gp + c3gp + guide_area() + c4gp + c5gp + 
   plot_layout(guides = 'collect') + 
@@ -1118,33 +1183,37 @@ spdet_time
 
 
 ### write out plots as jpgs ---------------------------------------------------
-ggsave(spdet_time, filename = "./saved_objects/spdet_time.jpg", 
+if(!dir.exists("./saved_objects")) {
+  dir.create("./saved_objects")
+}
+
+ggsave(spdet_time, filename = "./saved_objects/spdet_time.eps", 
        width = 15, height = 10, 
-       units = "cm", device = "jpeg")
+       units = "cm", device = "eps")
 
 ggsave(obscorplot_gcki, filename = "./saved_objects/obscorplot_gcki.jpg", 
        width = 15, height = 10, 
-       units = "cm", device = "jpeg")
+       units = "cm", device = "jpg")
 
 ggsave(predcorplot_gcki, filename = "./saved_objects/predcorplot_gcki.jpg", 
        width = 15, height = 10, 
-       units = "cm", device = "jpeg")
+       units = "cm", device = "jpg")
 
 ggsave(obscorplot_wiwr, filename = "./saved_objects/obscorplot_wiwr.jpg", 
        width = 15, height = 10, 
-       units = "cm", device = "jpeg")
+       units = "cm", device = "jpg")
 
 ggsave(predcorplot_wiwr, filename = "./saved_objects/predcorplot_wiwr.jpg", 
        width = 15, height = 10, 
-       units = "cm", device = "jpeg")
+       units = "cm", device = "jpg")
 
-ggsave(brt_summary, filename = "./saved_objects/brt_summary.jpg", 
+ggsave(brt_summary, filename = "./saved_objects/brt_summary.eps", 
        width = 20, height = 15, 
-       units = "cm", device = "jpeg")
+       units = "cm", device = "eps")
 
-ggsave(brt_summary_sp2, filename = "./saved_objects/brt_summary_sp2.jpg", 
+ggsave(brt_summary_sp2, filename = "./saved_objects/brt_summary_sp2.eps", 
        width = 20, height = 8, 
-       units = "cm", device = "jpeg")
+       units = "cm", device = "eps")
 
 ### write out tables as .csvs---------------------------------------------------
 # write out table of mixed model results for species richness model with four
@@ -1183,3 +1252,10 @@ rmse_wiwr_gam <- readRDS("rmse_wiwr_gam.rds")
 meanrmse_wiwr_gam <- mean(rmse_wiwr_gam)
 rmse_aruwiwr_gam <- readRDS("rmse_aruwiwr_gam.rds")
 meanrmse_aruwiwr_gam <- mean(rmse_aruwiwr_gam)
+
+## anova results for significance of overall model results for species richness
+## GLMM
+anova(nullrand.spdetmm, max.rand.spdetmm, test = "Chisq")
+anova(nowind.rand.spdetmm, max.rand.spdetmm, test= "Chisq")
+anova(nonoise.rand.spdetmm, max.rand.spdetmm, test= "Chisq")
+anova(norainct.rand.spdetmm, max.rand.spdetmm, test= "Chisq")
