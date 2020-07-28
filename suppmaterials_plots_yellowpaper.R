@@ -213,8 +213,7 @@ ggplot(data = wiwr_aru10c_testpreds_brt, aes(x = OOB_preds, y = resp)) +
   ggtitle("Winter Wren\nARU- 10 consecutive min; 1000 BRTs")
 
 ## WIWRARU10c BRT- observed vs predicted values- standardized preds
-wiwr_aru10c_preds_brt <- left_join(wiwr_aru10c_preds_brt, sum_wiwr,
-                                   by = "day_of_yr")
+wiwr_aru10c_preds_brt <- left_join(wiwr_aru10c_preds_brt, sum_wiwr)
 
 ggplot(data = wiwr_aru10c_preds_brt, aes(x = resp, y = mean_pred)) +
   geom_point() +
@@ -433,7 +432,7 @@ rm(fits_arugcki22r_brt)
 ##GAM abundance summary plots --------------------------------------------------
 ## scatterplot of number of GCKI per day (point counts) over time, with fitted
 ## average model (BRT) as a line
-#fits_gcki_gam <- readRDS("fits_gcki_gam.rds")
+fits_gcki_gam <- readRDS("fits_gcki_gam.rds")
 
 # get standardized predictions for predictions to test data from all 1000 models
 gcki_ptct_preds_gam <- bind_rows(lapply(fits_gcki_gam, FUN = function(x) {
