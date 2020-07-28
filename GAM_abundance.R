@@ -17,7 +17,7 @@
 ## TODO: * 
 ################################
 
-fitgam <- TRUE
+fitgam <- FALSE
 
 if(fitgam){
 
