@@ -21,7 +21,15 @@
 library(Hmisc)
 library(tidyverse)
 
+newkrip <- FALSE
+
 #setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
+
+## read in oiriginal data again because later in the script we need to create 
+## df that treats each 30 sec interval as a sampling event
+widearu <- read_csv(file = "./data/ARUPointCounts_WIDE_PtAbbaye2019.csv")
+longaru <- read_csv(file = "./data/ARUPointCounts_PtAbbaye2019.csv")
+filenames <- read_csv(file = "./data/anonymized_file_key.csv")
 
 
 #get rid of column values irrelevant for this analysis
@@ -82,7 +90,67 @@ spdet_aru <- spdet_aru[spdet_aru$anon_filename %nin% drop_anon, ]
 spdet_paired <- spdet_paired[spdet_paired$anon_filename %nin% drop_anon, ]
 
 
+if (newkrip) {
+#### PREP FOR KRIPPENDORF'S ALPHA REVIEW OF GCKI AND WIWR OBSERVATIONS----------
+
+## GCKI data prep
+# #subset longaru to gcki
+# kgcki <- longaru[which(longaru$species_code == "GCKI"), ]
+# 
+# #subset widearu to gcki
+# kgckiw <- widearu[which(widearu$species_code == "GCKI"), ]
+
+kw <- widearu
+kl <- longaru
+
+# prep widearu kinglet samples
+kw[is.na(kw)] <- "0"
+kw[4:23] <- as.integer(kw[4:23] != 0)
+
+#add .wav extension to filenames
+kw$anon_filename <- paste(kw$anon_filename, ".wav", sep = "")
+
+## add up number of 30 sec periods in which a GCKI was detected- long aru
+# change minute half values from 1 + 2 to :00 and :30
+kl[which(kl$minute_half == "1"), "minute_half"] <- ":00"
+kl[which(kl$minute_half == "2"), "minute_half"] <- ":30"
+# paste those minute half values onto the minute_detected col
+kl$minute_detected <- paste0(as.character(kl$minute_detected), 
+                                   as.character(kl$minute_half))
+kl$minute_half <- NULL
+
+# pivot_wider to make each half min a column
+### TODO: DEBUG HERE!!! right now det code is converting to a list when pivoting
+###  wide. why? fix this!!!
+kripdf <- pivot_wider(kl, names_from = "minute_detected", 
+                        values_from = "det_code")
+kripdf[is.na(kripdf)] <- "0"
+kripdf[4:9] <- as.integer(kripdf[4:9] != 0)
+kripdf <- rename(kripdf, anon_filename = "anon_file_name")
+
+kripdf <- full_join(kw, kripdf)
+
+kripdf[is.na(kripdf)] <- 0
+
+#get rid of columns we don't need in filenames
+filenames <- subset(filenames, select = c(original_name, anon_name))
+#change column name to match allaru
+filenames <- rename(filenames, anon_filename = "anon_name")
+
+#join filenames to allaru to add a column that has the un-anonymized file names
+kripdf <- left_join(kripdf, filenames, by = "anon_filename")
+
+#get rid of species common name column (not needed)
+kripdf$species_common_name <- NULL
+
+## subset to only aru counts that are duplicated
+dup <- table(kripdf$original_name)
+kripdup <- kripdf[kripdf$original_name %in% names(dup[dup > 1]), ]
+
+# order df by original file name so duplicates appear next to each other. 
+kripdup <- kripdup[order(kripdup$original_name, kripdup$species_code),]
+}
+
 # clean up environment
 rm(allaru_s, dup_no_match, match, no_match, spdet_arudup, w.allaru, w.arudup,
    arudup, dr, drop_anon, nm, pair, t.arudup)
-
