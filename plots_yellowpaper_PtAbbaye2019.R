@@ -326,7 +326,7 @@ rm(fits_aruwiwr22r_brt)
 ## abundance data and BRT models for 2 species for all 4 survey methods
 brt_summary <- g4p5 + g4p6 + g4p7 + g4p8 + g4p1 + g4p2 + g4p3 + g4p4 + 
   plot_layout(ncol = 4) +
-  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
+  plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = 10))
 
 
@@ -363,7 +363,7 @@ preds_brt <- bind_rows(wiwr_preds_brt, gcki_preds_brt)
 sp2p1 <- ggplot(data = preds_brt[which(preds_brt$count_type == "ptct"), ], 
               aes(x = day_of_yr, y = mean_pred, colour = species)) +
   geom_line(aes(x = day_of_yr, y = mean_pred, colour = species)) + 
-  ggtitle("(a)") +
+  ggtitle("(A)") +
   xlab("") + 
   scale_x_continuous(breaks = c(91, 105, 121, 135),
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
@@ -382,7 +382,7 @@ sp2p1 <- ggplot(data = preds_brt[which(preds_brt$count_type == "ptct"), ],
 sp2p2 <- ggplot(data = preds_brt[which(preds_brt$count_type == "aru10c"), ], 
                 aes(x = day_of_yr, y = mean_pred, colour = species)) +
   geom_line(aes(x = day_of_yr, y = mean_pred, colour = species)) + 
-  ggtitle("(b)") +
+  ggtitle("(B)") +
   xlab("") + 
   scale_x_continuous(breaks = c(91, 105, 121, 135),
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
@@ -403,7 +403,7 @@ sp2p2 <- ggplot(data = preds_brt[which(preds_brt$count_type == "aru10c"), ],
 sp2p3 <- ggplot(data = preds_brt[which(preds_brt$count_type == "aru10r"), ], 
                 aes(x = day_of_yr, y = mean_pred, colour = species)) +
   geom_line(aes(x = day_of_yr, y = mean_pred, colour = species)) + 
-  ggtitle("(c)") +
+  ggtitle("(C)") +
   xlab("") + 
   scale_x_continuous(breaks = c(91, 105, 121, 135),
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
@@ -424,7 +424,7 @@ sp2p3 <- ggplot(data = preds_brt[which(preds_brt$count_type == "aru10r"), ],
 sp2p4 <- ggplot(data = preds_brt[which(preds_brt$count_type == "aru22r"), ], 
                 aes(x = day_of_yr, y = mean_pred, colour = species)) +
   geom_line(aes(x = day_of_yr, y = mean_pred, colour = species)) + 
-  ggtitle("(d)") +
+  ggtitle("(D)") +
   xlab("") + 
   scale_x_continuous(breaks = c(91, 105, 121, 135),
                      labels = c("April 1", "April 15", "May 1", "May 15")) +
@@ -549,7 +549,7 @@ c5wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru22r, y = aru10c,)) +
 
 obscorplot_wiwr <- c1wo + c2wo + c3wo + guide_area() + c4wo + c5wo + 
   plot_layout(guides = 'collect') + 
-  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
+  plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = t_size))
 
 ## point count + aru10c -- predicted
@@ -623,7 +623,7 @@ c5wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru22r, y = aru10c,)) +
 
 predcorplot_wiwr <- c1wp + c2wp + c3wp + guide_area() + c4wp + c5wp + 
   plot_layout(guides = 'collect') + 
-  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
+  plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = t_size))
 
 
@@ -787,7 +787,7 @@ c5go <- ggplot(data = abund_gcki_obs_wide, aes(x = aru22r, y = aru10c,)) +
 
 obscorplot_gcki <- c1go + c2go + c3go + guide_area() + c4go + c5go + 
   plot_layout(guides = 'collect') + 
-  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
+  plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = t_size))
 
 ## point count + aru10c -- predicted
@@ -867,7 +867,7 @@ c5gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru22r, y = aru10c,)) +
 
 predcorplot_gcki <- c1gp + c2gp + c3gp + guide_area() + c4gp + c5gp + 
   plot_layout(guides = 'collect') + 
-  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
+  plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = t_size))
 
 
@@ -1189,7 +1189,7 @@ if(!dir.exists("./saved_objects")) {
 
 ggsave(spdet_time, filename = "./saved_objects/spdet_time.eps", 
        width = 15, height = 10, 
-       units = "cm", device = "eps")
+       units = "cm", device = "eps", dpi = 600)
 
 ggsave(obscorplot_gcki, filename = "./saved_objects/obscorplot_gcki.jpg", 
        width = 15, height = 10, 
