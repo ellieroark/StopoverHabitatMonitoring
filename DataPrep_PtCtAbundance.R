@@ -4,7 +4,7 @@
 ## 
 ## author: Ellie Roark
 ## created: 10 Feb 2020
-## last modified: 15 Apr 2020
+## last modified: 06 Jan 2021
 ## 
 ## inputs: *Corrected_PointCounts_PtAbbaye2019.csv- original data file with all 
 ##           point count data from the 2019 field season at Point Abbaye
@@ -45,8 +45,7 @@ windday <- ptct %>%
 
 windday <- distinct(windday)
 
-#create new col that holds beaufort wind force, so that "wind" col can hold
-# windspeed in knots
+#create new col windspeed in knots
 windday$windknots <- NA
 
 
@@ -68,8 +67,8 @@ windday <- windday %>%
         group_by(day_of_yr) %>%
         summarise(windknots = mean(windknots), wind = median(wind))
 
-#fix median values for day of yr 110 and day of yr 120 by rounding up to the 
-#nearest beaufort force
+#fix median values for day of yr 110 and day of yr 120 (which have invalid
+# Beaufort forces of 1.5 and 2.5) by rounding up to the nearest beaufort force
 windday[which(windday$day_of_yr == 110), "wind"] <- 2
 windday[which(windday$day_of_yr == 120), "wind"] <- 3
 
@@ -78,6 +77,10 @@ windday[which(windday$day_of_yr == 120), "wind"] <- 3
 windday[which(windday$wind <= "1"), "wind"] <- "1"
 windday[which(windday$wind >= "3"), "wind"] <- "3"
 windday$wind <- as.numeric(windday$wind)
+
+# add centered and squared day of year cols to windday df 
+windday$day_of_yr_c <- windday$day_of_yr - mean(windday$day_of_yr)
+windday$day_sq <- windday$day_of_yr_c^2
 
 #change rain into factor with two groups, wet and dry
 ptct[which(ptct$rain == "Rain/Snow"), "rain"] <- "wet"
@@ -197,93 +200,6 @@ wiwr <- full_join(wiwr, nowiwrct)
 
 ## end create wiwr df-----------------------------------------------------------
 
-## create HETH df---------------------------------------------------------------
-#subset to HETH
-heth <- ptct[which(ptct$species_code == "HETH"), ]
-
-#get unique ptctids for counts on which there were no HETHs
-nohethct <- ptct[which(ptct$ptct_id %nin% heth$ptct_id), ]
-
-#get rid of species-specific variables
-dropa <- c("species_code","species_common_name", "minute_detected", "det_code", 
-           "rel_bearing", "distance", "minute_detected", "comments", "count")
-nohethct <- nohethct[ , !(names(nohethct) %in% dropa)]
-
-# get only a single row for each point count
-nohethct <- dplyr::distinct(nohethct)
-
-# add count variable back in, specifying that these are counts with 0 HETHs
-nohethct$count <- 0
-
-# get rid of species-specific variables in heth df
-dropb <- c("species_code","species_common_name", "minute_detected", "det_code", 
-           "rel_bearing", "distance", "minute_detected", "comments")
-heth <- heth[ , !(names(heth) %in% dropb)]
-
-# join heth and nohethct dfs to create a dataframe that has all point counts 
-# with the number of HETHs detected 
-heth <- full_join(heth, nohethct)
-
-## end create HETH df-----------------------------------------------------------
-
-## create BCCH df---------------------------------------------------------------
-#subset to BCCH
-bcch <- ptct[which(ptct$species_code == "BCCH"), ]
-
-#get unique ptctids for counts on which there were no BCCHs
-nobcchct <- ptct[which(ptct$ptct_id %nin% bcch$ptct_id), ]
-
-#get rid of species-specific variables
-dropa <- c("species_code","species_common_name", "minute_detected", "det_code", 
-           "rel_bearing", "distance", "minute_detected", "comments", "count")
-nobcchct <- nobcchct[ , !(names(nobcchct) %in% dropa)]
-
-# get only a single row for each point count
-nobcchct <- dplyr::distinct(nobcchct)
-
-# add count variable back in, specifying that these are counts with 0 BCCHs
-nobcchct$count <- 0
-
-# get rid of species-specific variables in bcch df
-dropb <- c("species_code","species_common_name", "minute_detected", "det_code", 
-           "rel_bearing", "distance", "minute_detected", "comments")
-bcch <- bcch[ , !(names(bcch) %in% dropb)]
-
-# join bcch and nobcchct dfs to create a dataframe that has all point counts 
-# with the number of BCCHs detected 
-bcch <- full_join(bcch, nobcchct)
-
-## end create BCCH df-----------------------------------------------------------
-
-## create YBSA df---------------------------------------------------------------
-#subset to ybsa
-ybsa <- ptct[which(ptct$species_code == "YBSA"), ]
-
-#get unique ptctids for counts on which there were no YBSAs
-noybsact <- ptct[which(ptct$ptct_id %nin% ybsa$ptct_id), ]
-
-#get rid of species-specific variables
-dropa <- c("species_code","species_common_name", "minute_detected", "det_code", 
-           "rel_bearing", "distance", "minute_detected", "comments", "count")
-noybsact <- noybsact[ , !(names(noybsact) %in% dropa)]
-
-# get only a single row for each point count
-noybsact <- dplyr::distinct(noybsact)
-
-# add count variable back in, specifying that these are counts with 0 YBSAs
-noybsact$count <- 0
-
-# get rid of species-specific variables in ybsa df
-dropb <- c("species_code","species_common_name", "minute_detected", "det_code", 
-           "rel_bearing", "distance", "minute_detected", "comments")
-ybsa <- ybsa[ , !(names(ybsa) %in% dropb)]
-
-# join ybsa and noybsact dfs to create a dataframe that has all point counts 
-# with the number of YBSAs detected 
-ybsa <- full_join(ybsa, noybsact)
-
-## end create YBSA df----------------------------------------------------------- 
-
 ## create dataframes with average # of individs. per pt ct each day, instead of 
 ## just  # of individuals per count---------------------------------------------
 #  add up number of individs detected per day for each 
@@ -291,41 +207,67 @@ sum_wiwr <- wiwr %>%
         group_by(day_of_yr) %>%
         summarize(resp = mean(count), count = sum(count))
 
-# sum_ybsa <- ybsa %>%
-#         group_by(day_of_yr) %>%
-#         summarize(count = mean(count))
-# 
-# sum_bcch <- bcch %>%
-#         group_by(day_of_yr) %>%
-#         summarize(count = mean(count))
-# 
-# sum_heth <- heth %>%
-#         group_by(day_of_yr) %>%
-#         summarize(count = mean(count))
-
 sum_gcki <- gcki %>%
         group_by(day_of_yr) %>%
         summarize(resp = mean(count), count = sum(count))
-
-# add centered and squared day of year cols to windday df before joining to 
-# sum_dfs
-windday$day_of_yr_c <- windday$day_of_yr - mean(windday$day_of_yr)
-windday$day_sq <- windday$day_of_yr_c^2
 
 
 
 # add windspeed rating in knots to sum_ dfs. 
 sum_gcki <- left_join(sum_gcki, windday, by = "day_of_yr")
 sum_wiwr <- left_join(sum_wiwr, windday, by = "day_of_yr")
-#sum_bcch <- left_join(sum_bcch, windday, by = "day_of_yr")
-#sum_ybsa <- left_join(sum_ybsa, windday, by = "day_of_yr")
-#sum_heth <- left_join(sum_heth, windday, by = "day_of_yr")
+
+### for loop that loops through all species in ptct and creates a "sum_[sp. code]"
+### dataframe for each species
+# create a list to hold a data frame for each species
+sum_species_dfs <- list()
+sp_codes <- unique(ptct$species_code)
+sp_codes <- sp_codes[!grepl(". .", sp_codes)]
+for(i in 1:length(sp_codes)) {
+        this_sp <- sp_codes[i]
+        
+        #subset to this species
+        sp_df <- ptct[which(ptct$species_code == this_sp), ]
+        
+        #get unique ptctids for counts on which there were no this_sp
+        nospct <- ptct[which(ptct$ptct_id %nin% sp_df$ptct_id), ]
+        
+        #get rid of species-specific variables
+        dropa <- c("species_code","species_common_name", "minute_detected", "det_code", 
+                   "rel_bearing", "distance", "minute_detected", "comments", "count")
+        nospct <- nospct[ , !(names(nospct) %in% dropa)]
+        
+        # get only a single row for each point count
+        nospct <- dplyr::distinct(nospct)
+        
+        # add count variable back in, specifying that these are counts with 0 this_sp
+        nospct$count <- 0
+        
+        # get rid of species-specific variables in sp_df
+        dropb <- c("species_code","species_common_name", "minute_detected", "det_code", 
+                   "rel_bearing", "distance", "minute_detected", "comments")
+        sp_df <- sp_df[ , !(names(sp_df) %in% dropb)]
+        
+        # join sp_df and nospct dfs to create a dataframe that has all point counts 
+        # with the number of this_sp detected 
+        sp_df <- full_join(sp_df, nospct)
+        
+        #  summarize number of individs detected per day
+        sum_sp <- sp_df %>%
+                group_by(day_of_yr) %>%
+                summarize(resp = mean(count), count = sum(count))
+        
+        # add windspeed rating in knots to sum_ dfs. 
+        sum_sp <- left_join(sum_sp, windday, by = "day_of_yr")
+        sum_species_dfs[[i]] <- sum_sp # add species df to list
+}
+names(sum_species_dfs) <- sp_codes
 
 ## end create # of individs per day dfs-----------------------------------------
 
-## remove no....ct dfs, now that that data is incorporated into each species df
-rm(nobcchct, nogckict, nowiwrct, noybsact, nohethct, dropa, dropb, 
-   sunrise_times)
 
-rm(bcch, heth, ptct, ybsa)
+
+## remove no....ct dfs, now that that data is incorporated into each species df
+rm(nogckict, nowiwrct, dropa, dropb, sunrise_times, ptct)
+
 
