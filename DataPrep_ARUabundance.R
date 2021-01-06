@@ -4,7 +4,7 @@
 ## 
 ## author: Ellie Roark
 ## created: 9 Mar 2020
-## last modified: 18 Mar 2020
+## last modified: 06 Jan 2021
 ## 
 ## inputs: *Corrected_PointCounts_PtAbbaye2019.csv- original data file with all 
 ##           point count data from the 2019 field season at Point Abbaye
@@ -46,7 +46,7 @@ wnogcki <- widearu[which(widearu$anon_filename %nin% aru_gckiw$anon_filename), ]
 lnogcki$count <- 0
 wnogcki$count <- 0
 
-#get list of anon filenames with 
+#get list of anon filenames with no gcki
 keepw <- c("anon_filename", "count")
 keepl <- c("anon_file_name", "count")
 lnogcki <- lnogcki[ , (names(lnogcki) %in% keepl)]
@@ -356,7 +356,7 @@ arugcki10r <- semi_join(arugcki22, s10r, by = c("selec", "aruday"))
 #add addgcki counts to arugcki22r df
 arugcki22r <- bind_rows(arugcki22r, addgcki)
 
-#subsample 5 min from each aruday and add to arugcki10r
+#subsample 5 min from each aruday in addgcki and add to arugcki10r
 addmin <- addgcki %>% group_by(aruday) %>% distinct(selec)
 s5r <- sample_n(addmin, 5, replace = FALSE)
 addgcki5 <- semi_join(addgcki, s5r, by = c("selec", "aruday"))
@@ -408,8 +408,6 @@ sum_arugcki22r <- left_join(sum_arugcki22r, windday, by = "day_of_yr")
 sum_arugcki10r <- left_join(sum_arugcki10r, windday, by = "day_of_yr")
 
 ### end mean # individuals per count ---------------------------------------
-
-
 
 ##### end 10 and 22 rand min data prep (GCKI)-----------------------------------
 
@@ -745,7 +743,153 @@ sum_aruwiwr10r <- left_join(sum_aruwiwr10r, windday, by = "day_of_yr")
 
 ### end mean # individuals per count ---------------------------------------
 
-##### end 10 and 22 rand min data prep (GCKI)-----------------------------------
+##### end 10 and 22 rand min data prep (WIWR)-----------------------------------
+
+##### Prep 22 rand min data for ALL species detected in arurand-----------------
+aru_sp_codes <- unique(arurand$species_code)
+aru_sp_codes <- aru_sp_codes[!grepl(".* .*", aru_sp_codes)]
+# initiate list to hold dataframes for ARU detections of each sp.
+sum_aru_dfs <- list()
+
+for(i in 1:length(aru_sp_codes)) {
+  this_sp <- aru_sp_codes[i]
+  
+  #subset arurand (and addrand) to this_sp obersvations
+  sp22 <- arurand[which(arurand$species_code == this_sp), ]
+  add22 <- addrand[which(addrand$species_code == this_sp), ]
+  # if(nrow(add22) == 0) rm(add22)
+  
+  #get unique ptctids for counts on which there were none of this_sp
+  nosp <- arurand[which(arurand$filename %nin% sp22$filename), ]
+  addnosp <- addrand[which(addrand$filename %nin% add22$filename), ]
+  
+  #create a count column for the nosp dfs
+  nosp$count <- 0
+  addnosp$count <- 0
+  
+  #only keep filenames and count for nosp counts
+  nosp <- nosp[ , (names(nosp) %in% keep)]
+  addnosp <- addnosp[ , (names(addnosp) %in% keep)]
+  
+  # get only a single row for each minute with none of this_sp
+  nosp <- dplyr::distinct(nosp)
+  addnosp <- dplyr::distinct(addnosp)
+  
+  ## add up number of 30 sec periods in which this_sp was detected
+  #get rid of comments column
+  sp22$comments <- NULL
+  sp22[is.na(sp22)] <- "0"
+  sp22[3:4] <- as.integer(sp22[3:4] != 0)
+  sp22 <- sp22 %>%
+    mutate(count = rowSums(.[3:4]))
+  #subset to only count and anon_filename cols
+  sp22 <- sp22[ , (names(sp22) %in% keep)]
+  
+  if(nrow(add22) > 0) {
+    add22$comments <- NULL
+    add22[is.na(add22)] <- "0"
+    add22[3:4] <- as.integer(add22[3:4] != 0)
+    add22 <- add22 %>%
+      mutate(count = rowSums(.[3:4]))
+    #subset to only count and anon_filename cols
+    add22 <- add22[ , (names(add22) %in% keep)]
+  }
+
+  #prep for join: make sure col names are the same for both dfs
+  sp22 <- rename(sp22, anon_name = "filename")
+  nosp <- rename(nosp, anon_name = "filename")
+  
+  #join this_sp and no this_sp min observations
+  sp22 <- rbind(sp22, nosp)
+  add22 <- rbind(add22, addnosp)
+  rm(nosp, addnosp)
+  
+  ## make date a new column in addrand
+  add22$date <- regmatches(add22$filename, regexpr("2019-04-..", 
+                                                       add22$filename))
+  add22$date <- as.Date(add22$date)
+  
+  ## make a "selec" column for add22
+  add22$selec <- regmatches(add22$filename, regexpr("_[a-e][0-9]+", 
+                                                        add22$filename))
+  add22$selec <- gsub("_", "", add22$selec)
+  
+  #de-anonymize
+  sp22 <- left_join(sp22, filenames22r, by = "anon_name")
+  
+  # change "anon_name" to "filename" in sp22
+  sp22 <- rename(sp22, filename = "anon_name")
+  
+  #create an aru_id col for sp22
+  sp22$rec <- gsub("day.{2,3}_?", "", sp22$filename)
+  sp22$rec <- gsub("_.*_.*", "", sp22$rec)
+  
+  add22$rec <- regmatches(add22$filename, regexpr("rec.", 
+                                                      add22$filename))
+  
+  #de-anonymize aru_id
+  sp22 <- left_join(sp22, recs, by = "rec")
+  add22 <- left_join(add22, recs, by = "rec")
+  
+  #remove "rec" column-- aru_id is all that's needed
+  sp22$rec <- NULL
+  add22$rec <- NULL
+  
+  #create an aruday column that says both the date and the aru
+  sp22$aruday <- paste(as.character(sp22$date), 
+                            as.character(sp22$aru_id), 
+                            sep = "_")
+  add22$aruday <- paste(as.character(add22$date), 
+                          as.character(add22$aru_id), sep = "_")
+  
+  ## add wind to sp22. 
+  # make day of year col for sp22
+  sp22$day_of_yr <- yday(sp22$date)
+  add22$day_of_yr <- yday(addwiwr$date)
+  
+  # join windday and sp22 by day of yr
+  sp22 <- left_join(sp22, windday, by = "day_of_yr")
+  add22 <- left_join(add22, windday, by = "day_of_yr")
+  
+  #### get 22 random minutes for each unit on each day
+  #### from all random min data.
+  
+  ##randomly sample 10 rand min from each aruday and 22 rand min from each aruday
+  
+  # get 22 random min for each aruday from "min" df
+  s22r <- sample_n(min, 22, replace = FALSE)
+  
+  # get dataframe with all species observations from the 22 randomly selected mins
+  # for each aruday
+  sp22r <- semi_join(sp22, s22r, by = c("selec", "aruday"))
+  
+  #add add22 counts to sp22r df
+  sp22r <- bind_rows(sp22r, add22)
+  
+  ## standardize survey effort to 66 random min per day for 22min cts
+  sp22r <- sp22r %>% group_by(date)
+  std66 <- sample_n(sp22r, 66, replace = FALSE)
+  sp22r <- semi_join(sp22r, std66)
+  
+  
+  ### add up individuals detected per 22 and 10  random minutes-------------------
+  sum_sp22r <- sp22r %>%
+    group_by(day_of_yr) %>%
+    summarize(count = sum(count), segs = 2*n())
+  sum_sp22r$resp <- sum_sp22r$count/sum_sp22r$segs
+  
+  sum_sp22r$count_type <- "aru_22r"
+  
+  # join windday to sum_arugcki dfs by day of yr
+  sum_sp22r <- left_join(sum_sp22r, windday, by = "day_of_yr")
+  
+  ### end mean # individuals per count ---------------------------------------
+  
+  sum_aru_dfs[[i]] <- sum_sp22r
+}
+names(sum_aru_dfs) <- aru_sp_codes
+
+##### end prep 22 rand min data for ALL species---------------------------------
 
 
 # clean up workspace
