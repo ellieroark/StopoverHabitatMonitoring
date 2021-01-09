@@ -82,6 +82,15 @@ hist(sum_aruwiwr$resp)
 hist(sum_aruwiwr10r$resp)
 hist(sum_aruwiwr22r$resp)
 
+aruplot <- list()
+for(i in 1:length(aru_sp_codes)) {
+  this_sp <- aru_sp_codes[i]
+  tplot <- ggplot(data = sum_aru_dfs[[i]], aes(x = day_of_yr, y = resp)) +
+    geom_point() +
+    geom_smooth() +
+    ggtitle(this_sp)
+  aruplot[[i]] <- tplot
+}
 
 
 # end Exploratory plots -------------------------------------------------------
@@ -750,3 +759,14 @@ rm(fits_aruwiwr22r_brt, rmse_aruwiwr22r_brt)
 }
 ## end BRT for wiwr per day- ARU 22 random min----------------------------------
 
+## BRT for all species per day- point counts------------------------------------
+
+
+
+## end BRT for all species per day- point counts--------------------------------
+
+## BRT for all species per day- ARU 22 random min-------------------------------
+
+
+
+## end BRT for all species per day- ARU 22 random min---------------------------
