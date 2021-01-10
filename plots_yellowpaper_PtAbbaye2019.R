@@ -38,7 +38,8 @@ t_size <- 12
 ## average model (BRT) as a line
 fits_gcki_brt <- readRDS("fits_gcki_brt.rds")
 
-# get standardized predictions for predictions to test data from all 1000 models
+# get standardized predictions for predictions to days in the test data fold 
+# from all 1000 models
 gcki_ptct_preds_brt <- bind_rows(lapply(fits_gcki_brt, FUN = function(x) {
   bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
 }))
@@ -478,8 +479,9 @@ abund_wiwr_obs_wide <- dplyr::select(abund_wiwr_obs, day_of_yr, resp, method) %>
   pivot_wider(names_from = method, values_from = resp)
 abund_wiwr_obs_wide$type <- "observed"
 
-# combine predicted and observed abundance values
-abund_wiwr_wide <- bind_rows(abund_wiwr_pred_wide, abund_wiwr_obs_wide)
+# # [I think this is not needed 10 Jan 2020]
+# # combine predicted and observed abundance values
+# abund_wiwr_wide <- bind_rows(abund_wiwr_pred_wide, abund_wiwr_obs_wide)
 
 ## make correlation plots for WIWR
 ## point count + aru10c -- observed
@@ -535,7 +537,7 @@ c4wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru10r, y = aru10c)) +
         axis.text.y = element_text(size = t_size-2))
 
 ## aru10c + aru22r
-c5wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru22r, y = aru10c,)) + 
+c5wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru22r, y = aru10c)) + 
   geom_point(colour = "blue") + 
   ylab(expression(A[30*C])) + 
   xlab(expression(A[66*R])) + 
@@ -608,7 +610,7 @@ c4wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru10r, y = aru10c)) +
         axis.text.y = element_text(size = t_size-2))
 
 ## aru10c + aru22r
-c5wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru22r, y = aru10c,)) + 
+c5wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru22r, y = aru10c)) + 
   geom_point(shape = 17) + 
   ylab(expression(A[30*C])) + 
   xlab(expression(A[66*R])) + 
@@ -1180,6 +1182,119 @@ spdet_time <- ggplot(pred.4ct,
   
 spdet_time
 #### SPECIES RICHNESS OVER TIME BY COUNT TYPE-----------------------------------
+
+
+
+### plot correlation of observed values from Ap and A66R, and BRT predicted 
+## values from Ap and A66R for all 33 species-----------------------------------
+## get correlation between BRT predicted values ---
+# get standardized predictions for each species from point count models
+stand_preds_all_sp_ptct <- lapply(names(brt_params), FUN = function(x) {
+  fits_thisSp_brt <- readRDS(paste0("fits_", x, "_brt.rds"))
+  
+  # get standardized predictions for predictions to days in the test data fold 
+  # from all 1000 models
+  ptct_preds_brt <- bind_rows(lapply(fits_thisSp_brt, FUN = function(x) {
+    bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
+  }))
+  # get average prediction for each day from the 200 iterations of the 5-fold CV
+  ptct_preds_brt <- group_by(ptct_preds_brt, day_of_yr) %>%
+    summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+              se = std.error(predictions))
+  ptct_preds_brt$method <- "ptct"
+  return(ptct_preds_brt)
+})
+names(stand_preds_all_sp_ptct) <- names(brt_params)
+
+# get standardized predictions for each species from A66R models
+stand_preds_all_sp_a66r <- lapply(names(brt_params), FUN = function(x) {
+  fits_thisSp_brt <- readRDS(paste0("fits_", x, "_aru66r_brt.rds"))
+  
+  # get standardized predictions for predictions to days in the test data fold 
+  # from all 1000 models
+  aru_preds_brt <- bind_rows(lapply(fits_thisSp_brt, FUN = function(x) {
+    bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
+  }))
+  # get average prediction for each day from the 200 iterations of the 5-fold CV
+  aru_preds_brt <- group_by(aru_preds_brt, day_of_yr) %>%
+    summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+              se = std.error(predictions))
+  aru_preds_brt$method <- "aru66r"
+  return(aru_preds_brt)
+})
+names(stand_preds_all_sp_a66r) <- names(brt_params)
+
+stand_preds_all_sp <- mapply(FUN = function(x, y) {
+  bind_rows(x, y)}, stand_preds_all_sp_ptct, stand_preds_all_sp_a66r, 
+  SIMPLIFY = F)
+
+# make a df of the correlations between predictions from Ap and A66R
+cor_predictions <- data.frame(
+  species = names(stand_preds_all_sp), type = "predicted",
+  spearmans_cor = sapply(stand_preds_all_sp, FUN = function(x) {
+    cor(x$mean_pred[x$method == "aru66r"], x$mean_pred[x$method == "ptct"], 
+        method = "spearman")}), 
+  n_days_detected_ptct = NA, n_days_detected_aru = NA, 
+  stringsAsFactors = FALSE)
+# add columns for number of days on which each species was detected
+for(rn in 1:nrow(cor_predictions)) {
+  this_sp <- cor_predictions$species[rn]
+  cor_predictions$n_days_detected_ptct[rn] <- length(
+    which(sum_species_dfs[[this_sp]]$resp > 0))
+  cor_predictions$n_days_detected_aru[rn] <- length(
+    which(sum_aru_dfs[[this_sp]]$resp > 0))
+}
+
+## end correlation between BRT predicted values ---
+
+## get correlation between observed values ---
+cor_obs <- data.frame(
+  species = as.character(sp_detected_on_both), type = "observed",
+  spearmans_cor = NA, n_days_detected_ptct = NA, n_days_detected_aru = NA,
+  stringsAsFactors = F)
+for(rn in 1:nrow(cor_obs)) {
+  this_sp <- cor_obs$species[rn]
+  obs_df <- left_join(sum_aru_dfs[[this_sp]], sum_species_dfs[[this_sp]], 
+                      by = "day_of_yr")
+  cor_obs$spearmans_cor[rn] <- cor(obs_df$resp.x, obs_df$resp.y, 
+                                   method = "spearman")
+  cor_obs$n_days_detected_ptct[rn] <- length(
+    which(sum_species_dfs[[this_sp]]$resp > 0))
+  cor_obs$n_days_detected_aru[rn] <- length(which(sum_aru_dfs[[this_sp]]$resp > 0))
+}
+## end correlation between observed values ---
+
+# join correlations of predicted values and correlations of observed values
+cor_all_sp <- bind_rows(cor_obs, cor_predictions)
+
+ggplot(data = cor_all_sp, aes(x = factor(type), y = spearmans_cor)) + 
+  geom_boxplot() + 
+  ylab("Spearman's correlation coefficient") + 
+  xlab(element_blank()) + 
+  theme_bw()
+
+cor_by_aruDet <- ggplot(data = cor_all_sp, 
+                        aes(x = n_days_detected_aru, y = spearmans_cor, 
+                            group = type, color = type)) + 
+  geom_point() + 
+  geom_smooth() + 
+  theme_bw()
+cor_by_ptctDet <- ggplot(data = cor_all_sp, 
+                        aes(x = n_days_detected_ptct, y = spearmans_cor, 
+                            group = type, color = type)) + 
+  geom_point() + 
+  geom_smooth() + 
+  theme_bw()
+cor_by_ptctDet + cor_by_aruDet
+
+ggplot(data = cor_all_sp, aes(x = n_days_detected_ptct, y = n_days_detected_aru, 
+                              color = spearmans_cor, size = spearmans_cor)) + 
+  geom_point() + 
+  theme_bw()
+
+### end plot correlations of Ap and A66R --------------------------------------
+
+
 
 
 ### write out plots as jpgs ---------------------------------------------------
