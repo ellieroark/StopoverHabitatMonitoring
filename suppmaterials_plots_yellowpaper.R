@@ -939,6 +939,36 @@ brt_testerr_gcki <- gp + g30c + g30r + g66r +
                   tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = 10))
 
+## graphs for all species
+for(i in 1:length(names(brt_params))) {
+  this_sp <- names(brt_params)[i]
+  ex_brts_thisSp <- tryCatch({
+    readRDS(paste0("example_fitted_brt_", this_sp, ".rds"))}, 
+    error = function(x) NA)
+  ntree_err_df_thisSp <- tryCatch({bind_rows(mapply(FUN = function(x, fold) {
+    data.frame(ntrees = 1:length(x$mod$cv.error), 
+               err = x$mod$cv.error, 
+               fold = fold)
+  }, ex_brts_thisSp, 1:length(ex_brts_thisSp), SIMPLIFY = FALSE))}, 
+  error = function (x) NA)
+  gp <- tryCatch({
+    ggplot(data = ntree_err_df_thisSp, aes(x = ntrees, y = err, 
+                                           color = factor(fold))) + 
+      geom_line() + 
+      ylab("Absolute error (test data)") + 
+      xlab("Number of trees") + 
+      scale_color_viridis_d(name = "CV fold") + 
+      theme_bw() + 
+      geom_vline(xintercept = brt_params[[this_sp]]$pt_ct[["nt"]]) + # nt we chose
+      ggtitle(expression(A[p]), 
+              subtitle = paste0(this_sp, " sr = ", 
+                                ex_brts_thisSp[[1]]$mod$shrinkage))}, 
+    error = function(x) NA)
+  try(print(gp))
+  try(rm(ex_brts_thisSp, ntree_err_df_thisSp, gp))
+}
+# end graphs for all species
+
 
 ## write out final plots for supp materials!------------------------------------
 ggsave(brt_testerr_wiwr, filename = "./saved_objects/brt_testerr_wiwr.jpg", 
