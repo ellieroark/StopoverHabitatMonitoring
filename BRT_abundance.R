@@ -19,7 +19,8 @@
 ################################
 
 plotson <- FALSE
-fitbrt <- TRUE
+fitbrt <- FALSE
+fitbrt_allSp <- F
 n_cores <- 3
 
 # make a df to hold the shrinkage rate and number of trees to use for each
@@ -35,18 +36,19 @@ sp_detected_on_both <- table(
 sp_detected_on_both <- names(sp_detected_on_both[sp_detected_on_both == 2])
 sp_detected_on_both <- sp_detected_on_both[sp_detected_on_both != "CANG"]
 
+set.seed(12010922) # set this to something new before running each small species batch
 brt_params <- list(
-  # AMCR = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
-  # AMGO = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
-  # AMRE = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0002, nt = 3000)),
-  # AMRO = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000)),# 
-  # BAEA = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
-  # BAWW = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000)),
-  # BCCH = list(pt_ct = c(sr = 0.002, nt = 2000), aru66r = c(sr = 0.001, nt = 3000)),# 
+  AMCR = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
+  AMGO = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
+  AMRE = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0002, nt = 3000)),
+  AMRO = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000)),#
+  BAEA = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
+  BAWW = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000)),
+  BCCH = list(pt_ct = c(sr = 0.002, nt = 2000), aru66r = c(sr = 0.001, nt = 3000)))#,#
   # BHVI = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
   # BLJA = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0002, nt = 2500)),
   # BRCR = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0002, nt = 3000)),
-  BTNW = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0005, nt = 2500)),
+  # BTNW = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0005, nt = 2500)),
   # COGR = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000)),
   # CORA = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
   # DEJU = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
@@ -68,11 +70,11 @@ brt_params <- list(
   # RCKI = list(pt_ct = c(sr = 0.0001, nt = 5000), aru66r = c(sr = 0.0001, nt = 3000)),
   # SWTH = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000)),
   # WBNU = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000)),
-  WIWR = list(pt_ct = c(sr = 0.0005, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000)),
+  # WIWR = list(pt_ct = c(sr = 0.0005, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000)),
   # WTSP = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 6000)),
   # YBSA = list(pt_ct = c(sr = 0.0005, nt = 5000), aru66r = c(sr = 0.0005, nt = 3000)),
-  YRWA = list(pt_ct = c(sr = 0.0005, nt = 5000), aru66r = c(sr = 0.0005, nt = 2000))
-)
+  # YRWA = list(pt_ct = c(sr = 0.0005, nt = 5000), aru66r = c(sr = 0.0005, nt = 2000))
+# )
 
 if(plotson){
 # Exploratory plots -----------------------------------------------------------
@@ -813,7 +815,7 @@ if(fitbrt){
 ## end BRT for wiwr per day- ARU 22 random min----------------------------------
 
 ## BRT for all species per day- point counts------------------------------------
-if(fitbrt) {
+if(fitbrt_allSp) {
   # loop through species detected on both point counts and ARUs
   for (sp_n in 1:length(brt_params)) {
     this_sp <- names(brt_params)[sp_n]
@@ -914,7 +916,7 @@ if(fitbrt) {
 ## end BRT for all species per day- point counts--------------------------------
 
 ## BRT for all species per day- ARU 22 random min-------------------------------
-if(fitbrt) {
+if(fitbrt_allSp) {
   # loop through species detected on both point counts and ARUs
   for (sp_n in 1:length(brt_params)) {
     this_sp <- names(brt_params)[sp_n]
