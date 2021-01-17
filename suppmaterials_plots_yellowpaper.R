@@ -436,49 +436,56 @@ for(i in 1:length(brt_params)) {
   ## scatterplot of number of this sp per day over time, with fitted 
   ## average model (BRT) as a line
   this_sp <- names(brt_params)[i]
-  fits_brt <- readRDS(paste0("fits_", this_sp, "_brt.rds"))
+  fits_brt <- tryCatch(readRDS(paste0("fits_", this_sp, "_brt.rds")), 
+                       error = function(x) NA)
   
   # get standardized predictions for predictions to days in the test data fold 
   # from all 1000 models
-  preds_brt <- bind_rows(lapply(fits_brt, FUN = function(x) {
+  preds_brt <- tryCatch({bind_rows(lapply(fits_brt, FUN = function(x) {
     bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
-  }))
+  }))}, 
+  error = function(x) NA)
   
   # get average prediction for each day from the 200 iterations of the 5-fold CV
-  preds_brt <- group_by(preds_brt, day_of_yr) %>%
+  preds_brt <- tryCatch({group_by(preds_brt, day_of_yr) %>%
     summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
-              se = std.error(predictions))
-  p1 <- ggplot(data = preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
-    geom_point(data = sum_species_dfs[[this_sp]], aes(x = day_of_yr, y = resp), 
-               colour = "dark grey") + 
-    geom_line(size=1) + 
-    xlab("") + 
-    scale_x_continuous(breaks = c(91, 105, 121, 135), 
-                       labels = c("April 1", "April 15", "May 1", "May 15")) +
-    ylab(expression(A[p])) + 
-    ggtitle(this_sp) + 
-    theme_bw() +
-    theme(axis.text.y = element_text(size = t_size-2), 
-          axis.title.y = element_text(size= t_size +1),
-          axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
-                                     vjust = 1))
+              se = std.error(predictions))}, 
+    error = function(x) NA)
+  p1 <- tryCatch({ggplot(data = preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+      geom_point(data = sum_species_dfs[[this_sp]], aes(x = day_of_yr, y = resp), 
+                 colour = "dark grey") + 
+      geom_line(size=1) + 
+      xlab("") + 
+      scale_x_continuous(breaks = c(91, 105, 121, 135), 
+                         labels = c("April 1", "April 15", "May 1", "May 15")) +
+      ylab(expression(A[p])) + 
+      ggtitle(this_sp) + 
+      theme_bw() +
+      theme(axis.text.y = element_text(size = t_size-2), 
+            axis.title.y = element_text(size= t_size +1),
+            axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
+                                       vjust = 1))}, 
+      error = function(x) NA)
   brt_summary_plots_all_sp[[this_sp]]$ptct_plot <- p1
   rm(fits_brt, p1, preds_brt)
   
   ## A66r models
-  fits_brt <- readRDS(paste0("fits_", this_sp, "_aru66r_brt.rds"))
+  fits_brt <- tryCatch({readRDS(paste0("fits_", this_sp, "_aru66r_brt.rds"))}, 
+                       error = function(x) NA)
   
   # get standardized predictions for predictions to days in the test data fold 
   # from all 1000 models
-  preds_brt <- bind_rows(lapply(fits_brt, FUN = function(x) {
+  preds_brt <- tryCatch({bind_rows(lapply(fits_brt, FUN = function(x) {
     bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
-  }))
+  }))}, 
+  error = function(x) NA)
   
   # get average prediction for each day from the 200 iterations of the 5-fold CV
-  preds_brt <- group_by(preds_brt, day_of_yr) %>%
+  preds_brt <- tryCatch({group_by(preds_brt, day_of_yr) %>%
     summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
-              se = std.error(predictions))
-  p1 <- ggplot(data = preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+              se = std.error(predictions))}, 
+    error = function(x) NA)
+  p1 <- tryCatch({ggplot(data = preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
     geom_point(data = sum_aru_dfs[[this_sp]], aes(x = day_of_yr, y = resp), 
                colour = "dark grey") + 
     geom_line(size=1) + 
@@ -491,13 +498,24 @@ for(i in 1:length(brt_params)) {
     theme(axis.text.y = element_text(size = t_size-2), 
           axis.title.y = element_text(size= t_size +1),
           axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
-                                     vjust = 1))
+                                     vjust = 1))}, 
+    error = function(x) NA)
   brt_summary_plots_all_sp[[this_sp]]$aru_plot <- p1
   rm(fits_brt, p1, preds_brt)
 }
-for(i in 1:length(brt_summary_plots_all_sp)) {
-  print(brt_summary_plots_all_sp[[i]]$ptct_plot + 
-          brt_summary_plots_all_sp[[i]]$aru_plot)
+
+# order species by lowest to highest correlations (of model predictions)
+brt_summary_plots_all_sp_ordered <- list()
+for(i in 1:nrow(cor_all_sp[cor_all_sp$type == "predicted", ])) {
+  this_sp <- cor_all_sp$species[cor_all_sp$type == "predicted"][i]
+  brt_summary_plots_all_sp_ordered[[i]] <- brt_summary_plots_all_sp[[this_sp]]
+}
+names(brt_summary_plots_all_sp_ordered) <- cor_all_sp$species[
+  cor_all_sp$type == "predicted"]
+
+for(i in 1:length(brt_summary_plots_all_sp_ordered)) {
+  try(print(brt_summary_plots_all_sp_ordered[[i]]$ptct_plot + 
+              brt_summary_plots_all_sp_ordered[[i]]$aru_plot))
 }
 ### end BRT summary plots for all species
 #### end BRT abundance summary plots--------------------------------------------

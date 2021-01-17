@@ -1190,50 +1190,61 @@ spdet_time
 ## get correlation between BRT predicted values ---
 # get standardized predictions for each species from point count models
 stand_preds_all_sp_ptct <- lapply(names(brt_params), FUN = function(x) {
-  fits_thisSp_brt <- readRDS(paste0("fits_", x, "_brt.rds"))
+  fits_thisSp_brt <- tryCatch(readRDS(paste0("fits_", x, "_brt.rds")), 
+                              error = function(x) NA)
   
   # get standardized predictions for predictions to days in the test data fold 
   # from all 1000 models
-  ptct_preds_brt <- bind_rows(lapply(fits_thisSp_brt, FUN = function(x) {
-    bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
-  }))
+  ptct_preds_brt <- tryCatch({
+    bind_rows(lapply(fits_thisSp_brt, FUN = function(x) {
+      bind_rows(lapply(x, FUN = function(y) {tryCatch(y$standardized_preds, 
+                                                      error = function(z) NA)}))
+    }))}, error = function(a) NA)
   # get average prediction for each day from the 200 iterations of the 5-fold CV
-  ptct_preds_brt <- group_by(ptct_preds_brt, day_of_yr) %>%
-    summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
-              se = std.error(predictions))
-  ptct_preds_brt$method <- "ptct"
+  ptct_preds_brt <- tryCatch({
+    group_by(ptct_preds_brt, day_of_yr) %>%
+      summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+                se = std.error(predictions))}, 
+    error = function(x) NA)
+  try(ptct_preds_brt$method <- "ptct")
   return(ptct_preds_brt)
 })
 names(stand_preds_all_sp_ptct) <- names(brt_params)
 
 # get standardized predictions for each species from A66R models
 stand_preds_all_sp_a66r <- lapply(names(brt_params), FUN = function(x) {
-  fits_thisSp_brt <- readRDS(paste0("fits_", x, "_aru66r_brt.rds"))
+  fits_thisSp_brt <- tryCatch(readRDS(paste0("fits_", x, "_aru66r_brt.rds")), 
+                              error = function(x) NA)
   
   # get standardized predictions for predictions to days in the test data fold 
   # from all 1000 models
-  aru_preds_brt <- bind_rows(lapply(fits_thisSp_brt, FUN = function(x) {
-    bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
-  }))
+  aru_preds_brt <- tryCatch({
+    bind_rows(lapply(fits_thisSp_brt, FUN = function(x) {
+      bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
+    }))}, error = function(x) NA)
   # get average prediction for each day from the 200 iterations of the 5-fold CV
-  aru_preds_brt <- group_by(aru_preds_brt, day_of_yr) %>%
-    summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
-              se = std.error(predictions))
-  aru_preds_brt$method <- "aru66r"
+  aru_preds_brt <- tryCatch({
+    group_by(aru_preds_brt, day_of_yr) %>%
+      summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+                se = std.error(predictions))}, 
+    error = function(x) NA)
+  try(aru_preds_brt$method <- "aru66r")
   return(aru_preds_brt)
 })
 names(stand_preds_all_sp_a66r) <- names(brt_params)
 
 stand_preds_all_sp <- mapply(FUN = function(x, y) {
-  bind_rows(x, y)}, stand_preds_all_sp_ptct, stand_preds_all_sp_a66r, 
+  tryCatch(bind_rows(x, y), error = function(x) NA)}, 
+  stand_preds_all_sp_ptct, stand_preds_all_sp_a66r, 
   SIMPLIFY = F)
 
 # make a df of the correlations between predictions from Ap and A66R
 cor_predictions <- data.frame(
   species = names(stand_preds_all_sp), type = "predicted",
   spearmans_cor = sapply(stand_preds_all_sp, FUN = function(x) {
-    cor(x$mean_pred[x$method == "aru66r"], x$mean_pred[x$method == "ptct"], 
-        method = "spearman")}), 
+    tryCatch({cor(x$mean_pred[x$method == "aru66r"], 
+                  x$mean_pred[x$method == "ptct"], 
+                  method = "spearman")}, error = function(x) NA)}), 
   n_days_detected_ptct = NA, n_days_detected_aru = NA, 
   stringsAsFactors = FALSE)
 # add columns for number of days on which each species was detected
@@ -1260,12 +1271,16 @@ for(rn in 1:nrow(cor_obs)) {
                                    method = "spearman")
   cor_obs$n_days_detected_ptct[rn] <- length(
     which(sum_species_dfs[[this_sp]]$resp > 0))
-  cor_obs$n_days_detected_aru[rn] <- length(which(sum_aru_dfs[[this_sp]]$resp > 0))
+  cor_obs$n_days_detected_aru[rn] <- length(
+    which(sum_aru_dfs[[this_sp]]$resp > 0))
 }
 ## end correlation between observed values ---
 
 # join correlations of predicted values and correlations of observed values
 cor_all_sp <- bind_rows(cor_obs, cor_predictions)
+# order species from most to least correlated
+cor_all_sp <- group_by(cor_all_sp, type) %>%
+  arrange(desc(spearmans_cor), .by_group = TRUE)
 
 ggplot(data = cor_all_sp, aes(x = factor(type), y = spearmans_cor)) + 
   geom_boxplot() + 
