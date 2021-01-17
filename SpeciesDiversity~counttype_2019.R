@@ -31,33 +31,74 @@ library(tidyverse)
 
 alpha_codes <- read_csv(file = "./data/BirdAlphaCodes.csv")
 
-#clean up environment
+# read in original random minute ARU data file with calls and songs noted
+aru_CS <- read_csv(file = "./data/ARU20randmin_final.csv")
+
+
+## transform original 10 consecutive minute data from longaru and widearu objects
+## to a single dataframe that contains not only the names of species but also the 
+## number of detections
+
+## transform longaru into a wide version of the data
+  # change minute half values from 1 + 2 to :00 and :30
+longaru[which(longaru$minute_half == "1"), "minute_half"] <- ":00"
+longaru[which(longaru$minute_half == "2"), "minute_half"] <- ":30"
+# paste those minute half values onto the minute_detected col
+longaru$minute_detected <- paste0(as.character(longaru$minute_detected), 
+                                   as.character(longaru$minute_half))
+longaru$minute_half <- NULL
+
+# fix error that assigns two S detections of YRWA to min 1:00 of a recording and
+# two C detections of CANG to minute 3:00 of a recording, by getting only unique
+# rows from longaru
+longaru <- distinct(longaru)
+
+# fix error of downy woodpecker "singing" detections (should be drums)
+widearu[which(widearu$anon_filename == "f86_early_May"), '9:00'] <- "D"
+widearu[which(widearu$anon_filename == "f86_early_May"), '9:30'] <- "D"
+
+# pivot_wider to make each half min a column
+ltow <- pivot_wider(longaru, names_from = "minute_detected", 
+                        values_from = "det_code")
+
+# prep ltow for joining with widearu
+ltow <- rename(ltow, anon_filename = "anon_file_name")
+#get rid of species_common_name from widearu... we'll replace it in a moment
+# with automated values from alpha_codes
+widearu$species_common_name <- NULL
+
+# join ltow and widearu to get a complete dataframe of 10 consec min ARU data
+allaru_det <- bind_rows(widearu, ltow)
 
 #get list of species detected by aru counts
 #first add common name to aru counts-- ARU 10 consec counts
 aru_names_10c <- left_join(
-  allaru, 
+  allaru_det, 
   alpha_codes[, which(colnames(alpha_codes) %in% c("SPEC", "COMMONNAME"))], 
   by = c("species_code" = "SPEC"))
 colnames(aru_names_10c)[colnames(aru_names_10c)=="COMMONNAME"] <- "species_common_name"
 
 #first add common name to aru counts-- ARU random counts
 aru_names_rand <- left_join(
-  arurand, 
+  aru_CS, 
   alpha_codes[, which(colnames(alpha_codes) %in% c("SPEC", "COMMONNAME"))], 
   by = c("species_code" = "SPEC"))
 colnames(aru_names_rand)[colnames(aru_names_rand)=="COMMONNAME"] <- "species_common_name"
 
 #select only species common names for all ARU count types and bind rows
-aru_names_10c <- select(aru_names_10c, "species_common_name", "aru_id", 
-                        "species_code")
-aru_names_rand <- select(aru_names_rand, "species_common_name", "aru_id", 
-                        "species_code")
+# aru_names_10c <- select(aru_names_10c, "species_common_name", "aru_id", 
+#                         "species_code")
+# aru_names_rand <- select(aru_names_rand, "species_common_name", "aru_id", 
+#                         "species_code")
+                  
+# prep for join-- change filename to anon_filename
+aru_names_rand <- rename(aru_names_rand, anon_filename = "filename")
+
+#join 10 consecutive minute records and random minute ARU records
 aru_names <- bind_rows(aru_names_10c, aru_names_rand)
 
 ## remove rows with "no birds" counts
 aru_names <- aru_names[which(aru_names$species_code != "no birds"), ]
-
 
 #add in "sp" taxa to species common name
 for (i in 1:nrow(aru_names)){
@@ -93,9 +134,8 @@ for (i in 1:nrow(ptct)){
 
 #get list of species detected by arus
 arudet <- unique(aru_names$species_common_name)
-
-#subset aru_names to only unique species 
-aru_names <- distinct(aru_names)
+#subset to only unique species 
+arudet <- unique(arudet)
 
 #get list of species detected by point counts
 ptdet <- unique(ptct$species_common_name)
@@ -107,11 +147,16 @@ onlypt <- ptct[ptct$species_common_name %nin% arudet, ]
 onlyaru <- aru_names[aru_names$species_common_name %nin% ptdet, ]
 
 # How many times was each bird detected by each detection code?
+# create dataframe that will hold the number of detections of each type for each
+# species
 sp_detection_method <- data.frame(species_common_name = 
                                     unique(c(ptct$species_common_name, 
                                              onlyaru$species_common_name)), 
                                   det_V = NA, det_C = NA, det_S = NA, 
-                                  det_D = NA)
+                                  det_D = NA, det_aru_C = NA, det_aru_S = NA, 
+                                  det_aru_D = NA)
+
+# add up the number of detections from point counts
 for(i in 1:nrow(sp_detection_method)) {
   sdf <- ptct[ptct$species_common_name == 
                 sp_detection_method$species_common_name[i], ]
@@ -120,12 +165,28 @@ for(i in 1:nrow(sp_detection_method)) {
   sp_detection_method$det_S[i] <- length(grep("S", sdf$det_code))
   sp_detection_method$det_D[i] <- length(grep("D", sdf$det_code))
 }
-# was this species ever detected by ARU?
-sp_detection_method$aru_det <- sp_detection_method$species_common_name %in% arudet
 
-#change TRUE/FALSE aru det to yes/no
-sp_detection_method$aru_det[which(sp_detection_method$aru_det == TRUE)] <- "yes"
-sp_detection_method$aru_det[which(sp_detection_method$aru_det == FALSE)] <- "no"
+# add up the number of detections from ARU counts
+for(i in 1:nrow(sp_detection_method)) {
+  this_sp <- aru_names[aru_names$species_common_name == 
+                sp_detection_method$species_common_name[i], ]
+  sp_detection_method$det_aru_S[i] <- sum(grepl("^S$", 
+                                                as.character(unlist(this_sp)), 
+                                                ignore.case = TRUE))
+  sp_detection_method$det_aru_C[i] <- sum(grepl("^C$", 
+                                                as.character(unlist(this_sp)), 
+                                                ignore.case = TRUE))
+  sp_detection_method$det_aru_D[i] <- sum(grepl("^D$", 
+                                                as.character(unlist(this_sp)), 
+                                                ignore.case = TRUE))
+}
+
+# # was this species ever detected by ARU?
+# sp_detection_method$aru_det <- sp_detection_method$species_common_name %in% arudet
+# 
+# #change TRUE/FALSE aru det to yes/no
+# sp_detection_method$aru_det[which(sp_detection_method$aru_det == TRUE)] <- "yes"
+# sp_detection_method$aru_det[which(sp_detection_method$aru_det == FALSE)] <- "no"
 
 #add scientific names to sp_detection_method
 sp_detection_method <- left_join(sp_detection_method,
