@@ -889,6 +889,19 @@ for(i in 1:length(aru_sp_codes)) {
 }
 names(sum_aru_dfs) <- aru_sp_codes
 
+# replace WIWR and GCKI resp and count values with the values from sum_wiwr and
+# sum_gcki so that downstream results match the results calculated individually
+# for those species
+if(identical(sum_aru_dfs$WIWR$day_of_yr, sum_aruwiwr22r$day_of_yr)) { 
+  sum_aru_dfs$WIWR$resp <- sum_aruwiwr22r$resp
+  sum_aru_dfs$WIWR$count <- sum_aruwiwr22r$count
+} else warning("WIWR data frames don't match near end of DataPrep_ARUabundance.R.  Downstream analyses for WIWR won't match the individually-calculated results for WIWR.")
+if(identical(sum_aru_dfs$GCKI$day_of_yr, sum_arugcki22r$day_of_yr)) { 
+  sum_aru_dfs$GCKI$resp <- sum_arugcki22r$resp
+  sum_aru_dfs$GCKI$count <- sum_arugcki22r$count
+} else warning("GCKI data frames don't match near end of DataPrep_ARUabundance.R.  Downstream analyses for GCKI won't match the individually-calculated results for GCKI")
+
+
 ##### end prep 22 rand min data for ALL species---------------------------------
 
 

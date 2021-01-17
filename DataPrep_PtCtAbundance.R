@@ -204,12 +204,12 @@ wiwr <- full_join(wiwr, nowiwrct)
 ## just  # of individuals per count---------------------------------------------
 #  add up number of individs detected per day for each 
 sum_wiwr <- wiwr %>%
-        group_by(day_of_yr) %>%
-        summarize(resp = mean(count), count = sum(count))
+  group_by(day_of_yr) %>%
+  summarize(resp = mean(count), count = sum(count))
 
 sum_gcki <- gcki %>%
-        group_by(day_of_yr) %>%
-        summarize(resp = mean(count), count = sum(count))
+  group_by(day_of_yr) %>%
+  summarize(resp = mean(count), count = sum(count))
 
 
 
@@ -224,44 +224,54 @@ sum_species_dfs <- list()
 sp_codes <- unique(ptct$species_code)
 sp_codes <- sp_codes[!grepl(". .", sp_codes)]
 for(i in 1:length(sp_codes)) {
-        this_sp <- sp_codes[i]
-        
-        #subset to this species
-        sp_df <- ptct[which(ptct$species_code == this_sp), ]
-        
-        #get unique ptctids for counts on which there were no this_sp
-        nospct <- ptct[which(ptct$ptct_id %nin% sp_df$ptct_id), ]
-        
-        #get rid of species-specific variables
-        dropa <- c("species_code","species_common_name", "minute_detected", "det_code", 
-                   "rel_bearing", "distance", "minute_detected", "comments", "count")
-        nospct <- nospct[ , !(names(nospct) %in% dropa)]
-        
-        # get only a single row for each point count
-        nospct <- dplyr::distinct(nospct)
-        
-        # add count variable back in, specifying that these are counts with 0 this_sp
-        nospct$count <- 0
-        
-        # get rid of species-specific variables in sp_df
-        dropb <- c("species_code","species_common_name", "minute_detected", "det_code", 
-                   "rel_bearing", "distance", "minute_detected", "comments")
-        sp_df <- sp_df[ , !(names(sp_df) %in% dropb)]
-        
-        # join sp_df and nospct dfs to create a dataframe that has all point counts 
-        # with the number of this_sp detected 
-        sp_df <- full_join(sp_df, nospct)
-        
-        #  summarize number of individs detected per day
-        sum_sp <- sp_df %>%
-                group_by(day_of_yr) %>%
-                summarize(resp = mean(count), count = sum(count))
-        
-        # add windspeed rating in knots to sum_ dfs. 
-        sum_sp <- left_join(sum_sp, windday, by = "day_of_yr")
-        sum_species_dfs[[i]] <- sum_sp # add species df to list
+  this_sp <- sp_codes[i]
+  
+  #subset to this species
+  sp_df <- ptct[which(ptct$species_code == this_sp), ]
+  
+  #get unique ptctids for counts on which there were no this_sp
+  nospct <- ptct[which(ptct$ptct_id %nin% sp_df$ptct_id), ]
+  
+  #get rid of species-specific variables
+  dropa <- c("species_code","species_common_name", "minute_detected", "det_code", 
+             "rel_bearing", "distance", "minute_detected", "comments", "count")
+  nospct <- nospct[ , !(names(nospct) %in% dropa)]
+  
+  # get only a single row for each point count
+  nospct <- dplyr::distinct(nospct)
+  
+  # add count variable back in, specifying that these are counts with 0 this_sp
+  nospct$count <- 0
+  
+  # get rid of species-specific variables in sp_df
+  dropb <- c("species_code","species_common_name", "minute_detected", "det_code", 
+             "rel_bearing", "distance", "minute_detected", "comments")
+  sp_df <- sp_df[ , !(names(sp_df) %in% dropb)]
+  
+  # join sp_df and nospct dfs to create a dataframe that has all point counts 
+  # with the number of this_sp detected 
+  sp_df <- full_join(sp_df, nospct)
+  
+  #  summarize number of individs detected per day
+  sum_sp <- sp_df %>%
+    group_by(day_of_yr) %>%
+    summarize(resp = mean(count), count = sum(count))
+  
+  # add windspeed rating in knots to sum_ dfs. 
+  sum_sp <- left_join(sum_sp, windday, by = "day_of_yr")
+  sum_species_dfs[[i]] <- sum_sp # add species df to list
 }
 names(sum_species_dfs) <- sp_codes
+
+# make sure WIWR and GCKI resp values match the values from sum_wiwr and
+# sum_gcki so that downstream results match the results calculated individually
+# for those species
+if(!identical(sum_species_dfs$WIWR$resp, sum_wiwr$resp)) { 
+  warning("WIWR data frames don't match near end of DataPrep_ptCtAbundance.R")
+}
+if(!identical(sum_species_dfs$GCKI$resp, sum_gcki$resp)) { 
+  warning("GCKI data frames don't match near end of DataPrep_ptCtAbundance.R")
+}
 
 ## end create # of individs per day dfs-----------------------------------------
 

@@ -426,7 +426,99 @@ fits_arugcki22r_brt <- readRDS("fits_arugcki22r_brt.rds")
 rm(fits_arugcki22r_brt)
 ## end GCKI ARU (22 rand min) model plots---------------------------------------
 
-#### end BRT abundance summary plots----------------------------------------------
+### create BRT summary plots for all species
+# create a list, where each element is a list of plots for a single species
+brt_summary_plots_all_sp <- lapply(brt_params, function(x) {
+  list(ptct_plot = NA, aru_plot = NA)})
+
+for(i in 1:length(brt_params)) {
+  ## Point count models
+  ## scatterplot of number of this sp per day over time, with fitted 
+  ## average model (BRT) as a line
+  this_sp <- names(brt_params)[i]
+  fits_brt <- tryCatch(readRDS(paste0("fits_", this_sp, "_brt.rds")), 
+                       error = function(x) NA)
+  
+  # get standardized predictions for predictions to days in the test data fold 
+  # from all 1000 models
+  preds_brt <- tryCatch({bind_rows(lapply(fits_brt, FUN = function(x) {
+    bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
+  }))}, 
+  error = function(x) NA)
+  
+  # get average prediction for each day from the 200 iterations of the 5-fold CV
+  preds_brt <- tryCatch({group_by(preds_brt, day_of_yr) %>%
+    summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+              se = std.error(predictions))}, 
+    error = function(x) NA)
+  p1 <- tryCatch({ggplot(data = preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+      geom_point(data = sum_species_dfs[[this_sp]], aes(x = day_of_yr, y = resp), 
+                 colour = "dark grey") + 
+      geom_line(size=1) + 
+      xlab("") + 
+      scale_x_continuous(breaks = c(91, 105, 121, 135), 
+                         labels = c("April 1", "April 15", "May 1", "May 15")) +
+      ylab(expression(A[p])) + 
+      ggtitle(this_sp) + 
+      theme_bw() +
+      theme(axis.text.y = element_text(size = t_size-2), 
+            axis.title.y = element_text(size= t_size +1),
+            axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
+                                       vjust = 1))}, 
+      error = function(x) NA)
+  brt_summary_plots_all_sp[[this_sp]]$ptct_plot <- p1
+  rm(fits_brt, p1, preds_brt)
+  
+  ## A66r models
+  fits_brt <- tryCatch({readRDS(paste0("fits_", this_sp, "_aru66r_brt.rds"))}, 
+                       error = function(x) NA)
+  
+  # get standardized predictions for predictions to days in the test data fold 
+  # from all 1000 models
+  preds_brt <- tryCatch({bind_rows(lapply(fits_brt, FUN = function(x) {
+    bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
+  }))}, 
+  error = function(x) NA)
+  
+  # get average prediction for each day from the 200 iterations of the 5-fold CV
+  preds_brt <- tryCatch({group_by(preds_brt, day_of_yr) %>%
+    summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+              se = std.error(predictions))}, 
+    error = function(x) NA)
+  p1 <- tryCatch({ggplot(data = preds_brt, aes(x = day_of_yr, y = mean_pred)) + 
+    geom_point(data = sum_aru_dfs[[this_sp]], aes(x = day_of_yr, y = resp), 
+               colour = "dark grey") + 
+    geom_line(size=1) + 
+    xlab("") + 
+    scale_x_continuous(breaks = c(91, 105, 121, 135), 
+                       labels = c("April 1", "April 15", "May 1", "May 15")) +
+    ylab(expression(A[66*R])) + 
+    ggtitle(this_sp) + 
+    theme_bw() +
+    theme(axis.text.y = element_text(size = t_size-2), 
+          axis.title.y = element_text(size= t_size +1),
+          axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
+                                     vjust = 1))}, 
+    error = function(x) NA)
+  brt_summary_plots_all_sp[[this_sp]]$aru_plot <- p1
+  rm(fits_brt, p1, preds_brt)
+}
+
+# order species by lowest to highest correlations (of model predictions)
+brt_summary_plots_all_sp_ordered <- list()
+for(i in 1:nrow(cor_all_sp[cor_all_sp$type == "predicted", ])) {
+  this_sp <- cor_all_sp$species[cor_all_sp$type == "predicted"][i]
+  brt_summary_plots_all_sp_ordered[[i]] <- brt_summary_plots_all_sp[[this_sp]]
+}
+names(brt_summary_plots_all_sp_ordered) <- cor_all_sp$species[
+  cor_all_sp$type == "predicted"]
+
+for(i in 1:length(brt_summary_plots_all_sp_ordered)) {
+  try(print(brt_summary_plots_all_sp_ordered[[i]]$ptct_plot + 
+              brt_summary_plots_all_sp_ordered[[i]]$aru_plot))
+}
+### end BRT summary plots for all species
+#### end BRT abundance summary plots--------------------------------------------
 
 
 ##GAM abundance summary plots --------------------------------------------------
@@ -938,6 +1030,66 @@ brt_testerr_gcki <- gp + g30c + g30r + g66r +
   plot_annotation(title = 'Golden-crowned Kinglet', 
                   tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = 10))
+
+## graphs for all species
+# point counts
+for(i in 1:length(names(brt_params))) {
+  this_sp <- names(brt_params)[i]
+  ex_brts_thisSp <- tryCatch({
+    readRDS(paste0("example_fitted_brt_", this_sp, ".rds"))}, 
+    error = function(x) NA)
+  ntree_err_df_thisSp <- tryCatch({bind_rows(mapply(FUN = function(x, fold) {
+    data.frame(ntrees = 1:length(x$mod$cv.error), 
+               err = x$mod$cv.error, 
+               fold = fold)
+  }, ex_brts_thisSp, 1:length(ex_brts_thisSp), SIMPLIFY = FALSE))}, 
+  error = function (x) NA)
+  gp <- tryCatch({
+    ggplot(data = ntree_err_df_thisSp, aes(x = ntrees, y = err, 
+                                           color = factor(fold))) + 
+      geom_line() + 
+      ylab("Absolute error (test data)") + 
+      xlab("Number of trees") + 
+      scale_color_viridis_d(name = "CV fold") + 
+      theme_bw() + 
+      geom_vline(xintercept = brt_params[[this_sp]]$pt_ct[["nt"]]) + # nt we chose
+      ggtitle(expression(A[p]), 
+              subtitle = paste0(this_sp, " sr = ", 
+                                ex_brts_thisSp[[1]]$mod$shrinkage))}, 
+    error = function(x) NA)
+  try(print(gp))
+  try(rm(ex_brts_thisSp, ntree_err_df_thisSp, gp))
+}
+
+# aru66r
+for(i in 1:length(names(brt_params))) {
+  this_sp <- names(brt_params)[i]
+  ex_brts_thisSp <- tryCatch({
+    readRDS(paste0("example_fitted_brt_aru66r_", this_sp, ".rds"))}, 
+    error = function(x) NA)
+  ntree_err_df_thisSp <- tryCatch({bind_rows(mapply(FUN = function(x, fold) {
+    data.frame(ntrees = 1:length(x$mod$cv.error), 
+               err = x$mod$cv.error, 
+               fold = fold)
+  }, ex_brts_thisSp, 1:length(ex_brts_thisSp), SIMPLIFY = FALSE))}, 
+  error = function (x) NA)
+  gp <- tryCatch({
+    ggplot(data = ntree_err_df_thisSp, aes(x = ntrees, y = err, 
+                                           color = factor(fold))) + 
+      geom_line() + 
+      ylab("Absolute error (test data)") + 
+      xlab("Number of trees") + 
+      scale_color_viridis_d(name = "CV fold") + 
+      theme_bw() + 
+      geom_vline(xintercept = brt_params[[this_sp]]$aru66r[["nt"]]) + # nt we chose
+      ggtitle(expression(A[66*R]), 
+              subtitle = paste0(this_sp, " sr = ", 
+                                ex_brts_thisSp[[1]]$mod$shrinkage))}, 
+    error = function(x) NA)
+  try(print(gp))
+  try(rm(ex_brts_thisSp, ntree_err_df_thisSp, gp))
+}
+# end graphs for all species
 
 
 ## write out final plots for supp materials!------------------------------------
