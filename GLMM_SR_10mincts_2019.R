@@ -485,7 +485,7 @@ summary(aruspdetmod)
 ## none of the aru values appear significant, but now test significance of 
 ## overall term:
 aruspdetmod2 <- update(aruspdetmod, . ~ . - aru_id)
-anova(aruspdetmod, aruspdetmod2, test = "Chisq")
+anova(aruspdetmod2, aruspdetmod, test = "Chisq")
 #models not significantly different from each other
 
 ##make sure both models meet poisson assumptions and are not overdispersed
