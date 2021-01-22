@@ -26,6 +26,9 @@ library(patchwork)
 t_size <- 12
 #setwd("/home/emer/Dropbox/Ellie Roark/R/PointAbbaye/")
 
+## read in .csv that contains migration/breeding status for all species
+res_st <- read_csv(file= "./data/species_migrationstatus.csv")
+
 ### clean up environment
 # rm(arugcki, arugcki.day.gam, arugcki.day.gam2, aruwiwr, aruwiwr.day.gam, 
 #    aruwiwr.day.gam2)
@@ -36,11 +39,11 @@ t_size <- 12
 
 ## scatterplot of number of GCKI per day (point counts) over time, with fitted 
 ## average model (BRT) as a line
-fits_gcki_brt <- readRDS("fits_gcki_brt.rds")
+fits_gcki1_brt <- readRDS("fits_gcki1_brt.rds")
 
 # get standardized predictions for predictions to days in the test data fold 
 # from all 1000 models
-gcki_ptct_preds_brt <- bind_rows(lapply(fits_gcki_brt, FUN = function(x) {
+gcki_ptct_preds_brt <- bind_rows(lapply(fits_gcki1_brt, FUN = function(x) {
   bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
 }))
 
@@ -64,7 +67,7 @@ g4p1 <- ggplot(data = gcki_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
         axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
                                    vjust = 1))
 
-rm(fits_gcki_brt)
+rm(fits_gcki1_brt)
 
 
 ## scatterplot of number of GCKI per day (ARU consecutive 10 min) over time, 
@@ -180,8 +183,8 @@ rm(fits_arugcki22r_brt)
 ## scatterplot of number of WIWR per day (Point Counts 10 min) over time, 
 ## with fitted average model (BRT) as a line
 # get standardized predictions for predictions to test data from all 1000 models
-fits_wiwr_brt <- readRDS("fits_wiwr_brt.rds")
-wiwr_ptct_preds_brt <- bind_rows(lapply(fits_wiwr_brt, FUN = function(x) {
+fits_wiwr1_brt <- readRDS("fits_wiwr1_brt.rds")
+wiwr_ptct_preds_brt <- bind_rows(lapply(fits_wiwr1_brt, FUN = function(x) {
   bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
 }))
 
@@ -209,7 +212,7 @@ g4p5 <- ggplot(data = wiwr_ptct_preds_brt, aes(x = day_of_yr, y = mean_pred)) +
         axis.text.x = element_text(size = t_size-2, angle = 40, hjust = 1, 
                                    vjust = 1))
 
-rm(fits_wiwr_brt)
+rm(fits_wiwr1_brt)
 
 
 ## scatterplot of number of WIWR per day (ARU consecutive 10 min) over time, 
@@ -327,7 +330,7 @@ rm(fits_aruwiwr22r_brt)
 ## abundance data and BRT models for 2 species for all 4 survey methods
 brt_summary <- g4p5 + g4p6 + g4p7 + g4p8 + g4p1 + g4p2 + g4p3 + g4p4 + 
   plot_layout(ncol = 4) +
-  plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')') & 
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = 10))
 
 
@@ -551,7 +554,7 @@ c5wo <- ggplot(data = abund_wiwr_obs_wide, aes(x = aru22r, y = aru10c)) +
 
 obscorplot_wiwr <- c1wo + c2wo + c3wo + guide_area() + c4wo + c5wo + 
   plot_layout(guides = 'collect') + 
-  plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')') & 
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = t_size))
 
 ## point count + aru10c -- predicted
@@ -625,7 +628,7 @@ c5wp <- ggplot(data = abund_wiwr_pred_wide, aes(x = aru22r, y = aru10c)) +
 
 predcorplot_wiwr <- c1wp + c2wp + c3wp + guide_area() + c4wp + c5wp + 
   plot_layout(guides = 'collect') + 
-  plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')') & 
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = t_size))
 
 
@@ -789,7 +792,7 @@ c5go <- ggplot(data = abund_gcki_obs_wide, aes(x = aru22r, y = aru10c,)) +
 
 obscorplot_gcki <- c1go + c2go + c3go + guide_area() + c4go + c5go + 
   plot_layout(guides = 'collect') + 
-  plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')') & 
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = t_size))
 
 ## point count + aru10c -- predicted
@@ -869,7 +872,7 @@ c5gp <- ggplot(data = abund_gcki_pred_wide, aes(x = aru22r, y = aru10c,)) +
 
 predcorplot_gcki <- c1gp + c2gp + c3gp + guide_area() + c4gp + c5gp + 
   plot_layout(guides = 'collect') + 
-  plot_annotation(tag_levels = 'A', tag_prefix = '(', tag_suffix = ')') & 
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
   theme(plot.tag = element_text(size = t_size))
 
 
@@ -1240,7 +1243,7 @@ stand_preds_all_sp <- mapply(FUN = function(x, y) {
 
 # make a df of the correlations between predictions from Ap and A66R
 cor_predictions <- data.frame(
-  species = names(stand_preds_all_sp), type = "predicted",
+  species = names(stand_preds_all_sp), type = "Predicted",
   spearmans_cor = sapply(stand_preds_all_sp, FUN = function(x) {
     tryCatch({cor(x$mean_pred[x$method == "aru66r"], 
                   x$mean_pred[x$method == "ptct"], 
@@ -1260,7 +1263,7 @@ for(rn in 1:nrow(cor_predictions)) {
 
 ## get correlation between observed values ---
 cor_obs <- data.frame(
-  species = as.character(sp_detected_on_both), type = "observed",
+  species = as.character(sp_detected_on_both), type = "Observed",
   spearmans_cor = NA, n_days_detected_ptct = NA, n_days_detected_aru = NA,
   stringsAsFactors = F)
 for(rn in 1:nrow(cor_obs)) {
@@ -1282,12 +1285,6 @@ cor_all_sp <- bind_rows(cor_obs, cor_predictions)
 cor_all_sp <- group_by(cor_all_sp, type) %>%
   arrange(desc(spearmans_cor), .by_group = TRUE)
 
-ggplot(data = cor_all_sp, aes(x = factor(type), y = spearmans_cor)) + 
-  geom_boxplot() + 
-  ylab("Spearman's correlation coefficient") + 
-  xlab(element_blank()) + 
-  theme_bw()
-
 cor_by_aruDet <- ggplot(data = cor_all_sp, 
                         aes(x = n_days_detected_aru, y = spearmans_cor, 
                             group = type, color = type)) + 
@@ -1307,10 +1304,43 @@ ggplot(data = cor_all_sp, aes(x = n_days_detected_ptct, y = n_days_detected_aru,
   geom_point() + 
   theme_bw()
 
+#keep only species that had enough data for prediction 
+# (number of days > 1 for both ptct and aru)
+cor_all_sp <- cor_all_sp[which(cor_all_sp$n_days_detected_ptct > 1),]
+cor_all_sp <- cor_all_sp[which(cor_all_sp$n_days_detected_aru > 1),]
+
+#boxplot showing range of values for predicted and observed correlations for 
+# all sp
+f6a <- ggplot(data = cor_all_sp, aes(x = factor(type), y = spearmans_cor)) + 
+  geom_boxplot() + 
+  ylab("Spearman's correlation coefficient") + 
+  xlab(element_blank()) + 
+  theme_bw()
+
+## add the migration status to the dataframe with correlations for all species
+cor_all_sp <- left_join(cor_all_sp, res_st, by = "species")
+
+## boxplot of range of correlation values for predicted abundance indices; for 
+## resident vs. migrant species
+res_status_plot <- ggplot(data = 
+                            cor_all_sp[which(cor_all_sp$type == "Predicted"), ], 
+                          aes(x = factor(residence_status), y = spearmans_cor)) + 
+  geom_boxplot() + 
+  ylab("Spearman's correlation coefficient") + 
+  xlab(element_blank()) + 
+  theme_bw()
+
+
+f6 <- f6a + res_status_plot + plot_layout(ncol = 2) +
+  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
+  theme(plot.tag = element_text(size = 10))
+
+## prep dataframe that will become correlation table for all species results
+tbl_cor_all_sp <- cor_all_sp[ ,1:3]
+tbl_cor_all_sp <- pivot_wider(tbl_cor_all_sp, id_cols = "species", 
+                              names_from = "type", values_from = "spearmans_cor")
+
 ### end plot correlations of Ap and A66R --------------------------------------
-
-
-
 
 ### write out plots as jpgs ---------------------------------------------------
 if(!dir.exists("./saved_objects")) {
@@ -1345,6 +1375,10 @@ ggsave(brt_summary_sp2, filename = "./saved_objects/brt_summary_sp2.eps",
        width = 20, height = 8, 
        units = "cm", device = "eps")
 
+ggsave(f6, filename = "./saved_objects/allsp_corrboxplot.jpg", 
+       width= 12, height = 10, 
+       units = "cm", device = "jpeg")
+
 ### write out tables as .csvs---------------------------------------------------
 # write out table of mixed model results for species richness model with four
 # count types. 
@@ -1353,6 +1387,11 @@ write_csv(maxrand_df, path = "./saved_objects/mixedmodel_results_speciesrichness
 
 abund_corr[,3:6] <- round(abund_corr[,3:6], digits = 3)
 write_csv(abund_corr, path = "./saved_objects/abund_index_corr_coefficients.csv")
+
+tbl_cor_all_sp[,2:3] <- round(tbl_cor_all_sp[,2:3], digits = 3) 
+write_csv(tbl_cor_all_sp, path = "./saved_objects/allsp_corr_coefficients.csv")
+
+
 
 ### print numbers needed for manuscript-----------------------------------------
 ## mean RMSE for all BRTs
