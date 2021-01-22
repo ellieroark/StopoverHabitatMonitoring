@@ -199,10 +199,10 @@ fit_brt <- function(test_fold, sp_data, newdata, nt, sr,
 if(fitbrt){
 # make a list to hold fitted models and predictions from models with many 
 # replicate folds splits
-# At the end of the following for loop, fits_gcki_brt should have results from 
+# At the end of the following for loop, fits_gcki1_brt should have results from 
 # 200 different 5-fold CV splits (so 1000 different models fit, 5 for each fold
 # in each of 200 different fold splits)
-fits_gcki_brt <- list()
+fits_gcki1_brt <- list()
 for (i in 1:200) {
   # assign days to 3-day blocks
   days <- data.frame(day = min(sum_gcki$day_of_yr):max(sum_gcki$day_of_yr), 
@@ -247,7 +247,7 @@ for (i in 1:200) {
                    resp_name = "resp", return_model = TRUE)
   } else if(i ==3) {
     mods <- unlist(mods, recursive = F)
-    saveRDS(mods, file = "example_fitted_brt_gcki.rds")
+    saveRDS(mods, file = "example_fitted_brt_gcki1.rds")
     rm(mods)
   }
   
@@ -256,18 +256,18 @@ for (i in 1:200) {
                            resp_name = "resp", return_model = FALSE)
   
   # put predictions for these 5 folds into the big list for all splits
-  fits_gcki_brt[[i]] <- brt_test_folds
+  fits_gcki1_brt[[i]] <- brt_test_folds
   rm(brt_test_folds)
 }
-names(fits_gcki_brt) <- 1:length(fits_gcki_brt)
-rmse_gcki_brt <- sapply(fits_gcki_brt, FUN = function(x) {
+names(fits_gcki1_brt) <- 1:length(fits_gcki1_brt)
+rmse_gcki_brt <- sapply(fits_gcki1_brt, FUN = function(x) {
   sapply(x, FUN = function(z) {
     sqrt(mean(z$test_predictions$error^2))
   })
 })
-saveRDS(fits_gcki_brt, "fits_gcki_brt.rds")
+saveRDS(fits_gcki1_brt, "fits_gcki1_brt.rds")
 saveRDS(rmse_gcki_brt, "rmse_gcki_brt.rds")
-rm(fits_gcki_brt, rmse_gcki_brt)
+rm(fits_gcki1_brt, rmse_gcki_brt)
 }
 
 
@@ -517,10 +517,10 @@ if(fitbrt){
   ## Boosted Regression Tree for WIWR per DAY (ptct)---------------------------
   # make a list to hold fitted models and predictions from models with many 
   # replicate folds splits
-  # At the end of the following for loop, fits_gcki_brt should have results from 
+  # At the end of the following for loop, fits_wiwr1_brt should have results from 
   # 200 different 5-fold CV splits (so 1000 different models fit, 5 for each fold
   # in each of 200 different fold splits)
-  fits_wiwr_brt <- list()
+  fits_wiwr1_brt <- list()
   
   for (i in 1:200) {
     # assign days to 3-day blocks
@@ -566,7 +566,7 @@ if(fitbrt){
                           resp_name = "resp", return_model = TRUE)
     } else if(i ==3) {
       mods <- unlist(mods, recursive = F)
-      saveRDS(mods, file = "example_fitted_brt_wiwr.rds")
+      saveRDS(mods, file = "example_fitted_brt_wiwr1.rds")
       rm(mods)
     }
     
@@ -577,20 +577,20 @@ if(fitbrt){
     
     
     # put predictions for these 5 folds into the big list for all splits
-    fits_wiwr_brt[[i]] <- brt_test_folds
+    fits_wiwr1_brt[[i]] <- brt_test_folds
     rm(brt_test_folds)
     gc()
   }
-  names(fits_wiwr_brt) <- 1:length(fits_wiwr_brt)
+  names(fits_wiwr1_brt) <- 1:length(fits_wiwr1_brt)
   
-  rmse_wiwr_brt <- sapply(fits_wiwr_brt, FUN = function(x) {
+  rmse_wiwr_brt <- sapply(fits_wiwr1_brt, FUN = function(x) {
     sapply(x, FUN = function(z) {
       sqrt(mean(z$test_predictions$error^2))
     })
   })
-  saveRDS(fits_wiwr_brt, "fits_wiwr_brt.rds")
+  saveRDS(fits_wiwr1_brt, "fits_wiwr1_brt.rds")
   saveRDS(rmse_wiwr_brt, "rmse_wiwr_brt.rds")
-  rm(fits_wiwr_brt, rmse_wiwr_brt)
+  rm(fits_wiwr1_brt, rmse_wiwr_brt)
   ## end BRT for WIWR per DAY model (ptct)-------------------------------------
   
   
