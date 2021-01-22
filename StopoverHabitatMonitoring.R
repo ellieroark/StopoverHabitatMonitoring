@@ -120,6 +120,6 @@ source("./plots_yellowpaper_PtAbbaye2019.R")
 ## AND BRT_Abundance.R
 ## AND GAM_Abundance.R
 ## AND plots_yellowpaper_PtAbbaye2019.R
-#source("./suppmaterials_plots_yellowpaper.R")
+source("./suppmaterials_plots_yellowpaper.R")
 
 ### End Plots-------------------------------------------------------------------
