@@ -198,10 +198,113 @@ spdet_4ct <- full_join(spdet_paired, spdet_r, by = NULL)
 spdet_4ct <- spdet_4ct[order(spdet_4ct$date, spdet_4ct$ptct_id),]
 
 
+### calculate species accumulation curves ------------------------------------
+# make array to hold each aru/day combo, with a row for each minute (22), and\
+# a column for each replicate resample (100).  
+arudays <- unique(aru22r$aruday) # 126 aru/day combinations
+sp_accum <- vector("list", length(arudays))
+names(sp_accum) <- arudays
+
+for(sl in 1:length(sp_accum)) {
+  # make this element of the list a df with a row for each minute and a column
+  # for each replicate resamples
+  sp_accum[[sl]] <- data.frame(matrix(nrow = 22, ncol = 100))
+  # get data for this aru/day 
+  tdat <- aru22r[aru22r$aruday == names(sp_accum)[sl], ]
+  
+  for(rp in 1:100) { # loop through replicate samples
+    # draw resample
+    sampdat <- tdat[sample(1:nrow(tdat), size = nrow(tdat), replace = F), ]
+    mins <- unique(sampdat$selec) # get names of minutes in this aru/day combo
+    if(length(mins) != 22) warning(paste0("Number of minutes is not 22, sl = ", 
+                                          sl))
+    sp_list <- c() # initialize vector of species detected
+    
+    for(mn in 1:length(mins)) { # loop through minutes
+      tmin <- sampdat[sampdat$selec == mins[mn], ]
+      sp_list <- c(sp_list, tmin$species_code)
+      # remove non-species observations
+      sp_list <- sp_list[sp_list != "no birds"]
+      sp_list <- sp_list[!grepl(".* sp.", sp_list)]
+      sp_accum[[sl]][mn, rp] <- length(unique(sp_list))
+    }
+  }
+  # add columns for minutes, date, and aruday code
+  sp_accum[[sl]]$minute <- 1:22
+  if(length(unique(tdat$date)) != 1) stop("multiple dates in tdat") 
+  sp_accum[[sl]]$date <- unique(tdat$date)[1]
+  if(length(unique(tdat$aruday)) != 1) stop("multiple arudays in tdat") 
+  sp_accum[[sl]]$aruday <- unique(tdat$aruday)[1]
+  
+  # make long format (for easier plotting later)
+  sp_accum[[sl]] <- pivot_longer(sp_accum[[sl]], 1:100, names_to = "replicate", 
+                                 values_to = "n_species_detected")
+}
+sp_accum <- bind_rows(sp_accum)
+sp_accum$unique_replicate <- paste0(sp_accum$replicate, sp_accum$aruday)
+
+ggplot(data = sp_accum, aes(x = minute, y = n_species_detected, 
+                            group = unique_replicate, 
+                            color = date)) + 
+  geom_line()
+
+# make columns indicating date bins
+sp_accum$April2_April14 <- sp_accum$date <= "2019-04-14"
+sp_accum$April15_April27 <- sp_accum$date > "2019-04-14" & 
+  sp_accum$date <= "2019-04-27"
+sp_accum$April28_May9 <- sp_accum$date > "2019-04-27" & 
+  sp_accum$date <= "2019-05-09"
+sp_accum$May10_May22 <- sp_accum$date > "2019-05-09" 
+
+
+# ## old method
+# sp_accum <- array(data = NA, dim = c(22, 100, length(arudays)), 
+#                   dimnames = list(minute = 1:22, replicate = 1:100, 
+#                                   aruday = arudays))
+# 
+# # loop through aru/day combos, replicates, and rows to build data
+# for(sl in 1:dim(sp_accum)[3]) { # loop through slices (aru/day combos)
+#   # get data for this aru/day 
+#   tdat <- aru22r[aru22r$aruday == arudays[sl], ]
+#   for(rp in 1:dim(sp_accum)[2]) { # loop through replicate resamples
+#     # draw resample
+#     tdat <- tdat[sample(1:nrow(tdat), size = nrow(tdat), replace = F), ]
+#     mins <- unique(tdat$selec) # get names of minutes in this aru/day combo
+#     if(length(mins) != 22) warning(paste0("Number of minutes is not 22, sl = ", 
+#                                           sl))
+#     sp_list <- c() # initialize vector of species detected
+#     for(mn in 1:dim(sp_accum)[1]) { # loop through minutes
+#       tmin <- tdat[tdat$selec == mins[mn], ]
+#       sp_list <- c(sp_list, tmin$species_code)
+#       # remove non-species observations
+#       sp_list <- sp_list[sp_list != "no birds"]
+#       sp_list <- sp_list[!grepl(".* sp.", sp_list)]
+#       sp_accum[mn, rp, sl] <- length(unique(sp_list))
+#     }
+#   }
+#   # add date column 
+#   sp_accum[, dim(sp_accum[, , sl])[2] + 1, sl] <- 
+# }
+
+
+# # test
+# plot(x = 0:22, y = 0:22)
+# 
+# for(sl in 1:dim(sp_accum)[3]) {
+#   for (rp in 1:dim(sp_accum)[2]) {
+#       lines(x = names(sp_accum[, rp, sl]), y = sp_accum[, rp, sl])
+#   }
+# }
+# # end test
+
+### end calculate species accumulation curves --------------------------------
+
+
+
 ### clean up environment
 rm(covs, aru10r, aru22r, filenames, locs, recs, s10r, s22r, spdet_22r, spdet_aru, 
    spdet_10r, spdet_ptct, thisdat, weathervar, aru_id, aruday, n_sp, rec, 
-   sp_detected, thisct, min)
+   sp_detected, thisct, tdat, tmin, min)
 
 
 
