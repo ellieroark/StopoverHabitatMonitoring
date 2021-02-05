@@ -1,0 +1,25 @@
+README for Stopover Habitat Monitoring Git Repository Data files
+
+Original data were collected from 2 April-22 May, 2019 in Michigan, USA.
+
+README file created 28 July 2020, based on best recollection of each file's creation, which took place primarily between June 2019 and May 2020.
+
+Contact: Ellie Roark, +1 970 306 7096, ellieroark@gmail.com
+
+Corrected_PointCounts_PtAbbaye2019.csv: File containing bird observations, and data about weather and other conditions during in person, 10 minute point counts conducted between 2 April and 22 May, 2019 on the Point Abbaye peninsula in Baraga County, Michigan, USA. Many of these in person point counts were conducted alongside a continuously recording Automated audio Recording Unit (ARU).
+
+ARUPointCounts_PtAbbaye2019.csv: File containing part of the data obtained from listening to the 10 consecutive minute ARU recordings during which a point count was also conducted. Data contains anonymized names for each of the 10 consecutive minute files. File does not contain complete data from 10 consecutive minute ARU recordings, because we switched data entry format. See ARUPointCounts_WIDE_PtAbbaye2019.csv for the rest of the data from 10 consecutive minute ARU recording files.
+
+ARUPointCounts_WIDE_PtAbbaye2019.csv: File containing part of the data obtained from listening to the 10 consecutive minute ARU recordings during which a point count was also conducted. Data contains anonymized names for each of the 10 consecutive minute files. File does not contain complete data from 10 consecutive minute ARU recordings, because we switched data entry format. See ARUPointCounts_PtAbbaye2019.csv for the rest of the data from 10 consecutive minute ARU recording files.
+
+anonymized_file_key.csv: This file contains a key to de-anonymize the file names of 10 consecutive minute ARU counts. 
+
+ARU20randmin_final.csv: File containing data obtained from listening to 24 randomly selected minutes from a five-hour window from each of four ARUs. Recordings were created 2 April- 22 May, 2019. File names are anonymized. 
+
+ARU20randmin_additional_days106107.csv: File containing 22 additional minutes from one ARU on 16 April, 2019 and one ARU on 17 April, 2019. Additional data collected from each of these recorders on these days to adjust for sample size issues resulting from ARU malfunctions. 
+
+BirdAlphaCodes.csv: Scientific names, English common names, and four-letter code abbreviations, for bird species. Downloaded from https://www.birdpop.org/docs/misc/Alpha_codes_eng.pdf on 30 December, 2018. 
+
+DupARU_10mincts_ALL.csv: File containing data about species presence or absence in a duplicated subset of the 10 consecutive minute ARU data. Used for checking observer reliability in listening to ARU data.
+
+filename_key_20randmin.csv: File contains a key to de-anonymize file names of data in ARU20randmin_final.csv 
