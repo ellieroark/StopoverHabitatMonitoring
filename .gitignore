@@ -4,3 +4,4 @@
 *.Ruserdata
 *.RDataTmp
 *.rds
+.Rproj.user
