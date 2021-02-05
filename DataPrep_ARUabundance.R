@@ -4,7 +4,7 @@
 ## 
 ## author: Ellie Roark
 ## created: 9 Mar 2020
-## last modified: 06 Jan 2021
+## last modified: 5 Feb 2021
 ## 
 ## inputs: *Corrected_PointCounts_PtAbbaye2019.csv- original data file with all 
 ##           point count data from the 2019 field season at Point Abbaye
@@ -747,22 +747,18 @@ sum_aruwiwr10r <- left_join(sum_aruwiwr10r, windday, by = "day_of_yr")
 
 
 ##### Prep 10 consecutive minute data for ALL species---------------------------
-
+## TODO: Here 5 Feb 2021 wg
 
 
 ##### end prep 10 consecutive minute data for ALL species-----------------------
 
-##### Prep 10 random minute data for ALL species--------------------------------
 
-
-
-##### end prep 10 random minute data for ALL species----------------------------
-
-##### Prep 22 rand min data for ALL species detected in arurand-----------------
+##### Prep 22 and 10 rand min data for ALL species detected in arurand----------
 aru_sp_codes <- unique(arurand$species_code)
 aru_sp_codes <- aru_sp_codes[!grepl(".* .*", aru_sp_codes)]
 # initiate list to hold dataframes for ARU detections of each sp.
-sum_aru_dfs <- list()
+sum_aru_dfs <- list() # for 22 random minute samples
+sum_aru_dfs_10r <- list() # for 10 random minute samples
 
 for(i in 1:length(aru_sp_codes)) {
   this_sp <- aru_sp_codes[i]
@@ -864,43 +860,60 @@ for(i in 1:length(aru_sp_codes)) {
   sp22 <- left_join(sp22, windday, by = "day_of_yr")
   add22 <- left_join(add22, windday, by = "day_of_yr")
   
-  #### get 22 random minutes for each unit on each day
+  #### get 22 (and 10) random minutes for each unit on each day
   #### from all random min data.
-  
-  ##randomly sample 10 rand min from each aruday and 22 rand min from each aruday
-  
+  ## randomly sample 10 rand min from each aruday and 22 rand min from each aruday
   # get 22 random min for each aruday from "min" df
   s22r <- sample_n(min, 22, replace = FALSE)
+  # get 10 random min for each aruday from "min" df
+  s10r_loop <- sample_n(min, 10, replace = FALSE)
   
-  # get dataframe with all species observations from the 22 randomly selected mins
+  # get dataframe with all species observations from the randomly selected mins
   # for each aruday
   sp22r <- semi_join(sp22, s22r, by = c("selec", "aruday"))
+  sp10r <- semi_join(sp22, s10r_loop, by = c("selec", "aruday"))
   
   #add add22 counts to sp22r df
   sp22r <- bind_rows(sp22r, add22)
+  # add add22 counts to sp10r df.  add22 contains only data from 16 and 17 April
+  # (the days that had recorder malfunctions and therefore too few minutes).
+  sp10r <- bind_rows(sp10r, add22)
   
   ## standardize survey effort to 66 random min per day for 22min cts
   sp22r <- sp22r %>% group_by(date)
-  std66 <- sample_n(sp22r, 66, replace = FALSE)
-  sp22r <- semi_join(sp22r, std66)
-  
+  std66 <- sample_n(sp22r, 66, replace = FALSE) 
+  sp22r <- semi_join(sp22r, std66) # well this is a bit of code for the ages. It
+  # does the correct thing, but in a REALLY roundabout way (I think std66 is 
+  # actually the thing we want also, but oh well, this gets it done).
+  ## standardize survey effort to 30 random min per day for 10min cts
+  sp10r <- sp10r %>% group_by(date)
+  std30 <- sample_n(sp10r, 30, replace = FALSE)
+  sp10r <- semi_join(sp10r, std30)
   
   ### add up individuals detected per 22 and 10  random minutes-------------------
   sum_sp22r <- sp22r %>%
     group_by(day_of_yr) %>%
     summarize(count = sum(count), segs = 2*n())
   sum_sp22r$resp <- sum_sp22r$count/sum_sp22r$segs
-  
   sum_sp22r$count_type <- "aru_22r"
   
-  # join windday to sum_arugcki dfs by day of yr
+  sum_sp10r <- sp10r %>%
+    group_by(day_of_yr) %>%
+    summarize(count = sum(count), segs = 2*n())
+  sum_sp10r$resp <- sum_sp10r$count/sum_sp10r$segs
+  sum_sp10r$count_type <- "aru_10r"
+  
+  # join windday to sum dfs by day of yr
   sum_sp22r <- left_join(sum_sp22r, windday, by = "day_of_yr")
+  sum_sp10r <- left_join(sum_sp10r, windday, by = "day_of_yr")
   
   ### end mean # individuals per count ---------------------------------------
   
   sum_aru_dfs[[i]] <- sum_sp22r
+  sum_aru_dfs_10r[[i]] <- sum_sp10r
 }
 names(sum_aru_dfs) <- aru_sp_codes
+names(sum_aru_dfs_10r) <- aru_sp_codes
 
 # replace WIWR and GCKI resp and count values with the values from sum_wiwr and
 # sum_gcki so that downstream results match the results calculated individually
@@ -918,8 +931,10 @@ if(identical(sum_aru_dfs$GCKI$day_of_yr, sum_arugcki22r$day_of_yr)) {
 ##### end prep 22 rand min data for ALL species---------------------------------
 
 # clean up workspace
-rm(addgcki, addgcki5, addmin, addrand, addwiwr, addwiwr5, arugcki10r, 
+try(rm(addgcki, addgcki5, addmin, addrand, addwiwr, addwiwr5, arugcki10r, 
    arugcki22r, arugcki22, arurand, aruwiwr10r, aruwiwr22, aruwiwr22r, 
    filenames22r, min, recs,s5r, s10r, s10r_2, s22r, s22r_2, std30, std66, 
-   weathervar, windday, aru_id, keep, keepl, keepw, rec)
+   weathervar, windday, aru_id, keep, keepl, keepw, rec, s10r_loop, sum_sp22r, 
+   sum_sp10r))
 
+   rm()
