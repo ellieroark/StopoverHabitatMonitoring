@@ -745,6 +745,19 @@ sum_aruwiwr10r <- left_join(sum_aruwiwr10r, windday, by = "day_of_yr")
 
 ##### end 10 and 22 rand min data prep (WIWR)-----------------------------------
 
+
+##### Prep 10 consecutive minute data for ALL species---------------------------
+
+
+
+##### end prep 10 consecutive minute data for ALL species-----------------------
+
+##### Prep 10 random minute data for ALL species--------------------------------
+
+
+
+##### end prep 10 random minute data for ALL species----------------------------
+
 ##### Prep 22 rand min data for ALL species detected in arurand-----------------
 aru_sp_codes <- unique(arurand$species_code)
 aru_sp_codes <- aru_sp_codes[!grepl(".* .*", aru_sp_codes)]
@@ -903,7 +916,6 @@ if(identical(sum_aru_dfs$GCKI$day_of_yr, sum_arugcki22r$day_of_yr)) {
 
 
 ##### end prep 22 rand min data for ALL species---------------------------------
-
 
 # clean up workspace
 rm(addgcki, addgcki5, addmin, addrand, addwiwr, addwiwr5, arugcki10r, 
