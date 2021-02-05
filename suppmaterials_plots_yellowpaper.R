@@ -150,12 +150,12 @@ for(i in 1:length(brt_params)) {
 
 # order species by lowest to highest correlations (of model predictions)
 brt_summary_plots_all_sp_ordered <- list()
-for(i in 1:nrow(cor_all_sp[cor_all_sp$type == "predicted", ])) {
-  this_sp <- cor_all_sp$species[cor_all_sp$type == "predicted"][i]
+for(i in 1:nrow(cor_all_sp[cor_all_sp$type == "Predicted", ])) {
+  this_sp <- cor_all_sp$species[cor_all_sp$type == "Predicted"][i]
   brt_summary_plots_all_sp_ordered[[i]] <- brt_summary_plots_all_sp[[this_sp]]
 }
 names(brt_summary_plots_all_sp_ordered) <- cor_all_sp$species[
-  cor_all_sp$type == "predicted"]
+  cor_all_sp$type == "Predicted"]
 
 # for(i in 1:length(brt_summary_plots_all_sp_ordered)) {
 #   try(print(brt_summary_plots_all_sp_ordered[[i]]$ptct_plot +
