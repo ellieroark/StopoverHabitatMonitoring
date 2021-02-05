@@ -1331,14 +1331,19 @@ res_status_plot <- ggplot(data =
   theme_bw()
 
 
-f6 <- f6a + res_status_plot + plot_layout(ncol = 2) +
-  plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
-  theme(plot.tag = element_text(size = 10))
+# f6 <- f6a + res_status_plot + plot_layout(ncol = 2) +
+#   plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
+#   theme(plot.tag = element_text(size = 10))
 
 ## prep dataframe that will become correlation table for all species results
-tbl_cor_all_sp <- cor_all_sp[ ,1:3]
-tbl_cor_all_sp <- pivot_wider(tbl_cor_all_sp, id_cols = "species", 
-                              names_from = "type", values_from = "spearmans_cor")
+tbl_cor_all_sp <- cor_all_sp[ ,c(1:3,6)]
+tbl_cor_all_sp <- pivot_wider(tbl_cor_all_sp, id_cols = c("species", 
+                                                          "residence_status"), 
+                              names_from = "type", 
+                              values_from = "spearmans_cor")
+tbl_cor_all_sp <- tbl_cor_all_sp[order(tbl_cor_all_sp$Predicted, 
+                                       tbl_cor_all_sp$Observed, 
+                                       decreasing = TRUE), ]
 
 ### end plot correlations of Ap and A66R --------------------------------------
 
@@ -1347,9 +1352,9 @@ if(!dir.exists("./saved_objects")) {
   dir.create("./saved_objects")
 }
 
-ggsave(spdet_time, filename = "./saved_objects/spdet_time.eps", 
+ggsave(spdet_time, filename = "./saved_objects/spdet_time.jpg", 
        width = 15, height = 10, 
-       units = "cm", device = "eps", dpi = 600)
+       units = "cm", device = "jpg", dpi = 600)
 
 ggsave(obscorplot_gcki, filename = "./saved_objects/obscorplot_gcki.jpg", 
        width = 15, height = 10, 
@@ -1367,16 +1372,16 @@ ggsave(predcorplot_wiwr, filename = "./saved_objects/predcorplot_wiwr.jpg",
        width = 15, height = 10, 
        units = "cm", device = "jpg")
 
-ggsave(brt_summary, filename = "./saved_objects/brt_summary.eps", 
+ggsave(brt_summary, filename = "./saved_objects/brt_summary.jpg", 
        width = 20, height = 15, 
-       units = "cm", device = "eps")
+       units = "cm", device = "jpg")
 
 ggsave(brt_summary_sp2, filename = "./saved_objects/brt_summary_sp2.eps", 
        width = 20, height = 8, 
        units = "cm", device = "eps")
 
-ggsave(f6, filename = "./saved_objects/allsp_corrboxplot.jpg", 
-       width= 12, height = 10, 
+ggsave(f6a, filename = "./saved_objects/allsp_corrboxplot.jpg", 
+       width= 8, height = 10, 
        units = "cm", device = "jpeg")
 
 ### write out tables as .csvs---------------------------------------------------
@@ -1388,7 +1393,7 @@ write_csv(maxrand_df, path = "./saved_objects/mixedmodel_results_speciesrichness
 abund_corr[,3:6] <- round(abund_corr[,3:6], digits = 3)
 write_csv(abund_corr, path = "./saved_objects/abund_index_corr_coefficients.csv")
 
-tbl_cor_all_sp[,2:3] <- round(tbl_cor_all_sp[,2:3], digits = 3) 
+tbl_cor_all_sp[,3:4] <- round(tbl_cor_all_sp[,3:4], digits = 3) 
 write_csv(tbl_cor_all_sp, path = "./saved_objects/allsp_corr_coefficients.csv")
 
 
