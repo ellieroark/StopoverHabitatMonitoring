@@ -915,6 +915,18 @@ if(fitbrt_allSp) {
 }
 ## end BRT for all species per day- point counts--------------------------------
 
+## BRT for all species per day- ARU 10 consec min-------------------------------
+
+
+
+## end BRT for all species- ARU 10 consec min-----------------------------------
+
+##BRT for all species- ARU 10 random min-----------------------------------------
+
+
+
+## end BRT for all species- ARU 10 random min-----------------------------------
+
 ## BRT for all species per day- ARU 22 random min-------------------------------
 if(fitbrt_allSp) {
   # loop through species detected on both point counts and ARUs
