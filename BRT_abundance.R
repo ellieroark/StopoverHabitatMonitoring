@@ -22,7 +22,7 @@ plotson <- FALSE
 fitbrt <- FALSE # fit models for GCKI and WIWR for all 4 count types
 fitbrt_allSp_ap <- FALSE # fit models for all species using point count data
 fitbrt_allSp_a30c <- T # fit models for all species using A30c data
-fitbrt_allSp_a30r <- F # fit models for all species using A30R data
+fitbrt_allSp_a30r <- T # fit models for all species using A30R data
 fitbrt_allSp_a66r <- FALSE # fit models for all species using A66R data
 n_cores <- 4
 
@@ -970,7 +970,7 @@ if(fitbrt_allSp_a30c) {
       # for each fold in each of 200 different fold splits)
       fits_sp_brt <- list()
       
-      for (i in 1:3) { # do this 1:200
+      for (i in 1:200) { # do this 1:200
         # assign days to 3-day blocks
         days <- data.frame(day = min(this_df$day_of_yr):max(this_df$day_of_yr), 
                            block = NA)
