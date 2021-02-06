@@ -779,17 +779,19 @@ for (i in 1:length(sp_codes_10c)) {
   # get only a single row for each 10 min aru count (counts with no this sp)
   lnosp <- dplyr::distinct(lnosp)
   wnosp <- dplyr::distinct(wnosp)
-  
-  ## add up number of 30 sec periods in which this sp was detected- wide aru
-  aru_sp10cw[is.na(aru_sp10cw)] <- "0"
-  # turn detection code letters into "1" indicating detection
-  aru_sp10cw[, 4:23] <- as.integer(aru_sp10cw[, 4:23] != 0) 
-  aru_sp10cw <- aru_sp10cw %>%
-    mutate(count = rowSums(.[4:23]))
-  #subset to only count and anon_filename cols
-  aru_sp10cw <- aru_sp10cw[ , c("anon_filename", "count")]
-  #add .wav extension to filenames
-  aru_sp10cw$anon_filename <- paste(aru_sp10cw$anon_filename, ".wav", sep = "")
+ 
+  if(nrow(aru_sp10cw) > 0) { 
+    ## add up number of 30 sec periods in which this sp was detected- wide aru
+    aru_sp10cw[is.na(aru_sp10cw)] <- "0"
+    # turn detection code letters into "1" indicating detection
+    aru_sp10cw[, 4:23] <- try(as.integer(aru_sp10cw[, 4:23] != 0))
+    aru_sp10cw <- aru_sp10cw %>%
+      mutate(count = rowSums(.[4:23]))
+    #subset to only count and anon_filename cols
+    aru_sp10cw <- aru_sp10cw[ , c("anon_filename", "count")]
+    #add .wav extension to filenames
+    aru_sp10cw$anon_filename <- paste(aru_sp10cw$anon_filename, ".wav", sep = "")
+  }
   wnosp$anon_filename <- paste(wnosp$anon_filename, ".wav", sep = "")
   
   ## add up number of 30 sec periods in which this sp was detected- long aru
@@ -800,15 +802,21 @@ for (i in 1:length(sp_codes_10c)) {
   aru_sp10c$minute_detected <- paste0(as.character(aru_sp10c$minute_detected), 
                                      as.character(aru_sp10c$minute_half))
   aru_sp10c$minute_half <- NULL
+  aru_sp10c$comments <- NULL
   
   # pivot_wider to make each half min a column
   aru_sp10c <- pivot_wider(aru_sp10c, names_from = "minute_detected", 
                           values_from = "det_code")
-  #add up each row 
-  aru_sp10c[is.na(aru_sp10c)] <- "0"
-  aru_sp10c[, 4:ncol(aru_sp10c)] <- as.integer(aru_sp10c[, 4:ncol(aru_sp10c)] != 0)
+  if(nrow(aru_sp10c) > 0) {
+    #add up each row 
+    aru_sp10c[is.na(aru_sp10c)] <- "0"
+    aru_sp10c[, 3:ncol(aru_sp10c)] <- as.integer(
+      aru_sp10c[, 3:ncol(aru_sp10c)] != 0)
+  }
+  
   aru_sp10c <- aru_sp10c %>%
-    mutate(count = rowSums(.[4:ncol(aru_sp10c)]))
+    mutate(count = rowSums(.[3:ncol(aru_sp10c)]))
+  
   aru_sp10c <- aru_sp10c[ , c("anon_file_name", "count")]
   
   #prep for join: make sure col names are the same for both dfs
@@ -835,14 +843,14 @@ for (i in 1:length(sp_codes_10c)) {
   mtch <- c()
   no_match <- c()
   
-  for (i in 1:nrow(w.arudup)){
-    if (identical(w.arudup[i, "original_name"], 
-                  w.arudup[(i+1), "original_name"])){
-      if (identical(w.arudup[i, 2:ncol(w.arudup)], 
-                    w.arudup[(i+1), 2:ncol(w.arudup)])){
-        mtch <- c(mtch, w.arudup[i, "original_name"])
+  for (j in 1:nrow(w.arudup)){
+    if (identical(w.arudup[j, "original_name"], 
+                  w.arudup[(j+1), "original_name"])){
+      if (identical(w.arudup[j, 2:ncol(w.arudup)], 
+                    w.arudup[(j+1), 2:ncol(w.arudup)])){
+        mtch <- c(mtch, w.arudup[j, "original_name"])
       }
-      else {no_match <- c(no_match, w.arudup[i, "original_name"])}
+      else {no_match <- c(no_match, w.arudup[j, "original_name"])}
     }
   }
   

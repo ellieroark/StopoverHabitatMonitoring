@@ -4,7 +4,7 @@
 ## 
 ## author: Ellie Roark, Willson Gaul
 ## created: 6 Mar 2020
-## last modified: 5 Feb 2021 (wg)
+## last modified: 6 Feb 2021 (wg)
 ## 
 ## inputs: *MUST FIRST RUN: DataPrep_PtCtAbundance.R- script reads in original
 ##          point count data and prepares dataframes with the number of observed 
@@ -19,9 +19,12 @@
 ################################
 
 plotson <- FALSE
-fitbrt <- FALSE
-fitbrt_allSp <- FALSE
-n_cores <- 1
+fitbrt <- FALSE # fit models for GCKI and WIWR for all 4 count types
+fitbrt_allSp_ap <- FALSE # fit models for all species using point count data
+fitbrt_allSp_a30c <- FALSE # fit models for all species using A30c data
+fitbrt_allSp_a30r <- T # fit models for all species using A30R data
+fitbrt_allSp_a66r <- FALSE # fit models for all species using A66R data
+n_cores <- 2
 
 # make a df to hold the shrinkage rate and number of trees to use for each
 # species for both point count and ARU66r models.  The shrinkage rate and
@@ -38,42 +41,78 @@ sp_detected_on_both <- sp_detected_on_both[sp_detected_on_both != "CANG"]
 
 set.seed(16011449) # set this to something new before running each small species batch
 brt_params <- list(
-  AMCR = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
-  AMGO = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
-  AMRE = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0002, nt = 3000)),
-  AMRO = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000)),#
-  BAEA = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
-  BAWW = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000)),
-  BCCH = list(pt_ct = c(sr = 0.002, nt = 2000), aru66r = c(sr = 0.001, nt = 3000)),#
-  BHVI = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
-  BLJA = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0002, nt = 2500)),
-  BRCR = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0002, nt = 3000)),
-  BTNW = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0005, nt = 2500)),
-  COGR = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000)),
-  CORA = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
-  DEJU = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
-  DOWO = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
-  GCKI = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0005, nt = 2000)),
-  HAWO = list(pt_ct = c(sr = 0.0001, nt = 6000), aru66r = c(sr = 0.0001, nt = 3000)),
-  HETH = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0005, nt = 2000)),#
-  LEFL = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
-  MERL = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000)),
-  NAWA = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000)),
-  NOFL = list(pt_ct = c(sr = 0.0001, nt = 8000), aru66r = c(sr = 0.0001, nt = 3000)),
-  NOPA = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 1500)),#
-  NOWA = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0005, nt = 3000)),
-  OVEN = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.00003, nt = 1500)),
-  PIWA = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0005, nt = 3000)),
-  PIWO = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
-  PUFI = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000)),
-  RBNU = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000)),#
-  RCKI = list(pt_ct = c(sr = 0.0001, nt = 5000), aru66r = c(sr = 0.0001, nt = 3000)),
-  SWTH = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000)),
-  WBNU = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000)),
-  WIWR = list(pt_ct = c(sr = 0.0005, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000)),
-  WTSP = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 6000)),
-  YBSA = list(pt_ct = c(sr = 0.0005, nt = 5000), aru66r = c(sr = 0.0005, nt = 3000)),
-  YRWA = list(pt_ct = c(sr = 0.0005, nt = 5000), aru66r = c(sr = 0.0005, nt = 2000))
+  AMCR = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  AMGO = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  AMRE = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0002, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  AMRO = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),#
+  BAEA = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  BAWW = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  BCCH = list(pt_ct = c(sr = 0.002, nt = 2000), aru66r = c(sr = 0.001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),#
+  BHVI = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  BLJA = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0002, nt = 2500), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  BRCR = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0002, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  BTNW = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0005, nt = 2500), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  COGR = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  CORA = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  DEJU = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  DOWO = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  GCKI = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0005, nt = 2000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  HAWO = list(pt_ct = c(sr = 0.0001, nt = 6000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  HETH = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0005, nt = 2000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),#
+  LEFL = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  MERL = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  NAWA = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  NOFL = list(pt_ct = c(sr = 0.0001, nt = 8000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  NOPA = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 1500), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),#
+  NOWA = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0005, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  OVEN = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.00003, nt = 1500), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  PIWA = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0005, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  PIWO = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  PUFI = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  RBNU = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),#
+  RCKI = list(pt_ct = c(sr = 0.0001, nt = 5000), aru66r = c(sr = 0.0001, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  SWTH = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  WBNU = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  WIWR = list(pt_ct = c(sr = 0.0005, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  WTSP = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 6000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  YBSA = list(pt_ct = c(sr = 0.0005, nt = 5000), aru66r = c(sr = 0.0005, nt = 3000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  YRWA = list(pt_ct = c(sr = 0.0005, nt = 5000), aru66r = c(sr = 0.0005, nt = 2000), 
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000))
 )
 
 if(plotson){
@@ -815,7 +854,7 @@ if(fitbrt){
 ## end BRT for wiwr per day- ARU 22 random min----------------------------------
 
 ## BRT for all species per day- point counts------------------------------------
-if(fitbrt_allSp) {
+if(fitbrt_allSp_ap) {
   # loop through species detected on both point counts and ARUs
   for (sp_n in 1:length(brt_params)) {
     this_sp <- names(brt_params)[sp_n]
@@ -916,19 +955,212 @@ if(fitbrt_allSp) {
 ## end BRT for all species per day- point counts--------------------------------
 
 ## BRT for all species per day- ARU 10 consec min-------------------------------
-
-
-
+if(fitbrt_allSp_a30c) {
+  # loop through species detected on both point counts and ARUs
+  for (sp_n in 1:length(brt_params)) {
+    this_sp <- names(brt_params)[sp_n]
+    this_df <- sum_aru_dfs_10c[[this_sp]] # get ARU data for this sp.
+    # only model sp detected > 1 day
+    if(length(which(this_df$resp > 0)) > 1) {
+      ## Boosted Regression Tree for this species per DAY (aru) -------------
+      # make a list to hold fitted models and predictions from models with many 
+      # replicate folds splits
+      # At the end of the following for loop, fits_sp_brt should have results 
+      # from 200 different 5-fold CV splits (so 1000 different models fit, 5 
+      # for each fold in each of 200 different fold splits)
+      fits_sp_brt <- list()
+      
+      for (i in 1:200) { # do this 1:200
+        # assign days to 3-day blocks
+        days <- data.frame(day = min(this_df$day_of_yr):max(this_df$day_of_yr), 
+                           block = NA)
+        n_blocks <- nrow(days)/3
+        blocks <- rep(1:n_blocks, 3)
+        blocks <- blocks[order(blocks)]
+        start_row <- sample(1:nrow(days), size = 1)
+        days$block[start_row:nrow(days)] <- blocks[1:length(
+          start_row:nrow(days))]
+        if(start_row != 1) {
+          days$block[1:(start_row - 1)] <- blocks[(length(
+            start_row:nrow(days)) + 1):nrow(days)]
+        }
+        
+        # assign blocks to CV folds
+        fold_assignments <- data.frame(
+          block = unique(days$block), 
+          fold = sample(rep_len(1:5, length.out = length(unique(days$block)))))
+        days <- left_join(days, fold_assignments, by = "block")
+        rm(blocks, n_blocks, start_row, fold_assignments)
+        
+        # create new data to predict with
+        p_day <- data.frame(day_of_yr = seq(min(this_df$day_of_yr), 
+                                            max(this_df$day_of_yr), by = 1))
+        p_day$day_of_yr_c <- p_day$day_of_yr-mean(p_day$day_of_yr)
+        p_day$wind <- 1
+        p_day <- left_join(p_day, days, by = c("day_of_yr" = "day"))
+        
+        # join CV fold info onto bird data
+        bird_dat <- left_join(this_df, days, by = c("day_of_yr" = "day"))
+        
+        # fit brt to data in CV folds
+        brt_test_folds <- unique(bird_dat$fold)
+        names(brt_test_folds) <- as.character(brt_test_folds) 
+        
+        # the first time through the loop, save an example set of a few 5-CV 
+        # models so that we can graph the error as a function of number of trees
+        if(i < 3) {
+          if(i == 1) mods <- list()
+          mods[[i]] <- lapply(unique(bird_dat$fold), FUN = fit_brt, 
+                              sp_data = bird_dat, newdata = p_day, 
+                              nt = 10000, 
+                              sr = brt_params[[this_sp]]$aru30c[["sr"]], 
+                              n_cores = n_cores,
+                              resp_name = "resp", return_model = TRUE)
+        } else if(i ==3) {
+          mods <- unlist(mods, recursive = F)
+          saveRDS(mods, file = paste0("example_fitted_brt_aru30c_", this_sp, 
+                                      ".rds"))
+          rm(mods)
+        }
+        
+        # Here, we specify the nt and sr for each individual species, based
+        # on looking at the graphs of error by ntrees made using the .rds file
+        # written out in the above loop, and the graphing code in
+        # suppmaterials_plots_yellowpaper.R
+        brt_test_folds <- lapply(brt_test_folds, FUN = fit_brt,
+                                 sp_data = bird_dat,
+                                 newdata = p_day,
+                                 nt = brt_params[[this_sp]]$aru30c[["nt"]],
+                                 sr = brt_params[[this_sp]]$aru30c[["sr"]],
+                                 resp_name = "resp", n_cores = n_cores,
+                                 return_model = FALSE)
+        
+        # put predictions for these 5 folds into the big list for all splits
+        fits_sp_brt[[i]] <- brt_test_folds
+        rm(brt_test_folds)
+        gc()
+      }
+      names(fits_sp_brt) <- 1:length(fits_sp_brt)
+      
+      rmse_thisSp_brt <- sapply(fits_sp_brt, FUN = function(x) {
+        sapply(x, FUN = function(z) {
+          sqrt(mean(z$test_predictions$error^2))
+        })
+      })
+      saveRDS(fits_sp_brt, paste0("fits_", this_sp, "_aru30c_brt.rds"))
+      saveRDS(rmse_thisSp_brt, paste0("rmse_", this_sp, "_aru30c_brt.rds"))
+      try(rm(fits_sp_brt, rmse_thisSp_brt))
+      ## end BRT for this species per DAY model (aru)-------------------------
+    }
+  }
+}
 ## end BRT for all species- ARU 10 consec min-----------------------------------
 
 ##BRT for all species- ARU 10 random min-----------------------------------------
-
-
+if(fitbrt_allSp_a30r) {
+  # loop through species detected on both point counts and ARUs
+  for (sp_n in 1:length(brt_params)) {
+    this_sp <- names(brt_params)[sp_n]
+    this_df <- sum_aru_dfs_10r[[this_sp]] # get ARU data for this sp.
+    # only model sp detected > 1 day
+    if(length(which(this_df$resp > 0)) > 1) {
+      ## Boosted Regression Tree for this species per DAY (aru) -------------
+      # make a list to hold fitted models and predictions from models with many 
+      # replicate folds splits
+      # At the end of the following for loop, fits_sp_brt should have results 
+      # from 200 different 5-fold CV splits (so 1000 different models fit, 5 
+      # for each fold in each of 200 different fold splits)
+      fits_sp_brt <- list()
+      
+      for (i in 1:3) { # do this 1:200
+        # assign days to 3-day blocks
+        days <- data.frame(day = min(this_df$day_of_yr):max(this_df$day_of_yr), 
+                           block = NA)
+        n_blocks <- nrow(days)/3
+        blocks <- rep(1:n_blocks, 3)
+        blocks <- blocks[order(blocks)]
+        start_row <- sample(1:nrow(days), size = 1)
+        days$block[start_row:nrow(days)] <- blocks[1:length(
+          start_row:nrow(days))]
+        if(start_row != 1) {
+          days$block[1:(start_row - 1)] <- blocks[(length(
+            start_row:nrow(days)) + 1):nrow(days)]
+        }
+        
+        # assign blocks to CV folds
+        fold_assignments <- data.frame(
+          block = unique(days$block), 
+          fold = sample(rep_len(1:5, length.out = length(unique(days$block)))))
+        days <- left_join(days, fold_assignments, by = "block")
+        rm(blocks, n_blocks, start_row, fold_assignments)
+        
+        # create new data to predict with
+        p_day <- data.frame(day_of_yr = seq(min(this_df$day_of_yr), 
+                                            max(this_df$day_of_yr), by = 1))
+        p_day$day_of_yr_c <- p_day$day_of_yr-mean(p_day$day_of_yr)
+        p_day$wind <- 1
+        p_day <- left_join(p_day, days, by = c("day_of_yr" = "day"))
+        
+        # join CV fold info onto bird data
+        bird_dat <- left_join(this_df, days, by = c("day_of_yr" = "day"))
+        
+        # fit brt to data in CV folds
+        brt_test_folds <- unique(bird_dat$fold)
+        names(brt_test_folds) <- as.character(brt_test_folds) 
+        
+        # the first time through the loop, save an example set of a few 5-CV 
+        # models so that we can graph the error as a function of number of trees
+        if(i < 3) {
+          if(i == 1) mods <- list()
+          mods[[i]] <- lapply(unique(bird_dat$fold), FUN = fit_brt, 
+                              sp_data = bird_dat, newdata = p_day, 
+                              nt = 10000, 
+                              sr = brt_params[[this_sp]]$aru30r[["sr"]], 
+                              n_cores = n_cores,
+                              resp_name = "resp", return_model = TRUE)
+        } else if(i ==3) {
+          mods <- unlist(mods, recursive = F)
+          saveRDS(mods, file = paste0("example_fitted_brt_aru30r_", this_sp, 
+                                      ".rds"))
+          rm(mods)
+        }
+        
+        # Here, we specify the nt and sr for each individual species, based
+        # on looking at the graphs of error by ntrees made using the .rds file
+        # written out in the above loop, and the graphing code in
+        # suppmaterials_plots_yellowpaper.R
+        brt_test_folds <- lapply(brt_test_folds, FUN = fit_brt,
+                                 sp_data = bird_dat,
+                                 newdata = p_day,
+                                 nt = brt_params[[this_sp]]$aru30r[["nt"]],
+                                 sr = brt_params[[this_sp]]$aru30r[["sr"]],
+                                 resp_name = "resp", n_cores = n_cores,
+                                 return_model = FALSE)
+        
+        # put predictions for these 5 folds into the big list for all splits
+        fits_sp_brt[[i]] <- brt_test_folds
+        rm(brt_test_folds)
+        gc()
+      }
+      names(fits_sp_brt) <- 1:length(fits_sp_brt)
+      
+      rmse_thisSp_brt <- sapply(fits_sp_brt, FUN = function(x) {
+        sapply(x, FUN = function(z) {
+          sqrt(mean(z$test_predictions$error^2))
+        })
+      })
+      saveRDS(fits_sp_brt, paste0("fits_", this_sp, "_aru30r_brt.rds"))
+      saveRDS(rmse_thisSp_brt, paste0("rmse_", this_sp, "_aru30r_brt.rds"))
+      try(rm(fits_sp_brt, rmse_thisSp_brt))
+      ## end BRT for this species per DAY model (aru)-------------------------
+    }
+  }
+}
 
 ## end BRT for all species- ARU 10 random min-----------------------------------
 
 ## BRT for all species per day- ARU 22 random min-------------------------------
-if(fitbrt_allSp) {
+if(fitbrt_allSp_a66r) {
   # loop through species detected on both point counts and ARUs
   for (sp_n in 1:length(brt_params)) {
     this_sp <- names(brt_params)[sp_n]
