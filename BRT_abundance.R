@@ -21,10 +21,10 @@
 plotson <- FALSE
 fitbrt <- FALSE # fit models for GCKI and WIWR for all 4 count types
 fitbrt_allSp_ap <- FALSE # fit models for all species using point count data
-fitbrt_allSp_a30c <- FALSE # fit models for all species using A30c data
-fitbrt_allSp_a30r <- T # fit models for all species using A30R data
+fitbrt_allSp_a30c <- T # fit models for all species using A30c data
+fitbrt_allSp_a30r <- F # fit models for all species using A30R data
 fitbrt_allSp_a66r <- FALSE # fit models for all species using A66R data
-n_cores <- 2
+n_cores <- 4
 
 # make a df to hold the shrinkage rate and number of trees to use for each
 # species for both point count and ARU66r models.  The shrinkage rate and
@@ -41,78 +41,78 @@ sp_detected_on_both <- sp_detected_on_both[sp_detected_on_both != "CANG"]
 
 set.seed(16011449) # set this to something new before running each small species batch
 brt_params <- list(
-  AMCR = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+  AMCR = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  AMGO = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+  AMGO = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  AMRE = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0002, nt = 3000), 
+  AMRE = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0002, nt = 3000),
+              aru30r = c(sr = 0.0001, nt = 2500), aru30c = c(sr = 0.0001, nt = 3000)),
+  AMRO = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000),
+              aru30r = c(sr = 0.0006, nt = 4000), aru30c = c(sr = 0.0001, nt = 3000)),
+  BAEA = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  AMRO = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000), 
-              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),#
-  BAEA = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+  BAWW = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  BAWW = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000), 
+  BCCH = list(pt_ct = c(sr = 0.002, nt = 2000), aru66r = c(sr = 0.001, nt = 3000),
+              aru30r = c(sr = 0.0005, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  BHVI = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  BCCH = list(pt_ct = c(sr = 0.002, nt = 2000), aru66r = c(sr = 0.001, nt = 3000), 
-              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),#
-  BHVI = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+  BLJA = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0002, nt = 2500),
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 2000)),
+  BRCR = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0002, nt = 3000),
+              aru30r = c(sr = 0.0005, nt = 2000), aru30c = c(sr = 0.0001, nt = 3000)),
+  BTNW = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0005, nt = 2500),
+              aru30r = c(sr = 0.0005, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  COGR = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  BLJA = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0002, nt = 2500), 
+  CORA = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000),
+              aru30r = c(sr = 0.0005, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  DEJU = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  BRCR = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0002, nt = 3000), 
+  DOWO = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  BTNW = list(pt_ct = c(sr = 0.0005, nt = 2500), aru66r = c(sr = 0.0005, nt = 2500), 
+  GCKI = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0005, nt = 2000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  COGR = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000), 
+  HAWO = list(pt_ct = c(sr = 0.0001, nt = 6000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  CORA = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+  HETH = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0005, nt = 2000),
+              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.00003, nt = 2000)),
+  LEFL = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  DEJU = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+  MERL = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  DOWO = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+  NAWA = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  GCKI = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0005, nt = 2000), 
+  NOFL = list(pt_ct = c(sr = 0.0001, nt = 8000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  HAWO = list(pt_ct = c(sr = 0.0001, nt = 6000), aru66r = c(sr = 0.0001, nt = 3000), 
+  NOPA = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 1500),
+              aru30r = c(sr = 0.0001, nt = 2500), aru30c = c(sr = 0.0001, nt = 3000)),
+  NOWA = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0005, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  HETH = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0005, nt = 2000), 
-              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),#
-  LEFL = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+  OVEN = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.00003, nt = 1500),
+              aru30r = c(sr = 0.00003, nt = 4000), aru30c = c(sr = 0.0001, nt = 3000)),
+  PIWA = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0005, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  MERL = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000), 
+  PIWO = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  NAWA = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000), 
+  PUFI = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  NOFL = list(pt_ct = c(sr = 0.0001, nt = 8000), aru66r = c(sr = 0.0001, nt = 3000), 
+  RBNU = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  NOPA = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 1500), 
-              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),#
-  NOWA = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0005, nt = 3000), 
+  RCKI = list(pt_ct = c(sr = 0.0001, nt = 5000), aru66r = c(sr = 0.0001, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  OVEN = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.00003, nt = 1500), 
+  SWTH = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  PIWA = list(pt_ct = c(sr = 0.0001, nt = 2000), aru66r = c(sr = 0.0005, nt = 3000), 
+  WBNU = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  PIWO = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
+  WIWR = list(pt_ct = c(sr = 0.0005, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000),
+              aru30r = c(sr = 0.0005, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
+  WTSP = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 6000),
+              aru30r = c(sr = 0.0005, nt = 2000), aru30c = c(sr = 0.0001, nt = 3000)),
+  YBSA = list(pt_ct = c(sr = 0.0005, nt = 5000), aru66r = c(sr = 0.0005, nt = 3000),
               aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  PUFI = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0001, nt = 3000), 
-              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  RBNU = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 3000), 
-              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),#
-  RCKI = list(pt_ct = c(sr = 0.0001, nt = 5000), aru66r = c(sr = 0.0001, nt = 3000), 
-              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  SWTH = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000), 
-              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  WBNU = list(pt_ct = c(sr = 0.0001, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000), 
-              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  WIWR = list(pt_ct = c(sr = 0.0005, nt = 3000), aru66r = c(sr = 0.0005, nt = 3000), 
-              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  WTSP = list(pt_ct = c(sr = 0.0005, nt = 2000), aru66r = c(sr = 0.0001, nt = 6000), 
-              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  YBSA = list(pt_ct = c(sr = 0.0005, nt = 5000), aru66r = c(sr = 0.0005, nt = 3000), 
-              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000)),
-  YRWA = list(pt_ct = c(sr = 0.0005, nt = 5000), aru66r = c(sr = 0.0005, nt = 2000), 
-              aru30r = c(sr = 0.0001, nt = 3000), aru30c = c(sr = 0.0001, nt = 3000))
+  YRWA = list(pt_ct = c(sr = 0.0005, nt = 5000), aru66r = c(sr = 0.0005, nt = 2000),
+              aru30r = c(sr = 0.0005, nt = 3000), aru30c = c(sr = 0.0005, nt = 2000))
 )
 
 if(plotson){
@@ -970,7 +970,7 @@ if(fitbrt_allSp_a30c) {
       # for each fold in each of 200 different fold splits)
       fits_sp_brt <- list()
       
-      for (i in 1:200) { # do this 1:200
+      for (i in 1:3) { # do this 1:200
         # assign days to 3-day blocks
         days <- data.frame(day = min(this_df$day_of_yr):max(this_df$day_of_yr), 
                            block = NA)
@@ -1072,7 +1072,7 @@ if(fitbrt_allSp_a30r) {
       # for each fold in each of 200 different fold splits)
       fits_sp_brt <- list()
       
-      for (i in 1:3) { # do this 1:200
+      for (i in 1:200) { # do this 1:200
         # assign days to 3-day blocks
         days <- data.frame(day = min(this_df$day_of_yr):max(this_df$day_of_yr), 
                            block = NA)

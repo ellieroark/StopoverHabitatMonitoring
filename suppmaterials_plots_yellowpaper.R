@@ -376,6 +376,64 @@ for(i in 1:length(names(brt_params))) {
   try(rm(ex_brts_thisSp, ntree_err_df_thisSp, gp))
 }
 
+# aru30c
+for(i in 1:length(names(brt_params))) {
+  this_sp <- names(brt_params)[i]
+  ex_brts_thisSp <- tryCatch({
+    readRDS(paste0("example_fitted_brt_aru30c_", this_sp, ".rds"))}, 
+    error = function(x) NA)
+  ntree_err_df_thisSp <- tryCatch({bind_rows(mapply(FUN = function(x, fold) {
+    data.frame(ntrees = 1:length(x$mod$cv.error), 
+               err = x$mod$cv.error, 
+               fold = fold)
+  }, ex_brts_thisSp, 1:length(ex_brts_thisSp), SIMPLIFY = FALSE))}, 
+  error = function (x) NA)
+  gp <- tryCatch({
+    ggplot(data = ntree_err_df_thisSp, aes(x = ntrees, y = err, 
+                                           color = factor(fold))) + 
+      geom_line() + 
+      ylab("Absolute error (test data)") + 
+      xlab("Number of trees") + 
+      scale_color_viridis_d(name = "CV fold") + 
+      theme_bw() + 
+      geom_vline(xintercept = brt_params[[this_sp]]$aru30r[["nt"]]) + # nt we chose
+      ggtitle(expression(A[30*C]), 
+              subtitle = paste0(this_sp, " sr = ", 
+                                ex_brts_thisSp[[1]]$mod$shrinkage))}, 
+    error = function(x) NA)
+  try(print(gp))
+  try(rm(ex_brts_thisSp, ntree_err_df_thisSp, gp))
+}
+
+# aru30r
+for(i in 1:length(names(brt_params))) {
+  this_sp <- names(brt_params)[i]
+  ex_brts_thisSp <- tryCatch({
+    readRDS(paste0("example_fitted_brt_aru30r_", this_sp, ".rds"))}, 
+    error = function(x) NA)
+  ntree_err_df_thisSp <- tryCatch({bind_rows(mapply(FUN = function(x, fold) {
+    data.frame(ntrees = 1:length(x$mod$cv.error), 
+               err = x$mod$cv.error, 
+               fold = fold)
+  }, ex_brts_thisSp, 1:length(ex_brts_thisSp), SIMPLIFY = FALSE))}, 
+  error = function (x) NA)
+  gp <- tryCatch({
+    ggplot(data = ntree_err_df_thisSp, aes(x = ntrees, y = err, 
+                                           color = factor(fold))) + 
+      geom_line() + 
+      ylab("Absolute error (test data)") + 
+      xlab("Number of trees") + 
+      scale_color_viridis_d(name = "CV fold") + 
+      theme_bw() + 
+      geom_vline(xintercept = brt_params[[this_sp]]$aru30r[["nt"]]) + # nt we chose
+      ggtitle(expression(A[30*R]), 
+              subtitle = paste0(this_sp, " sr = ", 
+                                ex_brts_thisSp[[1]]$mod$shrinkage))}, 
+    error = function(x) NA)
+  #try(print(gp))
+  try(rm(ex_brts_thisSp, ntree_err_df_thisSp, gp))
+}
+
 # aru66r
 for(i in 1:length(names(brt_params))) {
   this_sp <- names(brt_params)[i]
