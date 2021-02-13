@@ -4,7 +4,7 @@
 ## 
 ## author: Ellie Roark
 ## created: 9 Mar 2020
-## last modified: 06 Jan 2021
+## last modified: 6 Feb 2021
 ## 
 ## inputs: *Corrected_PointCounts_PtAbbaye2019.csv- original data file with all 
 ##           point count data from the 2019 field season at Point Abbaye
@@ -21,6 +21,9 @@ library(tidyverse)
 library(lubridate)
 
 #read in 10 consecutive min ARU data
+# Some of the data was entered in long format, then Ellie switched to entering
+# data in wide format.  So read in both here, then get them into the same format
+# later.
 widearu <- read_csv(file = "./data/ARUPointCounts_WIDE_PtAbbaye2019.csv")
 longaru <- read_csv(file = "./data/ARUPointCounts_PtAbbaye2019.csv")
 filenames <- read_csv(file = "./data/anonymized_file_key.csv")
@@ -475,7 +478,7 @@ lnowiwr <- rename(lnowiwr, anon_filename = "anon_file_name")
 aruwiwr <- rbind(aru_wiwr, aru_wiwrw, lnowiwr, wnowiwr)
 
 ## clean up workspace
-rm(aru_wiwr, aru_wiwrw, lnowiwr, longaru, widearu, wnowiwr)
+rm(aru_wiwr, aru_wiwrw, lnowiwr, wnowiwr)
 
 ### un-anonymize the aru file names---------------------------------------------
 
@@ -531,7 +534,7 @@ for (i in 1:length(unique(wiwr_arudup$original_name))){
 aruwiwr <- aruwiwr[aruwiwr$anon_filename %nin% drop_anon, ]
 
 # clean up environment
-rm(dup_no_match, filenames, wiwr_arudup, match, no_match, w.arudup,
+rm(dup_no_match, wiwr_arudup, match, no_match, w.arudup,
    arudup, dr, drop_anon, nm, pair, t.arudup)
 
 ### get rid of duplicated ARU counts--------------------------------------------
@@ -747,22 +750,189 @@ sum_aruwiwr10r <- left_join(sum_aruwiwr10r, windday, by = "day_of_yr")
 
 
 ##### Prep 10 consecutive minute data for ALL species---------------------------
+# get names of all species detected by 10c counts
+sp_codes_10c <- unique(c(longaru$species_code, widearu$species_code))
+sp_codes_10c <- sp_codes_10c[!grepl(".* .*", sp_codes_10c)]
+# initiate list to hold dataframes for ARU detections of each sp.
+sum_aru_dfs_10c <- list() # for 10 consecutive minute samples
 
-
-
+for (i in 1:length(sp_codes_10c)) {
+  this_sp <- sp_codes_10c[i]
+  
+  #subset longaru to this sp
+  aru_sp10c <- longaru[which(longaru$species_code == this_sp), ]
+  #subset widearu to gcki
+  aru_sp10cw <- widearu[which(widearu$species_code == this_sp), ]
+  
+  #get unique ptctids for counts on which there were none of this sp
+  lnosp <- longaru[which(longaru$anon_file_name %nin% aru_sp10c$anon_file_name), ]
+  wnosp <- widearu[which(widearu$anon_filename %nin% aru_sp10cw$anon_filename), ]
+  
+  #create a count column for the nosp dfs
+  lnosp$count <- 0
+  wnosp$count <- 0
+  
+  # keep only two relevant columns
+  lnosp <- lnosp[ , c("anon_file_name", "count")]
+  wnosp <- wnosp[ , c("anon_filename", "count")]
+  
+  # get only a single row for each 10 min aru count (counts with no this sp)
+  lnosp <- dplyr::distinct(lnosp)
+  wnosp <- dplyr::distinct(wnosp)
+ 
+  if(nrow(aru_sp10cw) > 0) { 
+    ## add up number of 30 sec periods in which this sp was detected- wide aru
+    aru_sp10cw[is.na(aru_sp10cw)] <- "0"
+    # turn detection code letters into "1" indicating detection
+    aru_sp10cw[, 4:23] <- try(as.integer(aru_sp10cw[, 4:23] != 0))
+    aru_sp10cw <- aru_sp10cw %>%
+      mutate(count = rowSums(.[4:23]))
+    #subset to only count and anon_filename cols
+    aru_sp10cw <- aru_sp10cw[ , c("anon_filename", "count")]
+    #add .wav extension to filenames
+    aru_sp10cw$anon_filename <- paste(aru_sp10cw$anon_filename, ".wav", sep = "")
+  }
+  wnosp$anon_filename <- paste(wnosp$anon_filename, ".wav", sep = "")
+  
+  ## add up number of 30 sec periods in which this sp was detected- long aru
+  # change minute half values from 1 + 2 to :00 and :30
+  aru_sp10c[which(aru_sp10c$minute_half == "1"), "minute_half"] <- ":00"
+  aru_sp10c[which(aru_sp10c$minute_half == "2"), "minute_half"] <- ":30"
+  # paste those minute half values onto the minute_detected col
+  aru_sp10c$minute_detected <- paste0(as.character(aru_sp10c$minute_detected), 
+                                     as.character(aru_sp10c$minute_half))
+  aru_sp10c$minute_half <- NULL
+  aru_sp10c$comments <- NULL
+  
+  # pivot_wider to make each half min a column
+  aru_sp10c <- pivot_wider(aru_sp10c, names_from = "minute_detected", 
+                          values_from = "det_code")
+  if(nrow(aru_sp10c) > 0) {
+    #add up each row 
+    aru_sp10c[is.na(aru_sp10c)] <- "0"
+    aru_sp10c[, 3:ncol(aru_sp10c)] <- as.integer(
+      aru_sp10c[, 3:ncol(aru_sp10c)] != 0)
+  }
+  
+  aru_sp10c <- aru_sp10c %>%
+    mutate(count = rowSums(.[3:ncol(aru_sp10c)]))
+  
+  aru_sp10c <- aru_sp10c[ , c("anon_file_name", "count")]
+  
+  #prep for join: make sure col names are the same for both dfs
+  aru_sp10c <- rename(aru_sp10c, anon_filename = "anon_file_name")
+  lnosp <- rename(lnosp, anon_filename = "anon_file_name")
+  
+  ## merge aru_sp10c and aru_sp10cw
+  sp10c <- rbind(aru_sp10c, aru_sp10cw, lnosp, wnosp)
+  
+  ## un-anonymize the aru file names
+  #join filenames to sp10c to add a column that has the un-anonymized file names
+  sp10c <- left_join(sp10c, filenames, by = "anon_filename")
+  
+  ### get rid of duplicated ARU counts------------------------------------------
+  ## subset to only aru counts that are duplicated
+  arudup <- table(sp10c$original_name)
+  w.arudup <- sp10c[sp10c$original_name %in% names(arudup[arudup > 1]), ]
+  
+  ##order arudup by original name
+  w.arudup <- w.arudup[order(w.arudup$original_name), ]
+  
+  #for each matching "original file name" pair, check whether the species 
+  # detected are the same
+  mtch <- c()
+  no_match <- c()
+  
+  for (j in 1:nrow(w.arudup)){
+    if (identical(w.arudup[j, "original_name"], 
+                  w.arudup[(j+1), "original_name"])){
+      if (identical(w.arudup[j, 2:ncol(w.arudup)], 
+                    w.arudup[(j+1), 2:ncol(w.arudup)])){
+        mtch <- c(mtch, w.arudup[j, "original_name"])
+      }
+      else {no_match <- c(no_match, w.arudup[j, "original_name"])}
+    }
+  }
+  
+  #show rows with "no match" original names.  We do not do anything further
+  # with this, but it could be used to get some sort of measure of 
+  # consistency between the two duplicate listenings.
+  dup_no_match <- data.frame(w.arudup[w.arudup$original_name %in% no_match, ])
+  
+  #subset all data to only duplicated files
+  t.arudup <- table(sp10c$original_name)
+  sp_arudup <- sp10c[sp10c$original_name %in% 
+                           names(t.arudup[t.arudup > 1]), ]
+  #order sp_arudup by original filename
+  sp_arudup <- sp_arudup[order(sp_arudup$original_name), ]
+  
+  #randomly sample one of each duplicate aru recording
+  drop_anon <- c()
+  for (j in 1:length(unique(sp_arudup$original_name))){
+    nm <- unique(sp_arudup$original_name)[j]
+    pair <- sp_arudup$anon_filename[sp_arudup$original_name == nm]
+    dr <- sample(pair, size = 1)
+    drop_anon <- c(drop_anon, dr)
+  }
+  
+  #eliminate duplicate aru values selected in drop_anon from sp10c
+  sp10c <- sp10c[sp10c$anon_filename %nin% drop_anon, ]
+  
+  # clean up environment
+  try(rm(dup_no_match, sp_arudup, mtch, no_match, w.arudup, arudup, dr, drop_anon, 
+     nm, pair, t.arudup))
+  ### end get rid of duplicated ARU counts--------------------------------------
+  
+  ### add predictor variables needed for analysis-------------------------------
+  #create a point_id column for sp10c from the point id in original_name
+  sp10c$point_id <- gsub(".*_...._", "", sp10c$original_name)
+  sp10c$point_id <- gsub(".wav", "", sp10c$point_id)
+  
+  #create a point count id column by pasting the point_id and date cols
+  sp10c$ptct_id <- paste(as.character(sp10c$date), sp10c$point_id, sep = "_")
+  
+  #create an aru_id col for sp10c
+  sp10c$aru_id <- gsub("_........_...._...", "", sp10c$original_name)
+  sp10c$aru_id <- gsub("wav", "", sp10c$aru_id)
+  sp10c$aru_id <- gsub("[:.:]", "", sp10c$aru_id)
+  
+  # join weather variables to sp10c
+  sp10c <- left_join(sp10c, weathervar, by = "ptct_id")
+  
+  ### sample a max of 3 10c cts per day.
+  # temporarily drop dates 2019-04-16 and 2019-04-17 from the df since they don't 
+  # have 3 samples each.
+  tmp <- sp10c[which(sp10c$day_of_yr == 106 | sp10c$day_of_yr == 107), ]
+  sp10c <- sp10c[which(sp10c$ptct_id %nin% tmp$ptct_id), ]
+  sp10c <- sp10c %>% group_by(date)
+  std3 <- sample_n(sp10c, size= 3, replace = FALSE)
+  sp10c <- semi_join(sp10c, std3)
+  sp10c <- bind_rows(sp10c, tmp)
+  ### end add predictor variables for analysis----------------------------------
+  
+  ## aggregate this sp observations per day to get proportion of 30 sec 
+  ## intervals with a vocalization per day (resp), and total # of 30 sec 
+  ## intervals per day (count)
+  sum_sp10c <- sp10c %>%
+    group_by(day_of_yr) %>%
+    summarize(count = sum(count), segs = 20*n())
+  sum_sp10c$resp <- sum_sp10c$count/sum_sp10c$segs
+  
+  ## add average windspeed for the day to sum_sp10c df
+  sum_sp10c <- left_join(sum_sp10c, windday, by = "day_of_yr")
+  ### end aggregate by day------------------------------------------------------
+  sum_aru_dfs_10c[[i]] <- sum_sp10c
+}
+names(sum_aru_dfs_10c) <- sp_codes_10c
 ##### end prep 10 consecutive minute data for ALL species-----------------------
 
-##### Prep 10 random minute data for ALL species--------------------------------
 
-
-
-##### end prep 10 random minute data for ALL species----------------------------
-
-##### Prep 22 rand min data for ALL species detected in arurand-----------------
+##### Prep 22 and 10 rand min data for ALL species detected in arurand----------
 aru_sp_codes <- unique(arurand$species_code)
 aru_sp_codes <- aru_sp_codes[!grepl(".* .*", aru_sp_codes)]
 # initiate list to hold dataframes for ARU detections of each sp.
-sum_aru_dfs <- list()
+sum_aru_dfs <- list() # for 22 random minute samples
+sum_aru_dfs_10r <- list() # for 10 random minute samples
 
 for(i in 1:length(aru_sp_codes)) {
   this_sp <- aru_sp_codes[i]
@@ -864,43 +1034,60 @@ for(i in 1:length(aru_sp_codes)) {
   sp22 <- left_join(sp22, windday, by = "day_of_yr")
   add22 <- left_join(add22, windday, by = "day_of_yr")
   
-  #### get 22 random minutes for each unit on each day
+  #### get 22 (and 10) random minutes for each unit on each day
   #### from all random min data.
-  
-  ##randomly sample 10 rand min from each aruday and 22 rand min from each aruday
-  
+  ## randomly sample 10 rand min from each aruday and 22 rand min from each aruday
   # get 22 random min for each aruday from "min" df
   s22r <- sample_n(min, 22, replace = FALSE)
+  # get 10 random min for each aruday from "min" df
+  s10r_loop <- sample_n(min, 10, replace = FALSE)
   
-  # get dataframe with all species observations from the 22 randomly selected mins
+  # get dataframe with all species observations from the randomly selected mins
   # for each aruday
   sp22r <- semi_join(sp22, s22r, by = c("selec", "aruday"))
+  sp10r <- semi_join(sp22, s10r_loop, by = c("selec", "aruday"))
   
   #add add22 counts to sp22r df
   sp22r <- bind_rows(sp22r, add22)
+  # add add22 counts to sp10r df.  add22 contains only data from 16 and 17 April
+  # (the days that had recorder malfunctions and therefore too few minutes).
+  sp10r <- bind_rows(sp10r, add22)
   
   ## standardize survey effort to 66 random min per day for 22min cts
   sp22r <- sp22r %>% group_by(date)
-  std66 <- sample_n(sp22r, 66, replace = FALSE)
-  sp22r <- semi_join(sp22r, std66)
-  
+  std66 <- sample_n(sp22r, 66, replace = FALSE) 
+  sp22r <- semi_join(sp22r, std66) # well this is a bit of code for the ages. It
+  # does the correct thing, but in a REALLY roundabout way (I think std66 is 
+  # actually the thing we want also, but oh well, this gets it done).
+  ## standardize survey effort to 30 random min per day for 10min cts
+  sp10r <- sp10r %>% group_by(date)
+  std30 <- sample_n(sp10r, 30, replace = FALSE)
+  sp10r <- semi_join(sp10r, std30)
   
   ### add up individuals detected per 22 and 10  random minutes-------------------
   sum_sp22r <- sp22r %>%
     group_by(day_of_yr) %>%
     summarize(count = sum(count), segs = 2*n())
   sum_sp22r$resp <- sum_sp22r$count/sum_sp22r$segs
-  
   sum_sp22r$count_type <- "aru_22r"
   
-  # join windday to sum_arugcki dfs by day of yr
+  sum_sp10r <- sp10r %>%
+    group_by(day_of_yr) %>%
+    summarize(count = sum(count), segs = 2*n())
+  sum_sp10r$resp <- sum_sp10r$count/sum_sp10r$segs
+  sum_sp10r$count_type <- "aru_10r"
+  
+  # join windday to sum dfs by day of yr
   sum_sp22r <- left_join(sum_sp22r, windday, by = "day_of_yr")
+  sum_sp10r <- left_join(sum_sp10r, windday, by = "day_of_yr")
   
   ### end mean # individuals per count ---------------------------------------
   
   sum_aru_dfs[[i]] <- sum_sp22r
+  sum_aru_dfs_10r[[i]] <- sum_sp10r
 }
 names(sum_aru_dfs) <- aru_sp_codes
+names(sum_aru_dfs_10r) <- aru_sp_codes
 
 # replace WIWR and GCKI resp and count values with the values from sum_wiwr and
 # sum_gcki so that downstream results match the results calculated individually
@@ -918,8 +1105,10 @@ if(identical(sum_aru_dfs$GCKI$day_of_yr, sum_arugcki22r$day_of_yr)) {
 ##### end prep 22 rand min data for ALL species---------------------------------
 
 # clean up workspace
-rm(addgcki, addgcki5, addmin, addrand, addwiwr, addwiwr5, arugcki10r, 
+try(rm(addgcki, addgcki5, addmin, addrand, addwiwr, addwiwr5, arugcki10r, 
    arugcki22r, arugcki22, arurand, aruwiwr10r, aruwiwr22, aruwiwr22r, 
    filenames22r, min, recs,s5r, s10r, s10r_2, s22r, s22r_2, std30, std66, 
-   weathervar, windday, aru_id, keep, keepl, keepw, rec)
+   weathervar, windday, aru_id, keep, keepl, keepw, rec, s10r_loop, sum_sp22r, 
+   sum_sp10r))
 
+   rm()
