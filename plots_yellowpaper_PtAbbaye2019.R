@@ -4,7 +4,7 @@
 ## 
 ## author: Ellie Roark
 ## created: 27 Nov 2019
-## last modified: 1 May 2020
+## last modified: 13 Feb 2021
 ## 
 ## inputs: *see StopoverHabitatMonitoring.R for scripts which must be run
 ##          before this script can be sourced
@@ -1214,6 +1214,51 @@ stand_preds_all_sp_ptct <- lapply(names(brt_params), FUN = function(x) {
 })
 names(stand_preds_all_sp_ptct) <- names(brt_params)
 
+# get standardized predictions for each species from A30C models
+stand_preds_all_sp_a30c <- lapply(names(brt_params), FUN = function(x) {
+  fits_thisSp_brt <- tryCatch(readRDS(paste0("fits_", x, "_aru30c_brt.rds")), 
+                              error = function(x) NA)
+  
+  # get standardized predictions for predictions to days in the test data fold 
+  # from all 1000 models
+  aru_preds_brt <- tryCatch({
+    bind_rows(lapply(fits_thisSp_brt, FUN = function(x) {
+      bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
+    }))}, error = function(x) NA)
+  # get average prediction for each day from the 200 iterations of the 5-fold CV
+  aru_preds_brt <- tryCatch({
+    group_by(aru_preds_brt, day_of_yr) %>%
+      summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+                se = std.error(predictions))}, 
+    error = function(x) NA)
+  try(aru_preds_brt$method <- "aru30c")
+  return(aru_preds_brt)
+})
+names(stand_preds_all_sp_a30c) <- names(brt_params)
+
+
+# get standardized predictions for each species from A30R models
+stand_preds_all_sp_a30r <- lapply(names(brt_params), FUN = function(x) {
+  fits_thisSp_brt <- tryCatch(readRDS(paste0("fits_", x, "_aru30r_brt.rds")), 
+                              error = function(x) NA)
+  
+  # get standardized predictions for predictions to days in the test data fold 
+  # from all 1000 models
+  aru_preds_brt <- tryCatch({
+    bind_rows(lapply(fits_thisSp_brt, FUN = function(x) {
+      bind_rows(lapply(x, FUN = function(y) {y$standardized_preds}))
+    }))}, error = function(x) NA)
+  # get average prediction for each day from the 200 iterations of the 5-fold CV
+  aru_preds_brt <- tryCatch({
+    group_by(aru_preds_brt, day_of_yr) %>%
+      summarise(mean_pred = mean(predictions), sdev = sd(predictions), 
+                se = std.error(predictions))}, 
+    error = function(x) NA)
+  try(aru_preds_brt$method <- "aru30r")
+  return(aru_preds_brt)
+})
+names(stand_preds_all_sp_a30r) <- names(brt_params)
+
 # get standardized predictions for each species from A66R models
 stand_preds_all_sp_a66r <- lapply(names(brt_params), FUN = function(x) {
   fits_thisSp_brt <- tryCatch(readRDS(paste0("fits_", x, "_aru66r_brt.rds")), 
@@ -1236,47 +1281,118 @@ stand_preds_all_sp_a66r <- lapply(names(brt_params), FUN = function(x) {
 })
 names(stand_preds_all_sp_a66r) <- names(brt_params)
 
-stand_preds_all_sp <- mapply(FUN = function(x, y) {
-  tryCatch(bind_rows(x, y), error = function(x) NA)}, 
-  stand_preds_all_sp_ptct, stand_preds_all_sp_a66r, 
-  SIMPLIFY = F)
+stand_preds_all_sp <- mapply(FUN = function(df1, df2, df3, df4) {
+  tryCatch(bind_rows(df1, df2, df3, df4), error = function(x) NA)}, 
+  stand_preds_all_sp_ptct, stand_preds_all_sp_a30c, stand_preds_all_sp_a30r,
+  stand_preds_all_sp_a66r, SIMPLIFY = F)
 
 # make a df of the correlations between predictions from Ap and A66R
-cor_predictions <- data.frame(
-  species = names(stand_preds_all_sp), type = "Predicted",
+cor_predictions1 <- data.frame(
+  species = names(stand_preds_all_sp), type = "Predicted", pair = "Ap+A66R",
   spearmans_cor = sapply(stand_preds_all_sp, FUN = function(x) {
     tryCatch({cor(x$mean_pred[x$method == "aru66r"], 
                   x$mean_pred[x$method == "ptct"], 
                   method = "spearman")}, error = function(x) NA)}), 
   n_days_detected_ptct = NA, n_days_detected_aru = NA, 
   stringsAsFactors = FALSE)
+cor_predictions2 <- data.frame(
+  species = names(stand_preds_all_sp), type = "Predicted", pair = "Ap+A30R",
+  spearmans_cor = sapply(stand_preds_all_sp, FUN = function(x) {
+    tryCatch({cor(x$mean_pred[x$method == "aru30r"], 
+                  x$mean_pred[x$method == "ptct"], 
+                  method = "spearman")}, error = function(x) NA)}), 
+  n_days_detected_ptct = NA, n_days_detected_aru = NA, 
+  stringsAsFactors = FALSE)
+cor_predictions3 <- data.frame(
+  species = names(stand_preds_all_sp), type = "Predicted", pair = "Ap+A30C",
+  spearmans_cor = sapply(stand_preds_all_sp, FUN = function(x) {
+    tryCatch({cor(x$mean_pred[x$method == "aru30c"], 
+                  x$mean_pred[x$method == "ptct"], 
+                  method = "spearman")}, error = function(x) NA)}), 
+  n_days_detected_ptct = NA, n_days_detected_aru = NA, 
+  stringsAsFactors = FALSE)
+
 # add columns for number of days on which each species was detected
-for(rn in 1:nrow(cor_predictions)) {
-  this_sp <- cor_predictions$species[rn]
-  cor_predictions$n_days_detected_ptct[rn] <- length(
+for(rn in 1:nrow(cor_predictions1)) {
+  this_sp <- cor_predictions1$species[rn]
+  cor_predictions1$n_days_detected_ptct[rn] <- length(
     which(sum_species_dfs[[this_sp]]$resp > 0))
-  cor_predictions$n_days_detected_aru[rn] <- length(
+  cor_predictions1$n_days_detected_aru[rn] <- length(
     which(sum_aru_dfs[[this_sp]]$resp > 0))
 }
+
+for(rn in 1:nrow(cor_predictions2)) {
+  this_sp <- cor_predictions2$species[rn]
+  cor_predictions2$n_days_detected_ptct[rn] <- length(
+    which(sum_species_dfs[[this_sp]]$resp > 0))
+  cor_predictions2$n_days_detected_aru[rn] <- length(
+    which(sum_aru_dfs_10r[[this_sp]]$resp > 0))
+}
+
+for(rn in 1:nrow(cor_predictions3)) {
+  this_sp <- cor_predictions3$species[rn]
+  cor_predictions3$n_days_detected_ptct[rn] <- length(
+    which(sum_species_dfs[[this_sp]]$resp > 0))
+  cor_predictions3$n_days_detected_aru[rn] <- length(
+    which(sum_aru_dfs_10c[[this_sp]]$resp > 0))
+}
+
+cor_predictions <- bind_rows(cor_predictions1, cor_predictions2, cor_predictions3)
 
 ## end correlation between BRT predicted values ---
 
 ## get correlation between observed values ---
-cor_obs <- data.frame(
-  species = as.character(sp_detected_on_both), type = "Observed",
-  spearmans_cor = NA, n_days_detected_ptct = NA, n_days_detected_aru = NA,
-  stringsAsFactors = F)
-for(rn in 1:nrow(cor_obs)) {
-  this_sp <- cor_obs$species[rn]
-  obs_df <- left_join(sum_aru_dfs[[this_sp]], sum_species_dfs[[this_sp]], 
+cor_obs1 <- data.frame(
+  species = as.character(sp_detected_on_both), type = "Observed", 
+  pair = "Ap+A66R", spearmans_cor = NA, n_days_detected_ptct = NA, 
+  n_days_detected_aru = NA, stringsAsFactors = F)
+for(rn in 1:nrow(cor_obs1)) {
+  this_sp <- cor_obs1$species[rn]
+  obs_df <- left_join(sum_aru_dfs[[this_sp]], sum_species_dfs[[this_sp]],
                       by = "day_of_yr")
-  cor_obs$spearmans_cor[rn] <- cor(obs_df$resp.x, obs_df$resp.y, 
+  cor_obs1$spearmans_cor[rn] <- cor(obs_df$resp.x, obs_df$resp.y, 
                                    method = "spearman")
-  cor_obs$n_days_detected_ptct[rn] <- length(
+  cor_obs1$n_days_detected_ptct[rn] <- length(
     which(sum_species_dfs[[this_sp]]$resp > 0))
-  cor_obs$n_days_detected_aru[rn] <- length(
+  cor_obs1$n_days_detected_aru[rn] <- length(
     which(sum_aru_dfs[[this_sp]]$resp > 0))
 }
+
+cor_obs2 <- data.frame(
+  species = as.character(sp_detected_on_both), type = "Observed", 
+  pair = "Ap+A30R", spearmans_cor = NA, n_days_detected_ptct = NA, 
+  n_days_detected_aru = NA, stringsAsFactors = F)
+for(rn in 1:nrow(cor_obs2)) {
+  this_sp <- cor_obs2$species[rn]
+  obs_df <- left_join(sum_aru_dfs_10r[[this_sp]], sum_species_dfs[[this_sp]],
+                      by = "day_of_yr")
+  cor_obs2$spearmans_cor[rn] <- cor(obs_df$resp.x, obs_df$resp.y, 
+                                   method = "spearman")
+  cor_obs2$n_days_detected_ptct[rn] <- length(
+    which(sum_species_dfs[[this_sp]]$resp > 0))
+  cor_obs2$n_days_detected_aru[rn] <- length(
+    which(sum_aru_dfs_10r[[this_sp]]$resp > 0))
+}
+
+cor_obs3 <- data.frame(
+  species = as.character(sp_detected_on_both), type = "Observed", 
+  pair = "Ap+A30C", spearmans_cor = NA, n_days_detected_ptct = NA, 
+  n_days_detected_aru = NA, stringsAsFactors = F)
+for(rn in 1:nrow(cor_obs3)) {
+  this_sp <- cor_obs3$species[rn]
+  obs_df <- tryCatch({left_join(sum_aru_dfs_10c[[this_sp]], sum_species_dfs[[this_sp]],
+                      by = "day_of_yr")}, 
+                     error = function(x) NA)
+  cor_obs3$spearmans_cor[rn] <- tryCatch({cor(obs_df$resp.x, obs_df$resp.y, 
+                                   method = "spearman")}, 
+                                   error = function(x) NA)
+  cor_obs3$n_days_detected_ptct[rn] <- length(
+    which(sum_species_dfs[[this_sp]]$resp > 0))
+  cor_obs3$n_days_detected_aru[rn] <- length(
+    which(sum_aru_dfs_10c[[this_sp]]$resp > 0))
+}
+
+cor_obs <- bind_rows(cor_obs1, cor_obs2, cor_obs3)
 ## end correlation between observed values ---
 
 # join correlations of predicted values and correlations of observed values
@@ -1285,24 +1401,26 @@ cor_all_sp <- bind_rows(cor_obs, cor_predictions)
 cor_all_sp <- group_by(cor_all_sp, type) %>%
   arrange(desc(spearmans_cor), .by_group = TRUE)
 
-cor_by_aruDet <- ggplot(data = cor_all_sp, 
-                        aes(x = n_days_detected_aru, y = spearmans_cor, 
-                            group = type, color = type)) + 
-  geom_point() + 
-  geom_smooth() + 
-  theme_bw()
-cor_by_ptctDet <- ggplot(data = cor_all_sp, 
-                        aes(x = n_days_detected_ptct, y = spearmans_cor, 
-                            group = type, color = type)) + 
-  geom_point() + 
-  geom_smooth() + 
-  theme_bw()
-cor_by_ptctDet + cor_by_aruDet
-
-ggplot(data = cor_all_sp, aes(x = n_days_detected_ptct, y = n_days_detected_aru, 
-                              color = spearmans_cor, size = spearmans_cor)) + 
-  geom_point() + 
-  theme_bw()
+## plots that look at correlation values and the number of days a species was 
+## detected. exploratory but not relevant for manuscript
+# cor_by_aruDet <- ggplot(data = cor_all_sp, 
+#                         aes(x = n_days_detected_aru, y = spearmans_cor, 
+#                             group = type, color = type)) + 
+#   geom_point() + 
+#   geom_smooth() + 
+#   theme_bw()
+# cor_by_ptctDet <- ggplot(data = cor_all_sp, 
+#                         aes(x = n_days_detected_ptct, y = spearmans_cor, 
+#                             group = type, color = type)) + 
+#   geom_point() + 
+#   geom_smooth() + 
+#   theme_bw()
+# cor_by_ptctDet + cor_by_aruDet
+# 
+# ggplot(data = cor_all_sp, aes(x = n_days_detected_ptct, y = n_days_detected_aru, 
+#                               color = spearmans_cor, size = spearmans_cor)) + 
+#   geom_point() + 
+#   theme_bw()
 
 #keep only species that had enough data for prediction 
 # (number of days > 1 for both ptct and aru)
@@ -1310,40 +1428,107 @@ cor_all_sp <- cor_all_sp[which(cor_all_sp$n_days_detected_ptct > 1),]
 cor_all_sp <- cor_all_sp[which(cor_all_sp$n_days_detected_aru > 1),]
 
 #boxplot showing range of values for predicted and observed correlations for 
-# all sp
-f6a <- ggplot(data = cor_all_sp, aes(x = factor(type), y = spearmans_cor)) + 
-  geom_boxplot() + 
+# all sp for all pairs of methods
+f6a <- ggplot(data = cor_all_sp, aes(x = factor(type), y = spearmans_cor, 
+                                    facet_wrap = factor(pair), 
+                                    colour = pair) ) + 
+  scale_colour_viridis_d(option = "inferno", begin = 0.2, end = 0.75,
+                         name = "Correlation Pairs",
+                         labels = c(expression(paste(A[p], plain(", "), A[30*C])), 
+                                    expression(paste(A[p], plain(", "), A[30*R])), 
+                                    expression(paste(A[p], plain(", "), A[66*R])))) +
+  # geom_boxplot() + 
+  geom_violin() +
   ylab("Spearman's correlation coefficient") + 
   xlab(element_blank()) + 
   theme_bw()
+f6a
 
-## add the migration status to the dataframe with correlations for all species
-cor_all_sp <- left_join(cor_all_sp, res_st, by = "species")
+# what is the sample size for each boxplot?
+o <- table(cor_all_sp[cor_all_sp$type == "Observed", ]$pair)
+#table(cor_all_sp[cor_all_sp$type == "Predicted", ]$pair)
 
-## boxplot of range of correlation values for predicted abundance indices; for 
-## resident vs. migrant species
-res_status_plot <- ggplot(data = 
-                            cor_all_sp[which(cor_all_sp$type == "Predicted"), ], 
-                          aes(x = factor(residence_status), y = spearmans_cor)) + 
-  geom_boxplot() + 
-  ylab("Spearman's correlation coefficient") + 
-  xlab(element_blank()) + 
-  theme_bw()
+## LINEAR MIXED MODEL FOR CORRELATION VALUES BY PAIR AND TYPE-------------------
+## mixed model for correlation values varying by pair, type and interactions 
+## between pair and type; random effect for species identity!
+allsp.cormod <- lme(spearmans_cor ~ pair*type, 
+                    random = ~1|species, data = cor_all_sp)
 
+# linear model for same thing; no random term
+tlm <- lm(spearmans_cor ~ pair*type, data = cor_all_sp)
+plot(tlm)
+
+E <- rstandard(tlm)
+boxplot(E ~ species, data = cor_all_sp, axes = FALSE,
+          ylim = c(-4, 3))
+abline(0,0); axis(2)
+graphics::text(x = 1:30, y = -2, levels(unique(cor_all_sp$species)), srt=65)
+
+tgls <- gls(spearmans_cor ~ pair*type, data = cor_all_sp)
+
+anova(tgls, allsp.cormod)
+
+E2 <- resid(allsp.cormod, type = "normalized")
+F2 <- fitted(allsp.cormod)
+op <- par(mfrow = c(2, 2), mar = c(4, 4, 3, 2))
+MyYlab <- "Residuals"
+plot(x = F2, y = E2, xlab = "Fitted values", ylab = MyYlab)
+boxplot(E2 ~ type, data = cor_all_sp,
+        main = "Type of Abund Index value", ylab = MyYlab)
+boxplot(E2 ~ pair, data = cor_all_sp,
+          main = "abund. index", ylab = MyYlab)
+plot(x = cor_all_sp$spearmans_cor, y = E, ylab = MyYlab,
+       main = "Correlation Coefficient values", xlab = "Spearman's cor. coeff")
+par(op)
+
+## test mixed model allsp.cormod against null model 
+
+
+## END linear mixed model-------------------------------------------------------
+
+# ## add the migration status to the dataframe with correlations for all species
+# cor_all_sp <- left_join(cor_all_sp, res_st, by = "species")
+# 
+# ## boxplot of range of correlation values for predicted abundance indices; for 
+# ## resident vs. migrant species
+# res_status_plot <- ggplot(data = 
+#                             cor_all_sp[which(cor_all_sp$type == "Predicted"), ], 
+#                           aes(x = factor(residence_status), y = spearmans_cor)) + 
+#   geom_boxplot() + 
+#   ylab("Spearman's correlation coefficient") + 
+#   xlab(element_blank()) + 
+#   theme_bw()
+# 
 
 # f6 <- f6a + res_status_plot + plot_layout(ncol = 2) +
 #   plot_annotation(tag_levels = 'a', tag_prefix = '(', tag_suffix = ')') & 
 #   theme(plot.tag = element_text(size = 10))
 
 ## prep dataframe that will become correlation table for all species results
-tbl_cor_all_sp <- cor_all_sp[ ,c(1:3,6)]
-tbl_cor_all_sp <- pivot_wider(tbl_cor_all_sp, id_cols = c("species", 
-                                                          "residence_status"), 
-                              names_from = "type", 
+tbl_cor_all_sp <- cor_all_sp[ ,c(1:4)]
+tbl_cor_all_sp <- pivot_wider(tbl_cor_all_sp, id_cols = c("species", "type"), 
+                              names_from = "pair", 
                               values_from = "spearmans_cor")
-tbl_cor_all_sp <- tbl_cor_all_sp[order(tbl_cor_all_sp$Predicted, 
-                                       tbl_cor_all_sp$Observed, 
-                                       decreasing = TRUE), ]
+#order so predicted come first and observed come later. 
+tbl_cor_all_sp <- tbl_cor_all_sp[order(tbl_cor_all_sp$type, 
+                                       decreasing = T), ]
+##Then make an independent vector of species names of species in order (highest
+#to lowest predicted values for Ap + A66R.)
+t <- tbl_cor_all_sp[tbl_cor_all_sp$type == "Predicted", ]
+t <- t[order(t$`Ap+A66R`, decreasing = T), ]
+s <- t$species
+
+#make a new data frame
+cor_tbl <- data.frame()
+#loop through vector of species names I already made
+##for each species, create a df that is just the two rows for that species
+#then bind the rows of this_sp onto the empty dataframe I just created
+for (i in 1:length(s)){
+  this_sp <- s[i] 
+  df <- tbl_cor_all_sp[tbl_cor_all_sp$species == this_sp, ]
+  cor_tbl <- bind_rows(cor_tbl, df)
+}
+rm(tbl_cor_all_sp, t, s)
 
 ### end plot correlations of Ap and A66R --------------------------------------
 
@@ -1381,7 +1566,7 @@ ggsave(brt_summary_sp2, filename = "./saved_objects/brt_summary_sp2.eps",
        units = "cm", device = "eps")
 
 ggsave(f6a, filename = "./saved_objects/allsp_corrboxplot.jpg", 
-       width= 8, height = 10, 
+       width= 12, height = 10, 
        units = "cm", device = "jpeg")
 
 ### write out tables as .csvs---------------------------------------------------
@@ -1393,8 +1578,8 @@ write_csv(maxrand_df, path = "./saved_objects/mixedmodel_results_speciesrichness
 abund_corr[,3:6] <- round(abund_corr[,3:6], digits = 3)
 write_csv(abund_corr, path = "./saved_objects/abund_index_corr_coefficients.csv")
 
-tbl_cor_all_sp[,3:4] <- round(tbl_cor_all_sp[,3:4], digits = 3) 
-write_csv(tbl_cor_all_sp, path = "./saved_objects/allsp_corr_coefficients.csv")
+cor_tbl[,3:5] <- round(cor_tbl[,3:5], digits = 3) 
+write_csv(cor_tbl, path = "./saved_objects/allsp_corr_coefficients.csv")
 
 
 
